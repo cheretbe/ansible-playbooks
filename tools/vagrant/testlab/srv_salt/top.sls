@@ -1,3 +1,4 @@
 base:
   '*':
     - linux-utils
+    - ansible
