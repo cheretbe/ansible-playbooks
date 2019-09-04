@@ -1,0 +1,42 @@
+---
+# tasks file for ansible-aws-prerequisites
+
+- name: Check distribution
+  fail:
+    msg: "Only Ubuntu 18.04 is supported at the moment"
+  when: not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "18.04")
+
+- name: Add docker repository key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add docker repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+
+- name: Update and upgrade apt packages
+  become: yes
+  apt:
+    upgrade: "yes"
+    update_cache: yes
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+
+- name: Install needed packages
+  apt:
+    name: [docker-ce, python-pip, nodejs, npm]
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+    update_cache: no
+
+- name: Install PIP Docker packages
+  pip:
+    name: [docker, docker-compose]
+
+- name: Update NPM
+  npm:
+    name: npm
+    state: latest
+    global: yes
