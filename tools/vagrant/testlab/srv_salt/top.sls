@@ -1,6 +1,7 @@
 base:
   '*':
     - linux-utils
+    - etc_hosts
 
   'ansible':
     - ansible
