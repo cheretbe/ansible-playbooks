@@ -9,3 +9,9 @@ host_ubuntu_bionic:
     - ip: 172.24.0.11
     - names:
       - ubuntu-bionic
+
+host_ubuntu_xenial:
+  host.present:
+    - ip: 172.24.0.12
+    - names:
+      - ubuntu-xenial
