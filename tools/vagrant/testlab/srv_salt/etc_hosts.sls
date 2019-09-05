@@ -15,3 +15,9 @@ host_ubuntu_xenial:
     - ip: 172.24.0.12
     - names:
       - ubuntu-xenial
+
+host_centos_7:
+  host.present:
+    - ip: 172.24.0.13
+    - names:
+      - centos-7

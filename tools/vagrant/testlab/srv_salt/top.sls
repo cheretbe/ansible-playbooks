@@ -11,3 +11,6 @@ base:
 
   'ubuntu-xenial':
     - ssh-config
+
+  'centos-7':
+    - ssh-config
