@@ -5,6 +5,7 @@ base:
   'ansible':
     - linux-utils
     - ansible
+    - ansible-config
 
   'ubuntu-bionic':
     - ssh-config

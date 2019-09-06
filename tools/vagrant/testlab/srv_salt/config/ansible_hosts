@@ -1,0 +1,8 @@
+ubuntu-bionic
+ubuntu-xenial
+centos-7
+
+[all:vars]
+ansible_connection=ssh
+ansible_user=vagrant
+ansible_ssh_pass=vagrant
