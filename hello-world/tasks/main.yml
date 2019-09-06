@@ -2,4 +2,4 @@
 # tasks file for hello-world
 - name: Hello Message
   debug:
-    msg: "Hello World!"
+    msg: "Hello World! - from  {{ ansible_fqdn }} [{{ ansible_distribution }} {{ ansible_distribution_version}}]"
