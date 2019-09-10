@@ -26,7 +26,7 @@
 
 - name: Install needed packages
   apt:
-    name: [docker-ce, python-pip, nodejs, npm]
+    name: [docker-ce, python3-pip, nodejs, npm]
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
     update_cache: no
