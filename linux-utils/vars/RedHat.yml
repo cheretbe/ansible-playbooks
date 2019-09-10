@@ -1,0 +1,4 @@
+---
+packages_to_install:
+  - unzip_rh
+  - rsync_rh

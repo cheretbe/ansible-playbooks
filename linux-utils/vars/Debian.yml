@@ -1,0 +1,4 @@
+---
+packages_to_install:
+  - unzip
+  - rsync
