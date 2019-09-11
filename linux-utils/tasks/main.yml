@@ -1,9 +1,41 @@
 ---
 # tasks file for linux-utils
 
-- name: Bare include (free-form)
-  include_vars: "{{ ansible_os_family }}.yml"
+- name: Install APT packages
+  apt: 
+    name:
+      - mc
+      - htop
+      - net-tools
+      - dnsutils
+      - mtr-tiny
+      - ncdu
+      - wget
+      - git
+      - nano
+      - traceroute
+      - colordiff
+      - net-tools
+      - jq
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+  when: ansible_os_family == "Debian"
 
-- name: Hello Message
-  debug:
-    msg: "Hello World! {{ packages_to_install }}"
+- name: Install YUM packages
+  yum:
+    name:
+      - mc
+      - htop
+      - net-tools
+      - bind-utils
+      - mtr
+      - ncdu
+      - wget
+      - git
+      - nano
+      - traceroute
+      - colordiff
+      - net-tools
+      - jq
+    state: present
+  when: ansible_os_family == "RedHat"
