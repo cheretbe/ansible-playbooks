@@ -17,6 +17,7 @@
       - colordiff
       - net-tools
       - jq
+      - pv
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
   when: ansible_os_family == "Debian"
@@ -37,5 +38,6 @@
       - colordiff
       - net-tools
       - jq
+      - pv
     state: present
   when: ansible_os_family == "RedHat"
