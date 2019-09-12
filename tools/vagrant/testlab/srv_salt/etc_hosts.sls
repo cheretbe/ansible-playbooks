@@ -21,3 +21,8 @@ host_centos_7:
     - ip: 172.24.0.13
     - names:
       - centos-7
+
+# Disable cloud-init to prevent unwanted /etc/hosts updates
+/etc/cloud/cloud-init.disabled:
+  file.managed:
+    - create: true
