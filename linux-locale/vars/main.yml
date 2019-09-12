@@ -1,0 +1,4 @@
+---
+locales:
+  - { language_country: "en_US", encoding: "UTF-8" }
+  - { language_country: "ru_RU", encoding: "UTF-8" }

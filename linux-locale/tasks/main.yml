@@ -1,0 +1,32 @@
+---
+# tasks file for linux-locale
+
+- name: Generate ru_RU.UTF-8 locale
+  locale_gen:
+    name: ru_RU.UTF-8
+    state: present
+  when: ansible_os_family == "Debian"
+
+  # locale_gen module fails on CentOS:
+  # https://github.com/ansible/ansible/issues/44708
+  # Use this as a temporary workaround
+- name: Generate locales "{% for set in locales %}{{ set.language_country }}.{{ set.encoding }}{% if not loop.last %},{% endif %}{% endfor %}"
+  become: yes
+  command: localedef -c -i {{ item.language_country }} -f {{ item.encoding }} {{ item.language_country }}.{{ item.encoding }}
+  changed_when: false
+  loop: "{{ locales | flatten(1) }}"
+  when: ansible_os_family == "RedHat"
+
+- name: Update /etc/default/locale
+  copy:
+    src: "locale.conf"
+    dest: /etc/default/locale
+    backup: yes
+  when: ansible_os_family == "Debian"
+
+- name: Update /etc/locale.conf
+  copy:
+    src: "locale.conf"
+    dest: /etc/locale.conf
+    backup: yes
+  when: ansible_os_family == "RedHat"
