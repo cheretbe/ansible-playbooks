@@ -16,3 +16,4 @@ ansible localhost -m setup
 ansible centos-7 -m setup -a 'gather_subset=min'
 ```
 `ansible_virtualization_role`, `ansible_virtualization_type`
+ * https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/facts/virtual/linux.py
