@@ -36,6 +36,7 @@ import winrm
 
 s = winrm.Session('host.domain.tld', auth=(None, None), transport='kerberos')
 r = s.run_cmd('ipconfig', ['/all'])
+print(r.std_out.decode("windows-1251"))
 ```
 
 ```shell
