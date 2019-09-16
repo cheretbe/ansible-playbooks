@@ -17,3 +17,29 @@ ansible centos-7 -m setup -a 'gather_subset=min'
 ```
 `ansible_virtualization_role`, `ansible_virtualization_type`
  * https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/facts/virtual/linux.py
+ 
+Pywinrm
+```shell
+# Pre-requisites
+pip install kerberos requests_kerberos
+# python-dev for Python 2
+sudo apt install gcc python3-dev libkrb5-dev
+
+# Execute BEFORE running Python script
+# Enter domain name exactly like specified in /etc/krb5.conf (e.g. DOMAIN.TLD, not DOMAIN.tld)
+kinit user@DOMAIN.TLD
+klist
+```
+
+```python
+import winrm
+
+s = winrm.Session('host.domain.tld', auth=(None, None), transport='kerberos')
+r = s.run_cmd('ipconfig', ['/all'])
+```
+
+```shell
+# Destroy all kerberos tickets
+klist
+kdestroy
+```
