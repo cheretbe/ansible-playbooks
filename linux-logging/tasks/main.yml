@@ -1,0 +1,15 @@
+---
+# tasks file for linux-logging
+
+- name: Check whether Storage setting is configured in /etc/systemd/journald.conf"
+  command: grep -qP "^(?! *#) *(S|s)torage.*" /etc/systemd/journald.conf
+  register: check_storage_cfg
+  check_mode: no
+  failed_when: "check_storage_cfg == 2"
+  changed_when: no
+
+- name: Warn if Storage setting is not configured in /etc/systemd/journald.conf"
+  fail:
+    msg: "'Storage' setting is not configured in /etc/systemd/journald.conf"
+  ignore_errors: yes
+  when: check_storage_cfg.rc == 1
