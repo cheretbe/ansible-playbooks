@@ -1,0 +1,57 @@
+---
+# tasks file for linux-dns
+
+- name: Populate service facts
+  service_facts:
+
+- name: Check if systemd-resolved service is present
+  set_fact:
+    linux_dns_has_resolved: "{{ True if ('systemd-resolved.service' in ansible_facts.services) else False }}"
+
+- name: Get systemd version info
+  command: systemctl --version
+  register: linux_dns_systemd_info
+  when: linux_dns_has_resolved
+  changed_when: False
+
+- name: Get systemd version
+  set_fact:
+    linux_dns_systemd_version: "{{ linux_dns_systemd_info.stdout_lines[0].split(' ')[-1] }}"
+  when: linux_dns_has_resolved
+
+# As of systemd 232 DNS stub listener can be disabled
+# https://www.freedesktop.org/software/systemd/man/resolved.conf.html
+- name: "Check if resolved DNS stub needs diabling"
+  set_fact:
+    linux_dns_disable_stub: '{{ True if (linux_dns_systemd_version|int >= 232) else False }}'
+  when: linux_dns_has_resolved
+
+- name: Disable resolved DNS stub
+  ini_file:
+    path: /etc/systemd/resolved.conf
+    section: Resolve
+    option: DNSStubListener
+    value: "no"
+    backup: True
+  register: linux_dns_stub_option
+  when: linux_dns_disable_stub
+
+- name: Restart systemd-resolve service
+  service:
+    name: systemd-resolved.service
+    state: restarted
+  when: linux_dns_stub_option.changed
+
+# TODO: Manually backup existing file/link
+# https://docs.ansible.com/ansible/latest/modules/stat_module.html
+
+- name: "Update /etc/resolv.conf symlink"
+  file:
+    src: "/run/systemd/resolve/resolv.conf"
+    dest: "/etc/resolv.conf"
+    owner: root
+    group: root
+    state: link
+    # force: yes
+    # backup: yes
+  when: linux_dns_has_resolved
