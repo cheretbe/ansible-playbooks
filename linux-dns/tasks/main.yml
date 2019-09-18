@@ -31,7 +31,7 @@
     linux_dns_disable_stub: '{{ True if (linux_dns_systemd_version|int >= 232) else False }}'
   when: linux_dns_has_resolved
 
-- name: Disable resolved DNS stub
+- name: Disable systemd-resolved DNS stub
   ini_file:
     path: /etc/systemd/resolved.conf
     section: Resolve
@@ -41,7 +41,7 @@
   register: linux_dns_stub_option
   when: linux_dns_disable_stub
 
-- name: Restart systemd-resolve service
+- name: Restart systemd-resolved service
   service:
     name: systemd-resolved.service
     state: restarted
