@@ -6,7 +6,12 @@
 
 - name: Check if systemd-resolved service is present
   set_fact:
+    linux_dns_has_resolved: "{{ True if (ansible_facts.services['systemd-resolved.service']['status'] == 'enabled') else False }}"
+
+- name: Check if systemd-resolved service is enabled
+  set_fact:
     linux_dns_has_resolved: "{{ True if ('systemd-resolved.service' in ansible_facts.services) else False }}"
+  when: linux_dns_has_resolved
 
 - name: Get systemd version info
   command: systemctl --version
