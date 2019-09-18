@@ -1,0 +1,6 @@
+---
+# tasks file for linux-timezone
+
+- name: Set timezone to {{ linux_timezone_name }}
+  timezone:
+    name: "{{ linux_timezone_name }}"
