@@ -26,3 +26,4 @@ host_centos_7:
 /etc/cloud/cloud-init.disabled:
   file.managed:
     - create: true
+    - makedirs: true
