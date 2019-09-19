@@ -44,3 +44,7 @@ print(r.std_out.decode("windows-1251"))
 klist
 kdestroy
 ```
+```shell
+ansible win_hosts -m "win_command" -a "cmd /c set"
+ansible win_hosts -m raw -a "cmd /c set"
+```
