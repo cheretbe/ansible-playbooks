@@ -1,0 +1,61 @@
+---
+# tasks file for linux-mta
+
+- name: Determine postfix configuration type
+  set_fact:
+    postfix_relay_mode: "{{ True if linux_mta_postfix_relayhost else False }}"
+
+# Use 'debconf-show postfix' or 'debconf-get-selections | grep postfix' to view
+# all available questions
+- block:
+  - name: Configure APT postfix package (internet with smarthost)
+    debconf:
+      name: postfix
+      question: "postfix/main_mailer_type"
+      value: "Internet with smarthost"
+      vtype: select
+
+  - name: Configure APT postfix package (set relay host)
+    debconf:
+      name: postfix
+      question: "postfix/relayhost"
+      value: "mail.home.local"
+      vtype: string
+  when: (ansible_os_family == "Debian") and postfix_relay_mode|bool
+
+- name: Configure APT postfix package (local only)
+  debconf:
+    name: postfix
+    question: "postfix/main_mailer_type"
+    value: "Local only"
+    vtype: select
+  when: (ansible_os_family == "Debian") and (not postfix_relay_mode|bool)
+
+- name: Install APT packages
+  apt: 
+    name:
+      - postfix
+      - mailutils
+      - mutt
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+  when: ansible_os_family == "Debian"
+
+# - name: Install YUM packages
+#   yum:
+#     name: "???"
+#     state: present
+#   when: ansible_os_family == "RedHat"
+
+- name: Update system aliases table
+  template:
+    src: etc_aliases.j2
+    dest: /etc/aliases
+    owner: root
+    group: root
+    mode: 0644
+  register: linux_mta_etc_aliases_update
+
+- name: Re-initialize aliases database
+  command: /usr/bin/newaliases
+  when: linux_mta_etc_aliases_update.changed
