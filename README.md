@@ -6,6 +6,7 @@
 /ansible-roles/tools/update_known_hosts.sh
 
 # --check                 Dry run
+# --module-path /ansible-roles/library
 # --limit ubuntu-xenial   Run only on selected hosts
 # Run locally (note the trailing comma after 'localhost')
 # -i localhost, --connection=local
@@ -17,6 +18,16 @@ ansible centos-7 -m setup -a 'gather_subset=min'
 ```
 `ansible_virtualization_role`, `ansible_virtualization_type`
  * https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/facts/virtual/linux.py
+ 
+ ```yaml
+- name: Gather package facts
+  package_facts:
+    manager: apt
+
+- name: "Check if 'postfix' package is installed"
+  set_fact:
+    linux_mta_postfix_is_installed: "{{ ('postfix' in ansible_facts.packages)|bool }}"
+```
  
 Pywinrm
 ```shell
