@@ -1,0 +1,68 @@
+---
+# tasks file for ansible-aws
+
+- name: Check distribution
+  fail:
+    msg: "Only Ubuntu 18.04 is supported at the moment"
+  when: not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "18.04")
+
+- name: Inspect multiple images
+  docker_image_info:
+    name:
+      - pacur/centos-7
+      - sinatra
+  register: result
+
+- name: Make sure that both images pacur/centos-7 and sinatra exist locally
+  assert:
+    that:
+      - result.images | length == 0
+
+- name: Download https://github.com/ansible/awx/archive/{{ ansible_aws_version }}.tar.gz
+  get_url:
+    url: "https://github.com/ansible/awx/archive/{{ ansible_aws_version }}.tar.gz"
+    dest: /tmp/awx-{{ ansible_aws_version }}.tar.gz
+
+
+- name: Extract awx-{{ ansible_aws_version }}.tar.gz
+  unarchive:
+    src: /tmp/awx-{{ ansible_aws_version }}.tar.gz
+    dest: /tmp
+
+# - name: Run installation task
+#   include:
+#     file: /tmp/awx-{{ ansible_aws_version }}/installer/install.yml
+#   apply:
+#     tags:
+#       - aaa
+
+# - name: test me
+#   include: /tmp/awx-{{ ansible_aws_version }}/installer/install.yml
+
+# - name: Run installer
+#   command: ansible-playbook -i /opt/awx/inventory /tmp/awx-{{ ansible_aws_version }}/installer/install.yml
+
+# - name: dummy
+#   set_fact:
+#     dummy: 'Start build with "ansible-playbook --become awx/installer/install.yml"'
+
+# - name: aaa
+#   debug:
+#     var: dummy
+
+# https://docs.ansible.com/ansible/latest/user_guide/playbooks_prompts.html
+# https://docs.ansible.com/ansible/latest/modules/pause_module.html
+
+- name: Hint build command
+  debug:
+    msg: 'Start build with "ansible-playbook --become awx/installer/install.yml"'
+
+- name: Hint build command 1
+  debug:
+    msg: "Start build with 'ansible-playbook --become awx/installer/install.yml'"
+
+# Print as pause statement
+# Not suitable for different commands per host, because pause task skips host loop (forced run_once:yes)
+# - name: Print command as pause statment
+#   pause:
+#     prompt: 'Execute this and press enter: run_me.sh "with this argument"'
