@@ -6,61 +6,27 @@
     msg: "Only Ubuntu 18.04 is supported at the moment"
   when: not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "18.04")
 
-# - name: Inspect AWS docker containers
-#   docker_container_info:
-#     name:
-#       - awx_task
-#       - awx_web
-#       - awx_memcached
-#       - awx_rabbitmq
-#       - awx_postgres
-#   register: ansible_aws_containers
-
-- name: Get details of docker host
+- name: Get Docker info
   docker_host_info:
     containers: yes
   register: dockerHostInfo
 
-- name: dockerHostInfo.containers
-  debug:
-    # var: dockerHostInfo.containers[0].Names
-    var: dockerHostInfo.containers | map(attribute='Names') | list
-
-- name: debug 1
+- name: Get Docker container list
   set_fact:
-    # test: "{{ item | combine(item.ansible_facts.test) }}"
-    test: "{{ test }} + [ {{ item.Names[0] }} ]"
-    # test: "{{ item.Names[0] }}"
-  # with_items: "{{ dockerHostInfo.containers | map(attribute='Names') | list }}"
-  with_items: "{{ dockerHostInfo.containers  }}"
+    all_docker_containers: "{{ all_docker_containers + [(item)] }}"
+  with_items: "{{ dockerHostInfo.containers | map(attribute='Names') | list }}"
 
-- name: debug 2
-  debug:
-    # msg: "{% for set in test %}{{ set.Names[0] }}{% endfor %}"
-    msg: "{{ test }}"
-
-- name: test
+- name: Filter Docker container list
   set_fact:
-    test_me: 
+    existing_aws_docker_containers: "{{ all_docker_containers | intersect(aws_docker_containers) }}"
 
-# - name: Inspect AWS docker containers
-#   docker_container_info:
-#     name: "{{ item.Id }}"
-#   register: ansible_aws_containers
-#   with_items: "{{ dockerHostInfo.containers }}"
-
-# - name: Debug
+# - name: debug 2
 #   debug:
-#     var: ansible_aws_containers
-
-- name: Cancel
-  fail:
-    msg: "Debug"
-
+#     msg: "{{ existing_aws_docker_containers }}"
 
 - name: Check if AWS is installed
   set_fact:
-    ansible_aws_installed: ansible_aws_containers.images | length == 0
+    ansible_aws_installed: "{{ existing_aws_docker_containers | length != 0 }}"
 
 - block:
   - name: Confirm upgrade
@@ -74,7 +40,15 @@
       msg: "Cancelled by user"
     when: not ansible_aws_upgrade.user_input|bool
 
+  - name: Delete containers
+    debug:
+      msg: there you go
+
   when: ansible_aws_installed
+
+- name: Cancel
+  fail:
+    msg: "Debug"
 
 # - name: result
 #   debug:

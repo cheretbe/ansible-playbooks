@@ -1,2 +1,8 @@
 ---
-test: []
+all_docker_containers: []
+aws_docker_containers:
+  - "/awx_task"
+  - "/awx_web"
+  - "/awx_memcached"
+  - "/awx_rabbitmq"
+  - "/awx_postgres"
