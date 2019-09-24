@@ -6,17 +6,84 @@
     msg: "Only Ubuntu 18.04 is supported at the moment"
   when: not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "18.04")
 
-- name: Inspect multiple images
-  docker_image_info:
-    name:
-      - pacur/centos-7
-      - sinatra
-  register: result
+# - name: Inspect AWS docker containers
+#   docker_container_info:
+#     name:
+#       - awx_task
+#       - awx_web
+#       - awx_memcached
+#       - awx_rabbitmq
+#       - awx_postgres
+#   register: ansible_aws_containers
 
-- name: Make sure that both images pacur/centos-7 and sinatra exist locally
-  assert:
-    that:
-      - result.images | length == 0
+- name: Get details of docker host
+  docker_host_info:
+    containers: yes
+  register: dockerHostInfo
+
+- name: dockerHostInfo.containers
+  debug:
+    # var: dockerHostInfo.containers[0].Names
+    var: dockerHostInfo.containers | map(attribute='Names') | list
+
+- name: debug 1
+  set_fact:
+    # test: "{{ item | combine(item.ansible_facts.test) }}"
+    test: "{{ test }} + [ {{ item.Names[0] }} ]"
+    # test: "{{ item.Names[0] }}"
+  # with_items: "{{ dockerHostInfo.containers | map(attribute='Names') | list }}"
+  with_items: "{{ dockerHostInfo.containers  }}"
+
+- name: debug 2
+  debug:
+    # msg: "{% for set in test %}{{ set.Names[0] }}{% endfor %}"
+    msg: "{{ test }}"
+
+- name: test
+  set_fact:
+    test_me: 
+
+# - name: Inspect AWS docker containers
+#   docker_container_info:
+#     name: "{{ item.Id }}"
+#   register: ansible_aws_containers
+#   with_items: "{{ dockerHostInfo.containers }}"
+
+# - name: Debug
+#   debug:
+#     var: ansible_aws_containers
+
+- name: Cancel
+  fail:
+    msg: "Debug"
+
+
+- name: Check if AWS is installed
+  set_fact:
+    ansible_aws_installed: ansible_aws_containers.images | length == 0
+
+- block:
+  - name: Confirm upgrade
+    pause:
+      prompt: "AWS is already installed. Do you want to perform an in-place upgrade?"
+      echo: yes
+    register: ansible_aws_upgrade
+
+  - name: Check user input
+    fail:
+      msg: "Cancelled by user"
+    when: not ansible_aws_upgrade.user_input|bool
+
+  when: ansible_aws_installed
+
+# - name: result
+#   debug:
+#     var: ansible_aws_upgrade.user_input|bool
+
+# - name: Make sure that both images pacur/centos-7 and sinatra exist locally
+#   assert:
+#     that:
+#       - result.images | length == 0
 
 - name: Download https://github.com/ansible/awx/archive/{{ ansible_aws_version }}.tar.gz
   get_url:
