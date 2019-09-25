@@ -1,5 +1,5 @@
 ---
-# tasks file for ansible-aws
+# tasks file for ansible-awx
 
 - name: Check distribution
   fail:
@@ -18,35 +18,35 @@
 
 - name: Filter Docker container list
   set_fact:
-    existing_aws_docker_containers: "{{ all_docker_containers | intersect(aws_docker_containers) }}"
+    existing_awx_docker_containers: "{{ all_docker_containers | intersect(awx_docker_containers) }}"
 
-- name: Check if AWS is installed
+- name: Check if AWX is installed
   set_fact:
-    ansible_aws_installed: "{{ existing_aws_docker_containers | length != 0 }}"
+    ansible_awx_installed: "{{ existing_awx_docker_containers | length != 0 }}"
 
 - block:
   - name: Confirm upgrade
     pause:
-      prompt: "AWS is already installed. Do you want to perform an in-place upgrade?"
+      prompt: "AWX is already installed. Do you want to perform an in-place upgrade?"
       echo: yes
-    register: ansible_aws_upgrade
+    register: ansible_awx_upgrade
 
   - name: Check user input
     fail:
       msg: "Cancelled by user"
-    when: not ansible_aws_upgrade.user_input|bool
+    when: not ansible_awx_upgrade.user_input|bool
 
-  - name: Stop AWS containers
+  - name: Stop AWX containers
     docker_container:
       name: "{{ item }}"
       state: stopped
-    with_items: "{{ existing_aws_docker_containers }}"
+    with_items: "{{ existing_awx_docker_containers }}"
 
-  - name: Delete AWS containers
+  - name: Delete AWX containers
     docker_container:
       name: "{{ item }}"
       state: absent
-    with_items: "{{ existing_aws_docker_containers }}"
+    with_items: "{{ existing_awx_docker_containers }}"
 
   - name: Get Docker images info
     docker_image_info:
@@ -62,21 +62,21 @@
       name: "{{ item }}"
     with_items: "{{ all_docker_image_names }}"
 
-  when: ansible_aws_installed
+  when: ansible_awx_installed
 
 # - name: Cancel
 #   fail:
 #     msg: "Debug"
 
-- name: Download https://github.com/ansible/awx/archive/{{ ansible_aws_version }}.tar.gz
+- name: Download https://github.com/ansible/awx/archive/{{ ansible_awx_version }}.tar.gz
   get_url:
-    url: "https://github.com/ansible/awx/archive/{{ ansible_aws_version }}.tar.gz"
-    dest: /tmp/awx-{{ ansible_aws_version }}.tar.gz
+    url: "https://github.com/ansible/awx/archive/{{ ansible_awx_version }}.tar.gz"
+    dest: /tmp/awx-{{ ansible_awx_version }}.tar.gz
 
 
-- name: Extract awx-{{ ansible_aws_version }}.tar.gz
+- name: Extract awx-{{ ansible_awx_version }}.tar.gz
   unarchive:
-    src: /tmp/awx-{{ ansible_aws_version }}.tar.gz
+    src: /tmp/awx-{{ ansible_awx_version }}.tar.gz
     dest: /tmp
 
 - name: Create 'opt/awx' directory
@@ -86,7 +86,7 @@
 
 - name: Copy '/opt/awx/inventory' file
   copy:
-    src: /tmp/awx-{{ ansible_aws_version }}/installer/inventory
+    src: /tmp/awx-{{ ansible_awx_version }}/installer/inventory
     dest: /opt/awx/inventory
 
 - name: Replace options in the inventory file
@@ -105,4 +105,4 @@
 
 - name: Hint build command
   debug:
-    msg: "ansible-playbook -i /opt/awx/inventory /tmp/awx-{{ ansible_aws_version }}/installer/install.yml"
+    msg: "ansible-playbook -i /opt/awx/inventory /tmp/awx-{{ ansible_awx_version }}/installer/install.yml"

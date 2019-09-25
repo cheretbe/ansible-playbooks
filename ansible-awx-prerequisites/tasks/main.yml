@@ -1,5 +1,5 @@
 ---
-# tasks file for ansible-aws-prerequisites
+# tasks file for ansible-awx-prerequisites
 
 - name: Check distribution
   fail:

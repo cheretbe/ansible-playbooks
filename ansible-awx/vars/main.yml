@@ -1,6 +1,6 @@
 ---
 all_docker_containers: []
-aws_docker_containers:
+awx_docker_containers:
   - "/awx_task"
   - "/awx_web"
   - "/awx_memcached"
