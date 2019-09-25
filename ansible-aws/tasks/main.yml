@@ -36,11 +36,16 @@
       msg: "Cancelled by user"
     when: not ansible_aws_upgrade.user_input|bool
 
-  - name: Delete containers
+  - name: Stop AWS containers
+    docker_container:
+      name: "{{ item }}"
+      state: stopped
+    with_items: "{{ existing_aws_docker_containers }}"
+
+  - name: Delete AWS containers
     docker_container:
       name: "{{ item }}"
       state: absent
-    when: ansible_aws_installed
     with_items: "{{ existing_aws_docker_containers }}"
 
   - name: Get Docker images info
@@ -74,40 +79,30 @@
     src: /tmp/awx-{{ ansible_aws_version }}.tar.gz
     dest: /tmp
 
-# - name: Run installation task
-#   include:
-#     file: /tmp/awx-{{ ansible_aws_version }}/installer/install.yml
-#   apply:
-#     tags:
-#       - aaa
+- name: Create 'opt/awx' directory
+  file:
+    path: /opt/awx
+    state: directory
 
-# - name: test me
-#   include: /tmp/awx-{{ ansible_aws_version }}/installer/install.yml
+- name: Copy '/opt/awx/inventory' file
+  copy:
+    src: /tmp/awx-{{ ansible_aws_version }}/installer/inventory
+    dest: /opt/awx/inventory
 
-# - name: Run installer
-#   command: ansible-playbook -i /opt/awx/inventory /tmp/awx-{{ ansible_aws_version }}/installer/install.yml
+- name: Replace options in the inventory file
+  replace:
+    path: /opt/awx/inventory
+    regexp: "{{ item.regexp }}"
+    replace: "{{ item.replace }}"
+  with_items:
+    - { regexp: 'ansible_python_interpreter="/usr/bin/env python"', replace: 'ansible_python_interpreter="/usr/bin/env python3"'}
+    - { regexp: 'docker_compose_dir=/tmp/awxcompose', replace: 'docker_compose_dir=/opt/awx/awxcompose'}
+    - { regexp: 'postgres_data_dir=/tmp/pgdocker', replace: 'postgres_data_dir=/opt/awx/pgdocker'}
 
-# - name: dummy
-#   set_fact:
-#     dummy: 'Start build with "ansible-playbook --become awx/installer/install.yml"'
-
-# - name: aaa
-#   debug:
-#     var: dummy
-
-# https://docs.ansible.com/ansible/latest/user_guide/playbooks_prompts.html
-# https://docs.ansible.com/ansible/latest/modules/pause_module.html
+# - name: Cancel
+#   fail:
+#     msg: "Debug"
 
 - name: Hint build command
   debug:
-    msg: 'Start build with "ansible-playbook --become awx/installer/install.yml"'
-
-- name: Hint build command 1
-  debug:
-    msg: "Start build with 'ansible-playbook --become awx/installer/install.yml'"
-
-# Print as pause statement
-# Not suitable for different commands per host, because pause task skips host loop (forced run_once:yes)
-# - name: Print command as pause statment
-#   pause:
-#     prompt: 'Execute this and press enter: run_me.sh "with this argument"'
+    msg: "ansible-playbook -i /opt/awx/inventory /tmp/awx-{{ ansible_aws_version }}/installer/install.yml"
