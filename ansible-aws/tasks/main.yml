@@ -20,10 +20,6 @@
   set_fact:
     existing_aws_docker_containers: "{{ all_docker_containers | intersect(aws_docker_containers) }}"
 
-# - name: debug 2
-#   debug:
-#     msg: "{{ existing_aws_docker_containers }}"
-
 - name: Check if AWS is installed
   set_fact:
     ansible_aws_installed: "{{ existing_aws_docker_containers | length != 0 }}"
@@ -41,23 +37,31 @@
     when: not ansible_aws_upgrade.user_input|bool
 
   - name: Delete containers
-    debug:
-      msg: there you go
+    docker_container:
+      name: "{{ item }}"
+      state: absent
+    when: ansible_aws_installed
+    with_items: "{{ existing_aws_docker_containers }}"
+
+  - name: Get Docker images info
+    docker_image_info:
+    register: docker_image_info
+
+  - name: Get Docker image names
+    set_fact:
+      all_docker_image_names: "{{ docker_image_info.images | map(attribute='RepoTags') | list }}"
+
+  - name: Remove all Docker images
+    docker_image:
+      state: absent
+      name: "{{ item }}"
+    with_items: "{{ all_docker_image_names }}"
 
   when: ansible_aws_installed
 
-- name: Cancel
-  fail:
-    msg: "Debug"
-
-# - name: result
-#   debug:
-#     var: ansible_aws_upgrade.user_input|bool
-
-# - name: Make sure that both images pacur/centos-7 and sinatra exist locally
-#   assert:
-#     that:
-#       - result.images | length == 0
+# - name: Cancel
+#   fail:
+#     msg: "Debug"
 
 - name: Download https://github.com/ansible/awx/archive/{{ ansible_aws_version }}.tar.gz
   get_url:
