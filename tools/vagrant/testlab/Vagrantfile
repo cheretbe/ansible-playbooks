@@ -19,7 +19,7 @@ Vagrant.configure("2") do |config|
       vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
 
       ansible.vm.synced_folder "srv_salt", "/srv/salt"
-      ansible.vm.synced_folder "../../../", "/ansible-roles"
+      ansible.vm.synced_folder "../../../", "/ansible-playbooks"
     end
     ansible.vm.hostname = "ansible"
     ansible.vm.network "forwarded_port", guest: 80, host: 8080
@@ -40,7 +40,7 @@ Vagrant.configure("2") do |config|
       keep_color: true,
       inline: <<-SHELL
         mkdir -p /usr/share/ansible
-        ln -sfn /ansible-roles /usr/share/ansible/roles
+        ln -sfn /ansible-playbooks /usr/share/ansible/roles
       SHELL
   end
 
