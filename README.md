@@ -1,6 +1,7 @@
 # ansible-playbooks
 
 * https://stackoverflow.com/questions/18195142/safely-limiting-ansible-playbooks-to-a-single-machine/18195217#18195217
+* https://github.com/adamrushuk/ansible-azure/blob/master/vagrant/scripts/configure_ansible_awx.sh
 
 ```shell
 /ansible-playbooks/tools/update_known_hosts.sh
