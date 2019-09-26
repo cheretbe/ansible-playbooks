@@ -67,6 +67,12 @@
         [!!!] WARNING: this will destroy existing Docker containers! (yes/no)
       echo: yes
     register: ansible_awx_upgrade
+    when: not (ansible_awx_force_upgrade|bool)
+
+  - name: Set confirmation if upgrade is forced
+    set_fact:
+      ansible_awx_upgrade: { user_input: True}
+    when: ansible_awx_force_upgrade|bool
 
   - name: Check user input
     fail:
