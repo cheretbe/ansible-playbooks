@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if ! hash virtualenv 2>/dev/null; then
-  sudo apt install virtualenv
+  sudo apt install -y virtualenv
 fi
 
 if [ ! -f ~/virtenv/py3/bin/activate ]; then
