@@ -1,5 +1,11 @@
 # ansible-playbooks
 
+```shell
+/ansible-playbooks/tools/awx/install_awx.sh && \
+/ansible-playbooks/tools/awx/configure_tower_cli.sh && \
+/ansible-playbooks/tools/awx/set_test_config.sh
+```
+
 * https://stackoverflow.com/questions/18195142/safely-limiting-ansible-playbooks-to-a-single-machine/18195217#18195217
 * https://github.com/adamrushuk/ansible-azure/blob/master/vagrant/scripts/configure_ansible_awx.sh
 
