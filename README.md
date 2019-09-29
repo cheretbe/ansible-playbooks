@@ -4,6 +4,8 @@
 /ansible-playbooks/tools/awx/install_awx.sh && \
 /ansible-playbooks/tools/awx/configure_tower_cli.sh && \
 /ansible-playbooks/tools/awx/set_test_config.sh
+
+curl --user admin:password -H 'Content-Type: application/json' -XPOST -d '{"id": 2}' http://localhost/api/v2/job_templates/11/credentials/
 ```
 
 * https://stackoverflow.com/questions/18195142/safely-limiting-ansible-playbooks-to-a-single-machine/18195217#18195217
