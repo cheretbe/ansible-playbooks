@@ -4,6 +4,10 @@ if ! hash virtualenv 2>/dev/null; then
   sudo apt install -y virtualenv
 fi
 
+if ! hash jq 2>/dev/null; then
+  sudo apt install -y jq
+fi
+
 if [ ! -f ~/virtenv/py3/bin/activate ]; then
   mkdir -p ~/virtenv
   virtualenv -p python3 ~/virtenv/py3
