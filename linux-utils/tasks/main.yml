@@ -18,6 +18,7 @@
       - net-tools
       - jq
       - pv
+    update_cache: yes
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
   when: ansible_os_family == "Debian"
