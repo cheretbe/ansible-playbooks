@@ -19,7 +19,7 @@
     debconf:
       name: postfix
       question: "postfix/relayhost"
-      value: "mail.home.local"
+      value: "{{ linux_mta_postfix_relayhost }}"
       vtype: string
   when: (ansible_os_family == "Debian") and postfix_relay_mode|bool
 
