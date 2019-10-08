@@ -17,7 +17,7 @@
 # --limit ubuntu-xenial   Run only on selected hosts
 # Run locally (note the trailing comma after 'localhost')
 # -i localhost, --connection=local
-ansible-playbook /ansible-playbooks/tools/run_role.yml --extra-vars "role_name=hello-world"
+ansible-playbook /ansible-playbooks/run_role.yml --extra-vars "role_name=hello-world"
 
 ansible localhost -m setup
 # https://docs.ansible.com/ansible/latest/modules/setup_module.html#parameters
