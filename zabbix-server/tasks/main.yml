@@ -42,6 +42,19 @@
     update_cache: no
 
 
+# The following will not work on CentOS
+# https://stackoverflow.com/questions/12521114/getting-the-canonical-time-zone-name-in-shell-script
+- name: Get current timezone
+  shell: cat /etc/timezone
+  register: zabbix_server_timezone
+
+- name: Config timezone for PHP
+  ini_file:
+    path: "{{ zabbix_server_apache2_php_ini_path[ansible_distribution_release] }}"
+    section: Date
+    option: date.timezone
+    value: "{{ zabbix_server_timezone.stdout_lines[0] }}"
+    backup: True
 
 - name: Cancel
   fail:
