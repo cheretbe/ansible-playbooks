@@ -63,7 +63,7 @@
     dest: /etc/zabbix/apache.conf
     owner: root
     group: root
-    mode: 064
+    mode: 0644
   register: zabbix_server_apache_conf
 
 - name: Reload apache2 config
@@ -97,3 +97,40 @@
 - name: Create Zabbix DB structure
   shell:  "/bin/zcat /usr/share/doc/zabbix-server-mysql/create.sql.gz | /usr/bin/mysql -u {{ zabbix_server_db_user }} -p{{ zabbix_server_db_password }} {{ zabbix_server_db_name }}"
   when: zabbix_server_db_create.changed
+
+- name: Write custom '/etc/zabbix/zabbix_server.conf'
+  template:
+    src: zabbix_server.conf.j2
+    dest: /etc/zabbix/zabbix_server.conf
+    owner: root
+    group: root
+    mode: 0644
+  register: zabbix_server_conf
+
+- name: Auto-finish GUI configuration wizard
+  template:
+    src: zabbix.conf.php.j2
+    dest: /etc/zabbix/web/zabbix.conf.php
+    owner: www-data
+    group: www-data
+    mode: 0644
+  register: zabbix_server_gui
+  when: zabbix_server_finish_gui_wizard
+
+- name: Restart 'zabbix-server' service
+  systemd:
+    name: zabbix-server
+    state: restarted
+  when: zabbix_server_conf.changed or zabbix_server_gui.changed
+
+- name: Enable and start 'zabbix-server' service
+  systemd:
+    name: zabbix-server
+    state: started
+    enabled: yes
+
+- name: Enable and start 'zabbix-agent' service
+  systemd:
+    name: zabbix-agent
+    state: started
+    enabled: yes
