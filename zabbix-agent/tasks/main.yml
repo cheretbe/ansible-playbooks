@@ -1,0 +1,46 @@
+---
+# tasks file for zabbix-agent
+
+- name: Check if server name variable is defined
+  fail:
+    msg: "Variable 'zabbix_agent_server_name' must be defined"
+  when: not zabbix_agent_server_name is defined
+
+- name: Install apt package
+  apt:
+    name:  "zabbix-agent"
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+    update_cache: no
+
+- name: Set 'Server' parameter in '/etc/zabbix/zabbix_agentd.conf'
+  ini_file:
+    path: /etc/zabbix/zabbix_agentd.conf
+    section: ""
+    option: Server
+    value: "{{ zabbix_agent_server_name }}"
+    no_extra_spaces: True
+    backup: True
+
+- name: Set 'ServerActive' parameter in '/etc/zabbix/zabbix_agentd.conf'
+  ini_file:
+    path: /etc/zabbix/zabbix_agentd.conf
+    section: ""
+    option: ServerActive
+    value: "{{ zabbix_agent_server_name }}"
+    no_extra_spaces: True
+
+- name: Remove 'Hostname' parameter from '/etc/zabbix/zabbix_agentd.conf'
+  ini_file:
+    path: /etc/zabbix/zabbix_agentd.conf
+    section: ""
+    option: Hostname
+    state: absent
+
+- name: Set 'HostnameItem' parameter in '/etc/zabbix/zabbix_agentd.conf'
+  ini_file:
+    path: /etc/zabbix/zabbix_agentd.conf
+    section: ""
+    option: HostnameItem
+    value: system.hostname
+    no_extra_spaces: True
