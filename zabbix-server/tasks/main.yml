@@ -34,6 +34,7 @@
     name:  ["apache2", "libapache2-mod-php", "php", "php-pear", "php-cgi",
             "php-common", "libapache2-mod-php", "php-mbstring", "php-net-socket",
             "php-gd", "php-mysql", "php-gettext", "php-bcmath", "mariadb-server",
+            "python3-pip",
 
             "zabbix-server-mysql", "zabbix-frontend-php", "zabbix-agent",
             "zabbix-get"]
@@ -41,11 +42,11 @@
     force_apt_get: yes
     update_cache: no
 
-
 # The following will not work on CentOS
 # https://stackoverflow.com/questions/12521114/getting-the-canonical-time-zone-name-in-shell-script
 - name: Get current timezone
   shell: cat /etc/timezone
+  changed_when: false
   register: zabbix_server_timezone
 
 - name: Config timezone for PHP
@@ -56,125 +57,43 @@
     value: "{{ zabbix_server_timezone.stdout_lines[0] }}"
     backup: True
 
-- name: Cancel
-  fail:
-    msg: "Debug"
+- name: Write custom '/etc/zabbix/apache.conf'
+  template:
+    src: apache.conf.j2
+    dest: /etc/zabbix/apache.conf
+    owner: root
+    group: root
+    mode: 064
+  register: zabbix_server_apache_conf
 
-- name: Install PIP Docker packages
+- name: Reload apache2 config
+  systemd:
+    name: apache2
+    state: reloaded
+  when: zabbix_server_apache_conf.changed
+
+- name: Install Python PyMySQL package
   pip:
-    name: [docker, docker-compose]
+    name: PyMySQL
 
-- name: Update NPM
-  npm:
-    name: npm
-    state: latest
-    global: yes
+- name: "Create MySQL database '{{ zabbix_server_db_name }}'"
+  mysql_db:
+    name: "{{ zabbix_server_db_name }}"
+    state: present
+    encoding: utf8
+    collation: utf8_bin
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  register: zabbix_server_db_create
 
-- name: Get Docker info
-  docker_host_info:
-    containers: yes
-  register: dockerHostInfo
+- name: "Grant access to '{{ zabbix_server_db_user }}' on '{{ zabbix_server_db_name }}'"
+  mysql_user:
+    name: "{{ zabbix_server_db_user }}"
+    host: localhost
+    password: "{{ zabbix_server_db_password }}"
+    priv: "{{ zabbix_server_db_name }}.*:ALL"
+    state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 
-- name: Get Docker container list
-  set_fact:
-    all_docker_containers: "{{ all_docker_containers + [(item)] }}"
-  with_items: "{{ dockerHostInfo.containers | map(attribute='Names') | list }}"
-
-- name: Filter Docker container list
-  set_fact:
-    existing_awx_docker_containers: "{{ all_docker_containers | intersect(awx_docker_containers) }}"
-
-- name: Check if AWX is installed
-  set_fact:
-    ansible_awx_installed: "{{ existing_awx_docker_containers | length != 0 }}"
-
-- block:
-  - name: Confirm upgrade
-    pause:
-      prompt: >
-        AWX is already installed. Do you want to perform an in-place upgrade?
-        [!!!] WARNING: this will destroy existing Docker containers! (yes/no)
-      echo: yes
-    register: ansible_awx_upgrade
-    when: not (ansible_awx_force_upgrade|bool)
-
-  - name: Set confirmation if upgrade is forced
-    set_fact:
-      ansible_awx_upgrade: { user_input: True}
-    when: ansible_awx_force_upgrade|bool
-
-  - name: Check user input
-    fail:
-      msg: "Cancelled by user"
-    when: not ansible_awx_upgrade.user_input|bool
-
-  - name: Stop AWX containers
-    docker_container:
-      name: "{{ item }}"
-      state: stopped
-    with_items: "{{ existing_awx_docker_containers }}"
-
-  - name: Delete AWX containers
-    docker_container:
-      name: "{{ item }}"
-      state: absent
-    with_items: "{{ existing_awx_docker_containers }}"
-
-  - name: Get Docker images info
-    docker_image_info:
-    register: docker_image_info
-
-  - name: Get Docker image names
-    set_fact:
-      all_docker_image_names: "{{ docker_image_info.images | map(attribute='RepoTags') | list }}"
-
-  - name: Remove all Docker images
-    docker_image:
-      state: absent
-      name: "{{ item }}"
-    with_items: "{{ all_docker_image_names }}"
-
-  when: ansible_awx_installed
-
-# - name: Cancel
-#   fail:
-#     msg: "Debug"
-
-- name: Download https://github.com/ansible/awx/archive/{{ ansible_awx_version }}.tar.gz
-  get_url:
-    url: "https://github.com/ansible/awx/archive/{{ ansible_awx_version }}.tar.gz"
-    dest: /tmp/awx-{{ ansible_awx_version }}.tar.gz
-
-
-- name: Extract awx-{{ ansible_awx_version }}.tar.gz
-  unarchive:
-    src: /tmp/awx-{{ ansible_awx_version }}.tar.gz
-    dest: /tmp
-
-- name: Create 'opt/awx' directory
-  file:
-    path: /opt/awx
-    state: directory
-
-- name: Copy '/opt/awx/inventory' file
-  copy:
-    src: /tmp/awx-{{ ansible_awx_version }}/installer/inventory
-    dest: /opt/awx/inventory
-
-- name: Replace options in the inventory file
-  replace:
-    path: /opt/awx/inventory
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  with_items:
-    - { regexp: 'ansible_python_interpreter="/usr/bin/env python"', replace: 'ansible_python_interpreter="/usr/bin/env python3"'}
-    - { regexp: 'docker_compose_dir=/tmp/awxcompose', replace: 'docker_compose_dir=/opt/awx/awxcompose'}
-    - { regexp: 'postgres_data_dir=/tmp/pgdocker', replace: 'postgres_data_dir=/opt/awx/pgdocker'}
-
-# - name: Cancel
-#   fail:
-#     msg: "Debug"
-
-- name: Install AWX with the following command
-  debug:
-    msg: "ansible-playbook -i /opt/awx/inventory /tmp/awx-{{ ansible_awx_version }}/installer/install.yml"
+- name: Create Zabbix DB structure
+  shell:  "/bin/zcat /usr/share/doc/zabbix-server-mysql/create.sql.gz | /usr/bin/mysql -u {{ zabbix_server_db_user }} -p{{ zabbix_server_db_password }} {{ zabbix_server_db_name }}"
+  when: zabbix_server_db_create.changed

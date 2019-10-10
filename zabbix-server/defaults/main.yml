@@ -6,3 +6,6 @@ zabbix_server_apache2_php_ini_path:
     "/etc/php/7.2/apache2/php.ini"
   xenial:
     "/etc/php/7.0/apache2/php.ini"
+zabbix_server_db_name: zabbixdb
+zabbix_server_db_user: zabbixuser
+zabbix_server_db_password: Password
