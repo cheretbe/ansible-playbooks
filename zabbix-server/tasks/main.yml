@@ -1,12 +1,16 @@
 ---
 # tasks file for zabbix-server
 
+- name: Set PIP package name
+  set_fact:
+    pip_package_name: "{{ (ansible_python.version_info[0] == '3') | ternary('python3-pip', 'python-pip') }}"
+
 - name: Install needed packages
   apt:
     name:  ["apache2", "libapache2-mod-php", "php", "php-pear", "php-cgi",
             "php-common", "libapache2-mod-php", "php-mbstring", "php-net-socket",
             "php-gd", "php-mysql", "php-gettext", "php-bcmath", "mariadb-server",
-            "python3-pip",
+            "{{ pip_package_name }}",
 
             "zabbix-server-mysql", "zabbix-frontend-php", "zabbix-agent",
             "zabbix-get"]
