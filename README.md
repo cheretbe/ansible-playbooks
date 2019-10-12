@@ -42,7 +42,23 @@ Pywinrm
 pip install kerberos requests_kerberos
 # python-dev for Python 2
 sudo apt install gcc python3-dev libkrb5-dev
+```
+`/etc/krb5.conf`
+```
+[libdefaults]
+    default_realm = DOMAIN.TLD
 
+[realms]
+    DOMAIN.TLD = {
+      kdc = dc01.domain.tld
+      admin_server = dc01.domain.tld
+    }
+
+[domain_realm]
+.domain.tld = DOMAIN.TLD
+```
+
+```shell
 # Execute BEFORE running Python script
 # Enter domain name exactly like specified in /etc/krb5.conf (e.g. DOMAIN.TLD, not DOMAIN.tld)
 kinit user@DOMAIN.TLD
