@@ -41,7 +41,7 @@ Pywinrm
 # Pre-requisites
 # python-dev for Python 2
 sudo apt install gcc python3-dev libkrb5-dev
-pip install kerberos requests_kerberos
+pip install kerberos requests_kerberos pywinrm
 ```
 `/etc/krb5.conf`
 ```
