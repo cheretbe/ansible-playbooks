@@ -39,9 +39,9 @@ ansible centos-7 -m setup -a 'gather_subset=min'
 Pywinrm
 ```shell
 # Pre-requisites
-pip install kerberos requests_kerberos
 # python-dev for Python 2
 sudo apt install gcc python3-dev libkrb5-dev
+pip install kerberos requests_kerberos
 ```
 `/etc/krb5.conf`
 ```
