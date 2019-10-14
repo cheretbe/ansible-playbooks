@@ -37,6 +37,9 @@ ansible centos-7 -m setup -a 'gather_subset=min'
 ```
  
 Pywinrm
+
+* https://docs.ansible.com/ansible-tower/latest/html/administration/kerberos_auth.html
+
 ```shell
 # Pre-requisites
 # python-dev for Python 2
