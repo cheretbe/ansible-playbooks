@@ -43,7 +43,7 @@ Pywinrm
 ```shell
 # Pre-requisites
 # python-dev for Python 2
-sudo apt install gcc python3-dev libkrb5-dev
+sudo apt install gcc python3-dev krb5-user libkrb5-dev
 pip install kerberos requests_kerberos pywinrm
 ```
 `/etc/krb5.conf`
