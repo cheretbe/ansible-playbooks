@@ -1,0 +1,7 @@
+---
+# tasks file for win-7zip
+
+- name: Install 7-Zip via Chocolatey
+  win_chocolatey:
+    name: 7zip
+    state: present
