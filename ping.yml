@@ -1,8 +1,13 @@
 ---
-# - hosts: all
 
 - name: Ping all hosts
   hosts: all
+
   tasks:
-    - name: Ping host
-      ping:
+    - name: Ping Linux host
+      ping: ""
+      when: ansible_system == "Linux"
+
+    - name: Ping Windows host
+      win_ping: ""
+      when: ansible_system == "Win32NT"
