@@ -43,6 +43,8 @@ Pywinrm
 ```shell
 ansible all -m "win_command" -a "cmd /c set" -i host.domain.tld, --extra-vars "ansible_user=user@DOMAIN.TLD ansible_connection=winrm ansible_port=5985 ansible_winrm_transport=kerberos"
 
+ansible all -i 172.24.0.14, -m win_ping --extra-vars "ansible_user=vagrant ansible_connection=winrm ansible_port=5985 ansible_password=vagrant"
+
 # Pre-requisites
 # python-dev for Python 2
 sudo apt install gcc python3-dev krb5-user libkrb5-dev
