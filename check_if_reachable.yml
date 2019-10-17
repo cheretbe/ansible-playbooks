@@ -1,0 +1,40 @@
+---
+
+- name: Ping all hosts
+  hosts: all
+  gather_facts: no
+
+  tasks:
+    - name: Check if host is reachable
+      command: ping -c1 {{ inventory_hostname }}
+      delegate_to: localhost
+      # local_action:
+      #   module: command
+      #   _raw_params: ping -c1 {{ inventory_hostname }}
+      register: ping_result
+      ignore_errors: yes
+      failed_when: False
+      changed_when: False
+
+    # - debug: var=
+
+    - name: Gather facts
+      setup: ""
+      register: gather_fact_task
+      when: ping_result.rc == 0
+
+    - name: Set online description
+      set_fact:
+        host_description: "{{ ansible_fqdn }}: {{ ansible_distribution }} {{ ansible_distribution_version}} ({{ ansible_distribution_release }})"
+
+    - name: Print description
+      debug:
+        msg: "{{ host_description }}"
+
+    # - name: Ping Linux host
+    #   ping: ""
+    #   when: ping_result.rc == 0 and ansible_system == "Linux"
+
+    # - name: Ping Windows host
+    #   win_ping: ""
+    #   when: ping_result.rc == 0 and ansible_system == "Win32NT"
