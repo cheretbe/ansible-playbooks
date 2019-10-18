@@ -6,7 +6,7 @@
 
   tasks:
     - name: Check if host is reachable
-      set_fact: ping_output="{{ lookup('pipe', 'ping -c1 {{ inventory_hostname }} > /dev/null 2>&1 || echo error', errors='ignore') }}"
+      set_fact: ping_output="{{ lookup('pipe', 'ping -c1 {{ ansible_host }} > /dev/null 2>&1 || echo error', errors='ignore') }}"
 
     - name: Gather facts
       setup: ""
