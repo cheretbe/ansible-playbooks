@@ -8,28 +8,25 @@
     - name: Check if host is reachable
       set_fact: ping_output="{{ lookup('pipe', 'ping -c1 {{ inventory_hostname }} > /dev/null 2>&1 || echo error', errors='ignore') }}"
 
-    - block:
-      - name: Gather facts
-        setup: ""
-        register: gather_fact_task
-        when: ping_output != "error"
+    - name: Gather facts
+      setup: ""
+      register: gather_fact_task
+      when: ping_output != "error"
 
-      - name: Set online description
-        set_fact:
-          host_description: "{{ ansible_fqdn }}: {{ ansible_distribution }} {{ ansible_distribution_version}}"
-        when: ping_output != "error"
+    - name: Set online description
+      set_fact:
+        host_description: "{{ ansible_fqdn }}: {{ ansible_distribution }} {{ ansible_distribution_version}}"
+      when: ping_output != "error"
 
-      - name: Set online description
-        set_fact:
-          host_description: "{{ ansible_fqdn }}: {{ ansible_distribution }} {{ ansible_distribution_version}}"
-        when: ping_output != "error"
+    - name: Set online description
+      set_fact:
+        host_description: "{{ ansible_fqdn }}: {{ ansible_distribution }} {{ ansible_distribution_version}}"
+      when: ping_output != "error"
 
-      - name: Set offline description
-        set_fact:
-          host_description: "{{ inventory_hostname }}: offline (no ping to host)"
-        when: ping_output == "error"
-
-      no_log: True
+    - name: Set offline description
+      set_fact:
+        host_description: "{{ inventory_hostname }}: offline (no ping to host)"
+      when: ping_output == "error"
 
     - name: Print description
       debug:
