@@ -110,7 +110,7 @@ Vagrant.configure("2") do |config|
     end
   end
 
-  config.vm.define :win7 do |win7|
+  config.vm.define :win7, autostart: false do |win7|
     win7.vm.box = "cheretbe/win7_ru_64"
     win7.winrm.username = "vagrant"
     win7.winrm.password = "#{ENV['AO_DEFAULT_VAGRANT_PASSWORD']}"
