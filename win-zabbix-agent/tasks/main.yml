@@ -1,0 +1,29 @@
+---
+# tasks file for win-zabbix-agent
+
+- name: Check if server name variable is defined
+  fail:
+    msg: "Variable 'zabbix_agent_server_name' must be defined"
+  when: not zabbix_agent_server_name is defined
+
+- name: Install Zabbix Agent from MSI package
+  win_package:
+    path: https://www.zabbix.com/downloads/{{ zabbix_agent_version }}/zabbix_agent-{{ zabbix_agent_version }}-win-amd64-openssl.msi
+    product_id: "{9D68823B-02AD-4EEF-8DFF-BE903D09AF6C}"
+    state: present
+    arguments: "SERVER={{ zabbix_agent_server_name }} SERVERACTIVE={{ zabbix_agent_server_name }}"
+
+# Use 'win_lineinfile' until 'win_ini_file' module is implemented
+# https://github.com/ansible/ansible/issues/31050
+
+- name: Remove 'Hostname' parameter from 'c:\Program Files\Zabbix Agent\zabbix_agentd.conf'
+  win_lineinfile:
+    path: "c:\\Program Files\\Zabbix Agent\\zabbix_agentd.conf"
+    state: absent
+    regexp: '^Hostname='
+    backup: True
+
+- name: Set 'HostnameItem' parameter in 'c:\Program Files\Zabbix Agent\zabbix_agentd.conf'
+  win_lineinfile:
+    path: "c:\\Program Files\\Zabbix Agent\\zabbix_agentd.conf"
+    line: 'HostnameItem=system.hostname'
