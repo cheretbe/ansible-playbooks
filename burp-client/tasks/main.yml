@@ -1,0 +1,45 @@
+---
+# tasks file for burp-client
+
+- name: Check if server name variable is defined
+  fail:
+    msg: "Variable 'burp_client_server_name' must be defined"
+  when: not burp_client_server_name is defined
+
+- name: Install apt package
+  apt:
+    name:  ["burp-core", "burp-client"]
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+    update_cache: no
+
+- name: Set 'server' parameter in '/etc/burp/burp.conf'
+  ini_file:
+    path: /etc/burp/burp.conf
+    section: ""
+    option: server
+    value: "{{ burp_client_server_name }}"
+    backup: True
+
+- name: Set 'cname' parameter in '/etc/burp/burp.conf'
+  ini_file:
+    path: /etc/burp/burp.conf
+    section: ""
+    option: cname
+    value: "{{ burp_client_cname | default(ansible_fqdn) }}"
+
+- name: Set 'password' parameter in '/etc/burp/burp.conf'
+  ini_file:
+    path: /etc/burp/burp.conf
+    section: ""
+    option: password
+    value: "{{ burp_client_password }}"
+
+- name: Set 'RUN' parameter in '/etc/default/burp-client'
+  ini_file:
+    path: /etc/default/burp-client
+    section: ""
+    option: RUN
+    value: "{{ burp_client_enable_cron_job | bool | ternary('yes', 'no') }}"
+    no_extra_spaces: True
+    backup: True

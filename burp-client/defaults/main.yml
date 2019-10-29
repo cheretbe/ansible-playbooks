@@ -1,0 +1,11 @@
+---
+# 'cname' parameter for '/etc/burp/burp.conf'
+# Default is host's FQDN at the time of role execution
+# burp_client_cname: custom_cname
+
+# 'password' parameter for '/etc/burp/burp.conf'
+burp_client_password: abcdefgh
+
+# Set this to False to disable Burp cron job
+# (by setting 'RUN=no' in '/etc/default/burp-client')
+burp_client_enable_cron_job: True
