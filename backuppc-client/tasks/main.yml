@@ -1,0 +1,26 @@
+---
+# tasks file for backuppc-client
+
+- name: Check if SSH key variable is defined
+  fail:
+    msg: "Variable 'backuppc_client_ssh_auth_key' must be defined"
+  when: not backuppc_client_ssh_auth_key is defined
+
+- name: "Add user '{{ backuppc_client_user_name }}'"
+  user:
+    name: "{{ backuppc_client_user_name }}"
+
+- name: "Enable passwordless sudo commands for user '{{ backuppc_client_user_name }}'"
+  template:
+    src: etc_sudoers_d_backuppc.j2
+    # dest: /etc/sudoers.d/backuppc
+    dest: /home/vagrant/sudoers_test
+    owner: root
+    group: root
+    mode: 044
+
+- name: Add SSH authorized key
+  authorized_key:
+    user: backuppc
+    state: present
+    key: "{{ backuppc_client_ssh_auth_key }}"

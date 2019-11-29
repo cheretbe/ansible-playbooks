@@ -1,0 +1,6 @@
+---
+backuppc_client_user_name: "backuppc"
+# backuppc_client_ssh_auth_key: "{{ lookup('file', '/home/user/.ssh/id_rsa.pub') }}"
+# backuppc_client_ssh_auth_key: "ssh-rsa AAAA...== BackuppPC"
+# backuppc_client_custom_sudo_commands:
+#   - { comment: "Allow backuppc to create GitLab server backups", command: "/etc/burp/scripts/backup_gitlab.sh" }
