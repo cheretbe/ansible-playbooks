@@ -13,8 +13,7 @@
 - name: "Enable passwordless sudo commands for user '{{ backuppc_client_user_name }}'"
   template:
     src: etc_sudoers_d_backuppc.j2
-    # dest: /etc/sudoers.d/backuppc
-    dest: /home/vagrant/sudoers_test
+    dest: /etc/sudoers.d/backuppc
     owner: root
     group: root
     mode: 044
