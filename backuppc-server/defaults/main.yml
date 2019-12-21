@@ -1,0 +1,25 @@
+---
+# backuppc_server_version: "4.3.0"
+backuppc_server_version: "latest"
+
+# backuppc_server_backuppc_xs_version: "0.58"
+backuppc_server_backuppc_xs_version: "latest"
+
+# backuppc_server_rsync_bpc_version: "3.0.9.13"
+backuppc_server_rsync_bpc_version: "latest"
+
+backuppc_server_user_name: "backuppc-server"
+
+# Default: host FQDN
+#backuppc_server_host_name: "host.domain.tld"
+
+# Default: /var/lib/backuppc
+# If this parameter is defined, /var/lib/backuppc created as a link
+# to specified directory
+# backuppc_server_data_dir: "/path/to/a/directory"
+
+# backuppc_server_apache_allow: "allow from 127.0.0.1 192.168.0.0/24"
+backuppc_server_apache_allow: "allow from all"
+
+backuppc_server_www_users:
+  - { user_name: "backuppc", password: "backuppc" }
