@@ -391,8 +391,8 @@
 - name: Update CgiAdminUsers parameter in /etc/BackupPC/config.pl
   lineinfile:
     path: /etc/BackupPC/config.pl
-    regexp: "\\$Conf\\{CgiAdminUsers\\}     = '';"
-    line: "$Conf{CgiAdminUsers}     = '{{ backuppc_server_user_name }}';"
+    regexp: "\\$Conf\\{CgiAdminUsers\\}[ ]*=[ ]*'';"
+    line: "$Conf{CgiAdminUsers} = '{{ backuppc_server_user_name }}';"
     backup: true
   become: true
 
