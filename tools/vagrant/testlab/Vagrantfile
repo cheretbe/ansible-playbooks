@@ -41,7 +41,7 @@ Vagrant.configure("2") do |config|
   #       mkdir -p /usr/share/ansible
   #       ln -sfn /ansible-playbooks /usr/share/ansible/roles
   #     SHELL
-  # end
+  end
 
   config.vm.define :"ubuntu-bionic", autostart: false do |ubuntu_bionic|
     ubuntu_bionic.vm.box = "ubuntu/bionic64"
