@@ -8,10 +8,16 @@
   file.comment:
     - regex: ^PasswordAuthentication no
 
-restart_ssh_on_config_change:
+restart.ssh.on.config.change:
   service:
     - name: {{ ssh_service_name }}
     - running
     - enable: True
     - watch:
       - file: /etc/ssh/sshd_config
+
+vagrant.user.authorized_keys.entry:
+  ssh_auth.present:
+    - user: vagrant
+    - source: salt://config/id_rsa.pub
+    - config: '/home/vagrant/.ssh/authorized_keys'
