@@ -1,13 +1,12 @@
-#ansible_config_1:
-#  file.managed:
-#    - name: /etc/ansible/ansible.cfg
-#    - source: salt://config/ansible.cfg
+ansible.config:
+  file.managed:
+    - source: salt://config/ansible.cfg
+    - name: /home/vagrant/.ansible.cfg
 
-#ansible_config_2:
-#  file.managed:
-#    - name: /etc/ansible/hosts
-#    - source: salt://config/ansible_hosts
-
+ansible.test.inventory:
+  file.symlink:
+    - name: /home/vagrant/test_inventory.yml
+    - target: /vagrant/root_srv/salt/config/local_inventory.yml
 
 vagrant.user.private.key:
   file.managed:
