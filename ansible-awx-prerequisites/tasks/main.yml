@@ -79,31 +79,31 @@
       msg: "Cancelled by user"
     when: not ansible_awx_upgrade.user_input|bool
 
-  - name: Stop AWX containers
-    docker_container:
-      name: "{{ item }}"
-      state: stopped
-    with_items: "{{ existing_awx_docker_containers }}"
+  # - name: Stop AWX containers
+  #   docker_container:
+  #     name: "{{ item }}"
+  #     state: stopped
+  #   with_items: "{{ existing_awx_docker_containers }}"
 
-  - name: Delete AWX containers
-    docker_container:
-      name: "{{ item }}"
-      state: absent
-    with_items: "{{ existing_awx_docker_containers }}"
+  # - name: Delete AWX containers
+  #   docker_container:
+  #     name: "{{ item }}"
+  #     state: absent
+  #   with_items: "{{ existing_awx_docker_containers }}"
 
-  - name: Get Docker images info
-    docker_image_info:
-    register: docker_image_info
+  # - name: Get Docker images info
+  #   docker_image_info:
+  #   register: docker_image_info
 
-  - name: Get Docker image names
-    set_fact:
-      all_docker_image_names: "{{ docker_image_info.images | map(attribute='RepoTags') | list }}"
+  # - name: Get Docker image names
+  #   set_fact:
+  #     all_docker_image_names: "{{ docker_image_info.images | map(attribute='RepoTags') | list }}"
 
-  - name: Remove all Docker images
-    docker_image:
-      state: absent
-      name: "{{ item }}"
-    with_items: "{{ all_docker_image_names }}"
+  # - name: Remove all Docker images
+  #   docker_image:
+  #     state: absent
+  #     name: "{{ item }}"
+  #   with_items: "{{ all_docker_image_names }}"
 
   when: ansible_awx_installed
 
