@@ -3,6 +3,7 @@
 import sys
 import subprocess
 import json
+import shutil
 
 def run_dialog(parameters):
     dialog_cmd = ["dialog"] + parameters
@@ -15,6 +16,8 @@ def run_dialog(parameters):
     else:
         return stderr.decode("utf-8")
 
+if shutil.which("dialog") is None:
+    sys.exit("ERROR: Command 'dialog' is not found. Please install corresponding package")
 
 inventory = json.loads(subprocess.check_output(["ansible-inventory",
     "--list", "--export"]))
@@ -25,6 +28,11 @@ for group in inventory["all"]["children"]:
         inventory_groups.append(group)
 
 # inventory_groups += ["zzz"]
+# inventory_groups = []
+
+if len(inventory_groups) == 0:
+    subprocess.run(["ansible-inventory", "--list"])
+    sys.exit("ERROR: No groups were found in the inventory. Check inventory configuration")
 
 if len(inventory_groups) == 1:
     print(f"'{inventory_groups[0]}' is the only group in the inventory. "
@@ -34,9 +42,33 @@ else:
     dialog_list = []
     for idx, i in enumerate(inventory_groups):
         dialog_list += [str(idx), i]
+    # --menu <text> <height> <width> <menu height> <tag1> <item1> ...
     selection = run_dialog(["--keep-tite", "--no-tags", "--menu", "Select a group:",
         "0", "0", "0"] + dialog_list)
     current_group = inventory_groups[int(selection)]
+
+print(f"Using group '{current_group}'")
+
+inventory_hosts = []
+for host in inventory[current_group]["hosts"]:
+    inventory_hosts.append(host)
+
+dialog_list = []
+for idx, i in enumerate(inventory_hosts):
+    dialog_list += [str(idx), i, "on"]
+selection = run_dialog(["--keep-tite", "--no-tags",
+    "--checklist", f"Select hosts ({current_group}):", "0", "0", "0"] +
+    dialog_list)
+current_hosts = []
+for host_idx in selection.split():
+    current_hosts.append(inventory_hosts[int(host_idx)])
+
+if len(current_hosts) == 0:
+    sys.exit("No hosts were selected. Exiting")
+print("Using hosts", current_hosts)
+
+sys.exit(0)
+
 
     # run_dialog(["--keep-tite", "--title", "Enter the correct path:",
     # "--form", "", "0", "0", "0",
@@ -51,8 +83,6 @@ else:
 # group_hosts = inventory.get("ungrouped"["hosts"]
 # print(len(group_hosts))
 
-print(current_group)
-sys.exit(0)
 
 
 # https://github.com/Risoko/Bash-Archiving-Script/blob/master/script_for_archiving.sh
