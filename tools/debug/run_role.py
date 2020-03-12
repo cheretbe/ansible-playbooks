@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 
 import sys
+import os
+import types
 import subprocess
 import json
+import yaml
 import shutil
 
 def run_dialog(parameters):
@@ -15,6 +18,46 @@ def run_dialog(parameters):
         raise subprocess.CalledProcessError(proc.returncode, dialog_cmd, output=stderr)
     else:
         return stderr.decode("utf-8")
+
+def load_roles():
+    roles = []
+    for dir_entry in os.listdir("/ansible-playbooks"):
+        full_path = os.path.join("/ansible-playbooks", dir_entry)
+        if os.path.isdir(full_path):
+            role_info = read_role_info(dir_entry, full_path)
+            if not role_info is None:
+                roles.append(role_info)
+    return roles
+
+def read_role_info(role_name, role_path):
+    role_info = None
+    if os.path.isfile(os.path.join(role_path, "tasks", "main.yml")):
+        role_info = types.SimpleNamespace()
+        role_info.name = role_name
+        vars_file = os.path.join(role_path, "defaults", "main.yml")
+        if os.path.isfile(vars_file):
+            with open(vars_file, "r") as f:
+                role_info.default_vars = yaml.safe_load(f)
+        else:
+            role_info.default_vars = None
+    return role_info
+
+roles = load_roles()
+roles.sort(key=lambda x: x.name)
+
+dialog_list = []
+for idx, i in enumerate(roles):
+    dialog_list += [str(idx), i.name]
+selection = run_dialog(["--keep-tite", "--no-tags", "--menu", "Select a role:",
+    "0", "0", "0"] + dialog_list)
+current_role = roles[int(selection)].name
+
+role_default_vars = roles[int(selection)].default_vars
+
+print(current_role)
+print(role_default_vars)
+
+sys.exit(0)
 
 if shutil.which("dialog") is None:
     sys.exit("ERROR: Command 'dialog' is not found. Please install corresponding package")
