@@ -54,8 +54,30 @@ current_role = roles[int(selection)].name
 
 role_default_vars = roles[int(selection)].default_vars
 
-print(current_role)
-print(role_default_vars)
+# print(current_role)
+# print(role_default_vars)
+# for def_var in role_default_vars:
+#     print(def_var, role_default_vars[def_var])
+
+# --form         <text> <height> <width> <form height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1>...
+
+# cmd = ["dialog", "--keep-tite", "--title", "Enter the correct path:",
+#     "--form", "", "0", "0", "0",
+#     "PATH_FOR_FILE_ARCHIVING: ", "1", "1", "default1", "1", "27", "100", "0",
+#     "PATH_FOR_PLACE_FOR_ARCHIVING: ", "2", "1", "default2", "2", "30", "100", "0"]
+
+
+dialog_list = []
+# for idx, i in enumerate(inventory_hosts):
+#     dialog_list += [str(idx), i, "on"]
+for idx, key in enumerate(role_default_vars):
+    dialog_list += [key, str(idx + 1), "2", "", str(idx + 1), "30", "100", "0"]
+    # print(idx, key)
+selection = run_dialog(["--keep-tite", "--no-tags",
+    "--form", f"Override variable values for role '{current_role}':", "0", "0", "0"] +
+    dialog_list)
+
+print(selection.split("\n"))
 
 sys.exit(0)
 
