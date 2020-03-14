@@ -10,11 +10,17 @@ import shutil
 
 def run_dialog(parameters):
     dialog_cmd = ["dialog"] + parameters
-    proc = subprocess.Popen(dialog_cmd, stderr = subprocess.PIPE)
+    dialog_env = os.environ.copy()
+    # By default dialog returns 255 on ESC. It gets mixed up with error code -1
+    # converted to unsigned 8-bit. We set DIALOG_ESC variable to use the same
+    # code as Cancel since we don't need to distinguish ESC and Cancel.
+    dialog_env["DIALOG_ESC"] = "1"
+    proc = subprocess.Popen(dialog_cmd, stderr = subprocess.PIPE, env=dialog_env)
     stderr = proc.communicate()[1]
-    if proc.returncode in [1, 255]:
+    if proc.returncode == 1:
         sys.exit("Cancelled by user")
     elif proc.returncode != 0:
+        print(stderr.decode("utf-8"))
         raise subprocess.CalledProcessError(proc.returncode, dialog_cmd, output=stderr)
     else:
         return stderr.decode("utf-8")
@@ -42,47 +48,65 @@ def read_role_info(role_name, role_path):
             role_info.default_vars = None
     return role_info
 
+if shutil.which("dialog") is None:
+    sys.exit("ERROR: Command 'dialog' is not found. Please install corresponding package")
+
+config_file_name = os.path.expanduser("~/.cache/cheretbe/ansible-playbooks/run_role_cfg.json")
+if os.path.isfile(config_file_name):
+    with open(config_file_name) as f:
+        config = json.load(f)
+else:
+    config = {}
+
 roles = load_roles()
 roles.sort(key=lambda x: x.name)
 
+last_used_role = config.get("last_used_role", None)
+last_used_role_idx = None
 dialog_list = []
 for idx, i in enumerate(roles):
     dialog_list += [str(idx), i.name]
-selection = run_dialog(["--keep-tite", "--no-tags", "--menu", "Select a role:",
-    "0", "0", "0"] + dialog_list)
+    if last_used_role and (i.name == last_used_role):
+        last_used_role_idx = idx
+dialog_params = ["--keep-tite", "--no-tags", "--menu", "Select a role:",
+    "0", "0", "0"] + dialog_list
+if last_used_role_idx:
+    dialog_params = ["--default-item", str(last_used_role_idx)] + dialog_params
+selection = run_dialog(dialog_params)
+
 current_role = roles[int(selection)].name
+config["last_used_role"] = current_role
+print(f"Using role '{current_role}'")
 
 role_default_vars = roles[int(selection)].default_vars
+last_used_custom_vars = None
+if config.get("custom_vars", None):
+    last_used_custom_vars = config["custom_vars"].get(current_role, None)
+current_role_vars = {}
+if not role_default_vars is None:
+    caption_length = 0
+    for var_name in role_default_vars:
+        if len(var_name) > caption_length:
+            caption_length = len(var_name)
+    dialog_list = []
+    for idx, key in enumerate(role_default_vars):
+        var_value = ""
+        if last_used_custom_vars:
+            if key in last_used_custom_vars:
+                var_value = last_used_custom_vars[key]
+        dialog_list += [key + ":", str(idx + 1), "2", var_value, str(idx + 1),
+            str(caption_length + 4), "100", "0"]
+    selection = run_dialog(["--keep-tite", "--no-tags",
+        "--form", f"Override variable values for role '{current_role}':", "0", "0", "0"] +
+        dialog_list)
+    dialog_vars = selection.split("\n")
+    for idx, key in enumerate(role_default_vars):
+        if dialog_vars[idx]:
+            current_role_vars[key] = dialog_vars[idx]
 
-# print(current_role)
-# print(role_default_vars)
-# for def_var in role_default_vars:
-#     print(def_var, role_default_vars[def_var])
-
-# --form         <text> <height> <width> <form height> <label1> <l_y1> <l_x1> <item1> <i_y1> <i_x1> <flen1> <ilen1>...
-
-# cmd = ["dialog", "--keep-tite", "--title", "Enter the correct path:",
-#     "--form", "", "0", "0", "0",
-#     "PATH_FOR_FILE_ARCHIVING: ", "1", "1", "default1", "1", "27", "100", "0",
-#     "PATH_FOR_PLACE_FOR_ARCHIVING: ", "2", "1", "default2", "2", "30", "100", "0"]
-
-
-dialog_list = []
-# for idx, i in enumerate(inventory_hosts):
-#     dialog_list += [str(idx), i, "on"]
-for idx, key in enumerate(role_default_vars):
-    dialog_list += [key, str(idx + 1), "2", "", str(idx + 1), "30", "100", "0"]
-    # print(idx, key)
-selection = run_dialog(["--keep-tite", "--no-tags",
-    "--form", f"Override variable values for role '{current_role}':", "0", "0", "0"] +
-    dialog_list)
-
-print(selection.split("\n"))
-
-sys.exit(0)
-
-if shutil.which("dialog") is None:
-    sys.exit("ERROR: Command 'dialog' is not found. Please install corresponding package")
+if not config.get("custom_vars", None):
+    config["custom_vars"] = {}
+config["custom_vars"][current_role] = current_role_vars
 
 inventory = json.loads(subprocess.check_output(["ansible-inventory",
     "--list", "--export"]))
@@ -132,58 +156,6 @@ if len(current_hosts) == 0:
     sys.exit("No hosts were selected. Exiting")
 print("Using hosts", current_hosts)
 
-sys.exit(0)
-
-
-    # run_dialog(["--keep-tite", "--title", "Enter the correct path:",
-    # "--form", "", "0", "0", "0",
-    # "PATH_FOR_FILE_ARCHIVING: ", "1", "1", "default1", "1", "27", "100", "0",
-    # "PATH_FOR_PLACE_FOR_ARCHIVING: ", "2", "1", "default2", "2", "30", "100", "0"])
-
-
-    #     group_hosts = inventory[group]["hosts"]
-    # print(len(group_hosts))
-
-
-# group_hosts = inventory.get("ungrouped"["hosts"]
-# print(len(group_hosts))
-
-
-
-# https://github.com/Risoko/Bash-Archiving-Script/blob/master/script_for_archiving.sh
-
-# test = subprocess.check_output('dialog --title "Enter the correct path:" '
-#     '--form ""     0 0 0 '
-#     '"PATH_FOR_FILE_ARCHIVING: "         1 1 "default1"             1 25 100 0 '
-#     '"PATH_FOR_PLACE_FOR_ARCHIVING: "    2 1  "default2"       2 30 100 0',
-#     shell=True)
-# test = subprocess.check_output("dialog --clear --stdout --title \"aaa\" --fselect bbb 10 50", shell=True)
-
-cmd = ('dialog --title "Enter the correct path:" '
-    '--form ""     0 0 0 '
-    '"PATH_FOR_FILE_ARCHIVING: "         1 1 "default1"             1 25 100 0 '
-    '"PATH_FOR_PLACE_FOR_ARCHIVING: "    2 1  "default2"       2 30 100 0')
-
-# results = subprocess.run(cmd, stdout=subprocess.PIPE)
-# test = results.stdout.rstrip().decode('utf-8')
-
-# test = subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=True)
-# test = subprocess.check_output(cmd, shell=True)
-
-cmd = ["dialog", "--keep-tite", "--title", "Enter the correct path:",
-    "--form", "", "0", "0", "0",
-    "PATH_FOR_FILE_ARCHIVING: ", "1", "1", "default1", "1", "27", "100", "0",
-    "PATH_FOR_PLACE_FOR_ARCHIVING: ", "2", "1", "default2", "2", "30", "100", "0"]
-
-proc = subprocess.Popen(cmd,
-    # stdout = subprocess.PIPE,
-    stderr = subprocess.PIPE,
-)
-# stdout, stderr = proc.communicate()
-stderr = proc.communicate()[1]
- 
-# print(proc.returncode, stdout, stderr)
-print(proc.returncode, stderr)
-
-# print("-----")
-# print(test)
+os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
+with open(config_file_name, "w", encoding="utf-8") as f:
+    json.dump(config, f, ensure_ascii=False, indent=4)
