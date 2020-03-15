@@ -26,21 +26,11 @@ Vagrant.configure("2") do |config|
     ansible.vm.network "forwarded_port", guest: 80, host: 8080
     ansible.vm.network "private_network", ip: "172.24.0.10", virtualbox__intnet: "vagrant-intnet"
 
-    ansible.vm.provision "shell", name: "python-pygit2 installation", keep_color: true,
-      inline: "apt-get -y -q update && apt-get -y -q install python-pygit2"
-
     ansible.vm.provision :salt do |salt|
       salt.masterless = true
       salt.run_highstate = true
       salt.install_type = "stable"
     end
-
-  #   ansible.vm.provision "shell", name: "Create symlink to current repo",
-  #     keep_color: true,
-  #     inline: <<-SHELL
-  #       mkdir -p /usr/share/ansible
-  #       ln -sfn /ansible-playbooks /usr/share/ansible/roles
-  #     SHELL
   end
 
   config.vm.define :"ubuntu-bionic", autostart: false do |ubuntu_bionic|
