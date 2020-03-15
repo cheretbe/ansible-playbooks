@@ -315,9 +315,9 @@
 - name: Add apache allow directive
   lineinfile:
     dest: /etc/apache2/conf-available/backuppc.conf
-    regex: "allow from 127\\.0\\.0\\.1"
+    regex: "[Aa]llow from 127\\.0\\.0\\.1"
     line: "{{ backuppc_server_apache_allow }}"
-    insertafter: "deny from all"
+    insertafter: "[Dd]eny from all"
   become: true
   notify: Restart Apache
 
