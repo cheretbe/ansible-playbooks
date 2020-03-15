@@ -124,9 +124,6 @@ for group in inventory["all"]["children"]:
     if group in inventory:
         inventory_groups.append(group)
 
-# inventory_groups += ["zzz"]
-# inventory_groups = []
-
 if len(inventory_groups) == 0:
     subprocess.run(["ansible-inventory", "--list"])
     sys.exit("ERROR: No groups were found in the inventory. Check inventory configuration")
@@ -190,4 +187,6 @@ if current_group:
 
 ansible_playbook_cmd = ["ansible-playbook", "/ansible-playbooks/run_role.yml",
     "--extra-vars", f"role_name={current_role}"] + hosts_subset
+if len(current_role_vars) != 0:
+    ansible_playbook_cmd += ["--extra-vars", json.dumps(current_role_vars)]
 subprocess.check_call(ansible_playbook_cmd)
