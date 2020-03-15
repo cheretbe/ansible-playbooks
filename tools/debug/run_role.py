@@ -48,6 +48,12 @@ def read_role_info(role_name, role_path):
             role_info.default_vars = None
     return role_info
 
+def save_config():
+    os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
+    with open(config_file_name, "w", encoding="utf-8") as f:
+        json.dump(config, f, ensure_ascii=False, indent=4)
+
+
 if shutil.which("dialog") is None:
     sys.exit("ERROR: Command 'dialog' is not found. Please install corresponding package")
 
@@ -70,12 +76,13 @@ for idx, i in enumerate(roles):
         last_used_role_idx = idx
 dialog_params = ["--keep-tite", "--no-tags", "--menu", "Select a role:",
     "0", "0", "0"] + dialog_list
-if last_used_role_idx:
+if not last_used_role_idx is None:
     dialog_params = ["--default-item", str(last_used_role_idx)] + dialog_params
 selection = run_dialog(dialog_params)
 
 current_role = roles[int(selection)].name
 config["last_used_role"] = current_role
+save_config()
 print(f"Using role '{current_role}'")
 
 role_default_vars = roles[int(selection)].default_vars
@@ -107,6 +114,7 @@ if not role_default_vars is None:
 if not config.get("custom_vars", None):
     config["custom_vars"] = {}
 config["custom_vars"][current_role] = current_role_vars
+save_config()
 
 inventory = json.loads(subprocess.check_output(["ansible-inventory",
     "--list", "--export"]))
@@ -123,39 +131,63 @@ if len(inventory_groups) == 0:
     subprocess.run(["ansible-inventory", "--list"])
     sys.exit("ERROR: No groups were found in the inventory. Check inventory configuration")
 
-if len(inventory_groups) == 1:
-    print(f"'{inventory_groups[0]}' is the only group in the inventory. "
-        "Auto-selecting it")
-    current_group = inventory_groups[0]
+last_used_group = config.get("last_used_group", None)
+if last_used_group == "all":
+    last_used_group_idx = "all"
 else:
-    dialog_list = []
-    for idx, i in enumerate(inventory_groups):
-        dialog_list += [str(idx), i]
-    # --menu <text> <height> <width> <menu height> <tag1> <item1> ...
-    selection = run_dialog(["--keep-tite", "--no-tags", "--menu", "Select a group:",
-        "0", "0", "0"] + dialog_list)
+    last_used_group_idx = None
+dialog_list = ["all", "All hosts"]
+for idx, i in enumerate(inventory_groups):
+    dialog_list += [str(idx), i]
+    if last_used_group and i == last_used_group:
+        last_used_group_idx = idx
+
+# --menu <text> <height> <width> <menu height> <tag1> <item1> ...
+dialog_params = ["--keep-tite", "--no-tags", "--menu", "Select a group:",
+    "0", "0", "0"] + dialog_list
+if not last_used_group_idx is None:
+    dialog_params = ["--default-item", str(last_used_group_idx)] + dialog_params
+selection = run_dialog(dialog_params)
+if selection == "all":
+    print("Using all hosts")
+    current_group = None
+    config["last_used_group"] = "all"
+else:
     current_group = inventory_groups[int(selection)]
+    print(f"Using group '{current_group}'")
+    config["last_used_group"] = current_group
+save_config()
 
-print(f"Using group '{current_group}'")
+hosts_subset = []
+if current_group:
+    inventory_hosts = []
+    for host in inventory[current_group]["hosts"]:
+        inventory_hosts.append(host)
 
-inventory_hosts = []
-for host in inventory[current_group]["hosts"]:
-    inventory_hosts.append(host)
+    last_used_hosts = inventory_hosts
+    if not config.get("hosts", None) is None:
+        last_used_hosts = config["hosts"].get(current_group, inventory_hosts)
+    dialog_list = []
+    for idx, i in enumerate(inventory_hosts):
+        item_state = "on" if i in last_used_hosts else "off"
+        dialog_list += [str(idx), i, item_state]
+    selection = run_dialog(["--keep-tite", "--no-tags",
+        "--checklist", f"Select hosts ({current_group}):", "0", "0", "0"] +
+        dialog_list)
+    current_hosts = []
+    for host_idx in selection.split():
+        current_hosts.append(inventory_hosts[int(host_idx)])
 
-dialog_list = []
-for idx, i in enumerate(inventory_hosts):
-    dialog_list += [str(idx), i, "on"]
-selection = run_dialog(["--keep-tite", "--no-tags",
-    "--checklist", f"Select hosts ({current_group}):", "0", "0", "0"] +
-    dialog_list)
-current_hosts = []
-for host_idx in selection.split():
-    current_hosts.append(inventory_hosts[int(host_idx)])
+    if len(current_hosts) == 0:
+        sys.exit("No hosts were selected. Exiting")
+    print("Using hosts", current_hosts)
+    hosts_subset = ["-l", ",".join(current_hosts)]
 
-if len(current_hosts) == 0:
-    sys.exit("No hosts were selected. Exiting")
-print("Using hosts", current_hosts)
+    if not config.get("hosts", None):
+        config["hosts"] = {}
+    config["hosts"][current_group] = current_hosts
+    save_config()
 
-os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
-with open(config_file_name, "w", encoding="utf-8") as f:
-    json.dump(config, f, ensure_ascii=False, indent=4)
+ansible_playbook_cmd = ["ansible-playbook", "/ansible-playbooks/run_role.yml",
+    "--extra-vars", f"role_name={current_role}"] + hosts_subset
+subprocess.check_call(ansible_playbook_cmd)
