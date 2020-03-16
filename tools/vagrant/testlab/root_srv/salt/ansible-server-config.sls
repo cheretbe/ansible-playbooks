@@ -2,11 +2,20 @@ ansible.config:
   file.managed:
     - source: salt://config/ansible.cfg
     - name: /home/vagrant/.ansible.cfg
+    - user: vagrant
+    - group: vagrant
 
-ansible.test.inventory:
-  file.symlink:
-    - name: /home/vagrant/test_inventory.yml
-    - target: /vagrant/root_srv/salt/config/local_inventory.yml
+ansible.local.inventory:
+  file.managed:
+    - source: salt://config/local_inventory.yml
+    - name: /home/vagrant/local_inventory.yml
+    - user: vagrant
+    - group: vagrant
+
+ansible.awx.inventory:
+  file.managed:
+    - source: salt://config/awx_inventory.tower.yml
+    - name: /home/vagrant/awx_inventory.tower.yml
 
 vagrant.user.private.key:
   file.managed:
