@@ -53,7 +53,7 @@ tower-cli version
 
 echo "Waiting for data import to finish"
 SECONDS=0
-until tower-cli instance_group get tower >/dev/null 2>&1; do
+until tower-cli instance get awx >/dev/null 2>&1; do
     if [ $SECONDS -gt 300 ]; then
       >&2 echo "ERROR: Timeout waiting for data import to finish (300s)"
       exit 1
