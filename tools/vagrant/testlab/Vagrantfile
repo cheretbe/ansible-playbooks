@@ -44,6 +44,16 @@ Vagrant.configure("2") do |config|
       salt.install_type = "stable"
       salt.pillar({"use_awx" => use_awx})
     end
+
+    if use_awx then
+      ansible.vm.provision "shell", name: "AWX installation",
+        keep_color: true, privileged: false,
+        inline: <<-SHELL
+          /ansible-playbooks/tools/awx/install_awx.sh && \\
+          /ansible-playbooks/tools/awx/configure_tower_cli.sh && \\
+          /ansible-playbooks/tools/awx/set_test_config.sh
+        SHELL
+    end
   end
 
   config.vm.define :"ubuntu-bionic", autostart: false do |ubuntu_bionic|
