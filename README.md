@@ -1,5 +1,7 @@
 # ansible-playbooks
 
+[Testlab readme](./tools/vagrant/testlab/README.md)
+
 ```shell
 /ansible-playbooks/tools/update_known_hosts.sh
 ```
