@@ -2,6 +2,7 @@ ansible.config:
   file.managed:
     - source: salt://config/ansible.cfg
     - name: /home/vagrant/.ansible.cfg
+    - template: jinja
     - user: vagrant
     - group: vagrant
 
