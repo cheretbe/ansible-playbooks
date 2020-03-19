@@ -4,6 +4,13 @@
 
 . ~/virtenv/py3/bin/activate
 
+# tower-cli (https://github.com/ansible/tower-cli) is deprecated 
+# New official tool AWX CLI (https://github.com/ansible/awx/tree/devel/awxkit/awxkit/cli/docs)
+# doesn't look like a finished product as yet. For example, it is missing
+# backup/restore functionality:
+# https://github.com/ansible/awx/blob/devel/awxkit/awxkit/cli/docs/source/examples.rst#backuprestore
+# So for now we stick with tower-cli
+
 echo "Sending config from '/ansible-playbooks/tools/awx/test_config.json'"
 
 tower-cli send /ansible-playbooks/tools/awx/test_config.json && echo "Done"
