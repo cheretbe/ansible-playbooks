@@ -12,4 +12,5 @@ ansible-playbook /ansible-playbooks/run_role.yml \
 
 ansible-playbook "/tmp/awx-${awx_version}/installer/install.yml" \
   --become \
-  -i /opt/awx/inventory
+  -i "/tmp/awx-${awx_version}/installer/inventory" \
+  -e @/opt/awx/install-options.yml

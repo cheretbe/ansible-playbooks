@@ -127,25 +127,21 @@
     path: /opt/awx
     state: directory
 
-- name: Copy '/opt/awx/inventory' file
-  copy:
-    src: /tmp/awx-{{ ansible_awx_version }}/installer/inventory
-    dest: /opt/awx/inventory
-
-- name: Replace options in the inventory file
-  replace:
-    path: /opt/awx/inventory
-    regexp: "{{ item.regexp }}"
-    replace: "{{ item.replace }}"
-  with_items:
-    - { regexp: 'ansible_python_interpreter="/usr/bin/env python"', replace: 'ansible_python_interpreter="/usr/bin/env python3"'}
-    - { regexp: 'docker_compose_dir=/tmp/awxcompose', replace: 'docker_compose_dir=/opt/awx/awxcompose'}
-    - { regexp: 'postgres_data_dir=/tmp/pgdocker', replace: 'postgres_data_dir=/opt/awx/pgdocker'}
+- name: Set custom options in '/opt/awx/install-options.yml'
+  template:
+    src: install-options.yml.j2
+    dest: /opt/awx/install-options.yml
+    backup: true
 
 # - name: Cancel
 #   fail:
 #     msg: "Debug"
 
-- name: Install AWX with the following command
+- name: Install AWX using the following command
   debug:
-    msg: "ansible-playbook -i /opt/awx/inventory /tmp/awx-{{ ansible_awx_version }}/installer/install.yml"
+    msg: >-
+      ansible-playbook
+      /tmp/awx-{{ ansible_awx_version }}/installer/install.yml
+      -i /tmp/awx-{{ ansible_awx_version }}/installer/inventory
+      -e @/opt/awx/install-options.yml
+
