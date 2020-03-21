@@ -97,43 +97,12 @@
       msg: "Cancelled by user"
     when: not ansible_awx_upgrade.user_input|bool
 
-  # - name: Stop AWX containers
-  #   docker_container:
-  #     name: "{{ item }}"
-  #     state: stopped
-  #   with_items: "{{ existing_awx_docker_containers }}"
-
-  # - name: Delete AWX containers
-  #   docker_container:
-  #     name: "{{ item }}"
-  #     state: absent
-  #   with_items: "{{ existing_awx_docker_containers }}"
-
-  # - name: Get Docker images info
-  #   docker_image_info:
-  #   register: docker_image_info
-
-  # - name: Get Docker image names
-  #   set_fact:
-  #     all_docker_image_names: "{{ docker_image_info.images | map(attribute='RepoTags') | list }}"
-
-  # - name: Remove all Docker images
-  #   docker_image:
-  #     state: absent
-  #     name: "{{ item }}"
-  #   with_items: "{{ all_docker_image_names }}"
-
   when: ansible_awx_installed
-
-# - name: Cancel
-#   fail:
-#     msg: "Debug"
 
 - name: Download https://github.com/ansible/awx/archive/{{ ansible_awx_version }}.tar.gz
   get_url:
     url: "https://github.com/ansible/awx/archive/{{ ansible_awx_version }}.tar.gz"
     dest: /tmp/awx-{{ ansible_awx_version }}.tar.gz
-
 
 - name: Extract awx-{{ ansible_awx_version }}.tar.gz
   unarchive:
