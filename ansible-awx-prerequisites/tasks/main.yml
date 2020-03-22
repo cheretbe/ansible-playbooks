@@ -59,22 +59,24 @@
   set_fact:
     ansible_awx_installed: "{{ existing_awx_docker_containers | length != 0 }}"
 
-- name: Get currently installed AWX version
-  shell: 'docker exec awx_task /usr/bin/awx-manage version'
-  # shell: echo "4.3.1"
-  changed_when: false
-  register: installed_awx_version
-
-- name: Check if AWX needs an upgrade
-  set_fact:
-    awx_needs_upgrade: "{{ installed_awx_version.stdout is version (ansible_awx_version, '<') }}"
-
 - block:
-  - name: Exit if AWX does not need an upgrade
-    fail:
-      msg: >-
-        AWX {{ installed_awx_version.stdout }} does not need an upgrade to
-        version {{ ansible_awx_version }}
+  - name: Get currently installed AWX version
+    shell: 'docker exec awx_task /usr/bin/awx-manage version'
+    # shell: echo "4.3.1"
+    changed_when: false
+    register: installed_awx_version
+
+  - name: Check if AWX needs an upgrade
+    set_fact:
+      awx_needs_upgrade: "{{ installed_awx_version.stdout is version (ansible_awx_version, '<') }}"
+
+  - block:
+    - name: Exit if AWX does not need an upgrade
+      debug:
+        msg: >-
+          AWX {{ installed_awx_version.stdout }} does not need an upgrade to
+          version {{ ansible_awx_version }}
+    - meta: end_play
     when: not awx_needs_upgrade
 
   - name: Confirm upgrade
