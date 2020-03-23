@@ -132,6 +132,7 @@
   debug:
     msg: >-
       ansible-playbook
+      --become
       /tmp/awx-{{ ansible_awx_version }}/installer/install.yml
       -i /tmp/awx-{{ ansible_awx_version }}/installer/inventory
       -e @/opt/awx/install-options.yml
