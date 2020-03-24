@@ -14,8 +14,10 @@ use_awx = false
 awx_version = ""
 if File.file?("local-config.yml")
   local_config = YAML.load_file("local-config.yml")
-  use_awx = local_config.fetch("use_awx", use_awx)
-  awx_version = local_config.fetch("awx_version", awx_version)
+  unless local_config.nil?
+    use_awx = local_config.fetch("use_awx", use_awx)
+    awx_version = local_config.fetch("awx_version", awx_version)
+  end
 end
 
 Vagrant.configure("2") do |config|
