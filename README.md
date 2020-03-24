@@ -3,6 +3,9 @@
 [Testlab readme](./tools/vagrant/testlab/README.md)
 
 ```shell
+ansible-playbook -i localhost, --connection=local --become \
+  /ansible-playbooks/run_role.yml --extra-vars "role_name=docker-ce"
+
 /ansible-playbooks/tools/update_known_hosts.sh
 ```
 `ansible_virtualization_role`, `ansible_virtualization_type`
