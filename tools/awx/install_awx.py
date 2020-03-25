@@ -11,6 +11,8 @@ parser.add_argument('-b', '--batch-mode', action='store_true',
     default=False, help='Batch mode (upgrade AWX without confirmation)')
 parser.add_argument("awx_version", nargs="?", default="7.0.0",
     help="AWX version to install (default: 7.0.0)")
+parser.add_argument("-m", "--docker-mirror", dest="docker_mirror",
+    help="Local Docker registry mirror (e.g. localhost:5000)")
 
 options = parser.parse_args()
 
@@ -26,11 +28,13 @@ if proc.returncode == 0:
     else:
         print(f"Upgrading AWX {version_str} to version {options.awx_version}", flush=True)
 
-extra_vars = f"role_name=ansible-awx-prerequisites ansible_awx_version={options.awx_version}"
+extra_vars = f'"role_name": "ansible-awx-prerequisites", "ansible_awx_version": "{options.awx_version}"'
+if options.docker_mirror != "":
+    extra_vars += f', "docker_ce_registry_mirrors": ["{options.docker_mirror}"]'
 if options.batch_mode:
-    extra_vars += " ansible_awx_force_upgrade=true"
+    extra_vars += ', "ansible_awx_force_upgrade": True'
 subprocess.check_call(["ansible-playbook", "/ansible-playbooks/run_role.yml",
-    "--become", "--extra-vars", extra_vars, "-i", "localhost,",
+    "--become", "--extra-vars", "{" + extra_vars + "}", "-i", "localhost,",
     "--connection=local"])
 
 subprocess.check_call(["ansible-playbook",
