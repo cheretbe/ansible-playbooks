@@ -1,0 +1,5 @@
+---
+# vars file for docker-ce
+
+docker_daemon_config: {}
+registry_mirrors_needs_update: True

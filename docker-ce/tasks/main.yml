@@ -32,3 +32,46 @@
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
     update_cache: no
+
+- block:
+
+  - name: Check if Docker daemon config file exists
+    stat:
+      path: /etc/docker/daemon.json
+    register: docker_daemon_config_stat
+
+  - block:
+    - name: Read current Docker daemon config file
+      slurp:
+        path: /etc/docker/daemon.json
+      register: docker_daemon_config_file
+
+    - name: Get current Docker daemon config
+      set_fact:
+        docker_daemon_config: "{{ docker_daemon_config_file.content| b64decode | from_json }}"
+
+    - name: Check if current 'registry-mirrors' parameter needs update
+      set_fact:
+        registry_mirrors_needs_update: >-
+          {{ (docker_daemon_config['registry-mirrors'] != docker_ce_registry_mirrors) | bool }}
+      when: "'registry-mirrors' in docker_daemon_config"
+
+    when: docker_daemon_config_stat.stat.exists
+
+  - block:
+
+    - name: Set 'registry-mirrors' parameter in Docker daemon config
+      set_fact:
+        docker_daemon_config: >
+          {{ docker_daemon_config |
+            combine({'registry-mirrors': docker_ce_registry_mirrors}) }}
+
+    - name: Write Docker daemon config file file
+      copy:
+        content: "{{docker_daemon_config | to_nice_json }}"
+        dest: /etc/docker/daemon.json
+      notify: Restart Docker service
+
+    when: "registry_mirrors_needs_update | bool"
+
+  when: docker_ce_registry_mirrors | length > 0
