@@ -6,27 +6,23 @@
     msg: "Only Ubuntu 18.04 is supported at the moment"
   when: not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "18.04")
 
-- name: Add docker repository key
-  apt_key:
-    url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
-
-- name: Add docker repository
-  apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
-    state: present
+- name: Install Docker
+  include_role:
+    name: docker-ce
 
 - name: Update and upgrade apt packages
   become: yes
   apt:
     upgrade: "yes"
     update_cache: yes
+    # 10 min
+    cache_valid_time: 600
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
 
-- name: Install needed packages
+- name: Install required packages
   apt:
-    name: [docker-ce, python3-pip, nodejs, npm]
+    name: [python3-pip, nodejs, npm]
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
     update_cache: no
