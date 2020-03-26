@@ -11,9 +11,9 @@
 # https://github.com/ansible/awx/blob/devel/awxkit/awxkit/cli/docs/source/examples.rst#backuprestore
 # So for now we stick with tower-cli
 
-echo "Sending config from '/opt/ansible-playbooks/tools/awx/test_config.json'"
+echo "Sending config from '/opt/ansible-playbooks/tools/debug/test_config.json'"
 
-tower-cli send /opt/ansible-playbooks/tools/awx/test_config.json && echo "Done"
+tower-cli send /opt/ansible-playbooks/tools/debug/test_config.json && echo "Done"
 
 echo "Setting password for 'vagrant' user"
 tower-cli credential modify --name=vagrant --inputs='{"username": "vagrant", "password": "vagrant"}'

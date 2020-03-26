@@ -59,8 +59,8 @@ Vagrant.configure("2") do |config|
           /opt/ansible-playbooks/tools/awx/install_awx.py --batch-mode \\
             #{awx_version} #{docker_mirror_param} \\
             --project-data-folder /opt && \\
-          /opt/ansible-playbooks/tools/awx/configure_tower_cli.sh && \\
-          /opt/ansible-playbooks/tools/awx/set_test_config.sh
+          /opt/ansible-playbooks/tools/debug/configure_tower_cli.sh && \\
+          /opt/ansible-playbooks/tools/debug/set_test_config.sh
         SHELL
     end
   end
