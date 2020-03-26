@@ -27,8 +27,8 @@ def run_dialog(parameters):
 
 def load_roles():
     roles = []
-    for dir_entry in os.listdir("/ansible-playbooks"):
-        full_path = os.path.join("/ansible-playbooks", dir_entry)
+    for dir_entry in os.listdir("/opt/ansible-playbooks"):
+        full_path = os.path.join("/opt/ansible-playbooks", dir_entry)
         if os.path.isdir(full_path):
             role_info = read_role_info(dir_entry, full_path)
             if not role_info is None:
@@ -185,7 +185,7 @@ if current_group:
     config["hosts"][current_group] = current_hosts
     save_config()
 
-ansible_playbook_cmd = ["ansible-playbook", "/ansible-playbooks/run_role.yml",
+ansible_playbook_cmd = ["ansible-playbook", "/opt/ansible-playbooks/run_role.yml",
     "--extra-vars", f"role_name={current_role}"] + hosts_subset
 if len(current_role_vars) != 0:
     ansible_playbook_cmd += ["--extra-vars", json.dumps(current_role_vars)]

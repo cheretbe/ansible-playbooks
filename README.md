@@ -4,9 +4,9 @@
 
 ```shell
 ansible-playbook -i localhost, --connection=local --become \
-  /ansible-playbooks/run_role.yml --extra-vars "role_name=docker-ce"
+  ansible-playbooks/run_role.yml --extra-vars "role_name=docker-ce"
 
-/ansible-playbooks/tools/update_known_hosts.sh
+ansible-playbooks/tools/update_known_hosts.sh
 ```
 `ansible_virtualization_role`, `ansible_virtualization_type`
  * https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/facts/virtual/linux.py

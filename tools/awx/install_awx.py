@@ -2,6 +2,7 @@
 
 import time
 import sys
+import os
 import argparse
 import subprocess
 import packaging.version
@@ -33,7 +34,8 @@ if options.docker_mirror != "":
     extra_vars += f', "docker_ce_registry_mirrors": ["{options.docker_mirror}"]'
 if options.batch_mode:
     extra_vars += ', "ansible_awx_force_upgrade": True'
-subprocess.check_call(["ansible-playbook", "/ansible-playbooks/run_role.yml",
+subprocess.check_call(["ansible-playbook",
+    os.path.expanduser("~/ansible-playbooks/run_role.yml"),
     "--become", "--extra-vars", "{" + extra_vars + "}", "-i", "localhost,",
     "--connection=local"])
 

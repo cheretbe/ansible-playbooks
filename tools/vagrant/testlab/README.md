@@ -7,9 +7,9 @@ docker_mirror: "http://localhost:5000"
 ```
 
 ```shell
-/ansible-playbooks/tools/awx/install_awx.sh && \
-/ansible-playbooks/tools/awx/configure_tower_cli.sh && \
-/ansible-playbooks/tools/awx/set_test_config.sh
+~/ansible-playbooks/tools/awx/install_awx.sh && \
+~/ansible-playbooks/tools/awx/configure_tower_cli.sh && \
+~/ansible-playbooks/tools/awx/set_test_config.sh
 ```
 
 * https://github.com/adamrushuk/ansible-azure/blob/master/vagrant/scripts/configure_ansible_awx.sh

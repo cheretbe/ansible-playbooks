@@ -33,3 +33,8 @@ vagrant.user.public.key:
     - mode: 644
     - user: vagrant
     - group: vagrant
+
+git.repo.symlink:
+  file.symlink:
+    - name: /home/vagrant/ansible-playbooks
+    - target: /opt/ansible-playbooks
