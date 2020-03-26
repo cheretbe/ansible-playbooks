@@ -14,6 +14,9 @@ parser.add_argument("awx_version", nargs="?", default="7.0.0",
     help="AWX version to install (default: 7.0.0)")
 parser.add_argument("-m", "--docker-mirror", dest="docker_mirror",
     help="Local Docker registry mirror (e.g. localhost:5000)")
+parser.add_argument("-p", "--project-data-folder", dest="project_data_folder",
+    help="AWX project data folder (mounted as /var/lib/awx/projects in the "
+        "container")
 
 options = parser.parse_args()
 
@@ -30,10 +33,12 @@ if proc.returncode == 0:
         print(f"Upgrading AWX {version_str} to version {options.awx_version}", flush=True)
 
 extra_vars = f'"role_name": "ansible-awx-prerequisites", "ansible_awx_version": "{options.awx_version}"'
-if options.docker_mirror != "":
-    extra_vars += f', "docker_ce_registry_mirrors": ["{options.docker_mirror}"]'
 if options.batch_mode:
     extra_vars += ', "ansible_awx_force_upgrade": True'
+if options.docker_mirror != "":
+    extra_vars += f', "docker_ce_registry_mirrors": ["{options.docker_mirror}"]'
+if options.project_data_folder:
+    extra_vars += f', "ansible_awx_project_data_dir": "{options.project_data_folder}"'
 subprocess.check_call(["ansible-playbook",
     os.path.expanduser("~/ansible-playbooks/run_role.yml"),
     "--become", "--extra-vars", "{" + extra_vars + "}", "-i", "localhost,",
