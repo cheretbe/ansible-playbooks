@@ -3,3 +3,4 @@
 
 ansible_awx_version: "7.0.0"
 ansible_awx_force_upgrade: False
+ansible_awx_project_data_dir: False
