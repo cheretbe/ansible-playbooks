@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# set -euo pipefail
-
 . ~/virtenv/py3/bin/activate
+
+set -euo pipefail
 
 # tower-cli (https://github.com/ansible/tower-cli) is deprecated 
 # New official tool AWX CLI (https://github.com/ansible/awx/tree/devel/awxkit/awxkit/cli/docs)
@@ -11,16 +11,38 @@
 # https://github.com/ansible/awx/blob/devel/awxkit/awxkit/cli/docs/source/examples.rst#backuprestore
 # So for now we stick with tower-cli
 
-echo "Sending config from '/opt/ansible-playbooks/tools/debug/test_config.json'"
+# First 'tower-cli send' call almost always behaves weirdly: it fails showing
+# the message "Object is missing an asset type".
+# Obviously, project.json does contain an asset type.
+# Since the tool is deprecated, there is no much sense getting to the bottom of
+# the issue - we just repeat the call several times until it succeeds.
 
-tower-cli send /opt/ansible-playbooks/tools/debug/test_config.json && echo "Done"
+echo "Sending project from '/opt/ansible-playbooks/tools/debug/awx_objects/project.json'"
+for n in `seq 1 5`; do
+  if (tower-cli send /opt/ansible-playbooks/tools/debug/awx_objects/project.json); then
+    echo "Done"
+    break
+  fi
+  sleep 5
+  echo "Retrying"
+done
+
+echo "Sending credential from '/opt/ansible-playbooks/tools/debug/awx_objects/credential.json'"
+tower-cli send /opt/ansible-playbooks/tools/debug/awx_objects/credential.json
 
 echo "Setting password for 'vagrant' user"
 tower-cli credential modify --name=vagrant --inputs='{"username": "vagrant", "password": "vagrant"}'
 
-template_id=$(tower-cli job_template get setup_linux_server -f id)
+echo "Sending inventory from '/opt/ansible-playbooks/tools/debug/awx_objects/inventory.json'"
+tower-cli send /opt/ansible-playbooks/tools/debug/awx_objects/inventory.json
 
-current_cred_id=$(tower-cli job_template get setup_linux_server -f json | jq -r ".summary_fields.credentials[].id")
+echo "Sending job template from '/opt/ansible-playbooks/tools/debug/awx_objects/template.json'"
+tower-cli send /opt/ansible-playbooks/tools/debug/awx_objects/template.json
+
+echo "Setting credential for template 'check_if_reachable'"
+template_id=$(tower-cli job_template get check_if_reachable -f id)
+
+current_cred_id=$(tower-cli job_template get check_if_reachable -f json | jq -r ".summary_fields.credentials[].id")
 if [ ! -z "${current_cred_id}" ]; then
   echo "Diassociating credential ${current_cred_id} from job template ${template_id}"
   curl --silent --user admin:password -H 'Content-Type: application/json' -X POST \

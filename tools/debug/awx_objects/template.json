@@ -1,0 +1,38 @@
+[
+  {
+    "asset_type": "job_template",
+    "name": "check_if_reachable",
+    "inventory": "test_inventory",
+    "project": "ansible-playbooks",
+    "playbook": "check_if_reachable.yml",
+    "asset_relation": {
+      "survey_spec": {},
+      "notification_templates_error": [],
+      "notification_templates_success": [],
+      "schedules": [],
+      "labels": [],
+      "credentials": [
+        "vagrant"
+      ],
+      "roles": [
+        {
+          "name": "Admin",
+          "user": [
+            "admin"
+          ],
+          "team": []
+        },
+        {
+          "name": "Execute",
+          "user": [],
+          "team": []
+        },
+        {
+          "name": "Read",
+          "user": [],
+          "team": []
+        }
+      ]
+    }
+  }
+]
