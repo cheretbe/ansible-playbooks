@@ -13,6 +13,8 @@ end
 use_awx = false
 awx_version = ""
 docker_mirror_param = ""
+ansible_vm_memory = "4096"
+ansible_vm_cpus = "1"
 if File.file?("local-config.yml")
   local_config = YAML.load_file("local-config.yml")
   unless local_config.nil?
@@ -22,6 +24,8 @@ if File.file?("local-config.yml")
     unless docker_mirror_param.empty?
       docker_mirror_param = "--docker-mirror " + docker_mirror_param
     end
+    ansible_vm_memory = local_config.fetch("ansible_vm_memory", ansible_vm_memory)
+    ansible_vm_cpus = local_config.fetch("ansible_vm_cpus", ansible_vm_cpus)
   end
 end
 
@@ -29,8 +33,8 @@ Vagrant.configure("2") do |config|
   config.vm.define :ansible do |ansible|
     ansible.vm.box = "ubuntu/bionic64"
     ansible.vm.provider "virtualbox" do |vb|
-      vb.memory = "6144"
-      vb.cpus = "2"
+      vb.memory = ansible_vm_memory
+      vb.cpus = ansible_vm_cpus
       vb.customize ["modifyvm", :id, "--groups", "/__vagrant"]
       # prevent 'ubuntu-xenial-16.04-cloudimg-console.log' file creation
       # https://groups.google.com/forum/#!topic/vagrant-up/eZljy-bddoI

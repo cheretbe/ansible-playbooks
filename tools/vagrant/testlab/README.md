@@ -4,6 +4,8 @@
 use_awx: true
 awx_version: 7.0.0
 docker_mirror: "http://localhost:5000"
+ansible_vm_memory: "6144"
+ansible_vm_cpus: "2"
 ```
 
 ```shell
