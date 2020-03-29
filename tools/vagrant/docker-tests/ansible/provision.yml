@@ -6,6 +6,13 @@
 
   tasks:
     - include_role: name="/ansible-playbooks/linux-utils"
+    - include_role: name="/ansible-playbooks/docker-ce"
+
+    - name: Add user 'vagrant' to group 'docker'
+      user:
+        name: vagrant
+        groups: docker
+        append: yes
 
     - name: Install 'python3-pip' package
       apt:
