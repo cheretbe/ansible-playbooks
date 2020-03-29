@@ -1,0 +1,19 @@
+---
+
+- name: Molecule test VM provision
+  hosts: all
+  become: yes
+
+  tasks:
+    - include_role: name="/ansible-playbooks/linux-utils"
+
+    - name: Install 'python3-pip' package
+      apt:
+        name: "python3-pip"
+        # Fix for warning message "Could not find aptitude. Using apt-get instead"
+        force_apt_get: yes
+        update_cache: no
+
+    - name: Install PIP packages
+      pip:
+        name: [molecule, docker]
