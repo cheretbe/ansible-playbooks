@@ -1,3 +1,14 @@
+require "yaml"
+
+docker_mirrors = []
+if File.file?("local-config.yml")
+  local_config = YAML.load_file("local-config.yml")
+  unless local_config.nil?
+    docker_mirrors = local_config.fetch("docker_mirrors", docker_mirrors)
+  end
+end
+
+
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/bionic64"
   config.vm.provider "virtualbox" do |vb|
@@ -14,7 +25,8 @@ Vagrant.configure("2") do |config|
     ansible.playbook = "ansible/provision.yml"
     ansible.compatibility_mode = "2.0"
     ansible.extra_vars = {
-      "ansible_python_interpreter": "/usr/bin/python3"
+      "ansible_python_interpreter": "/usr/bin/python3",
+      "docker_ce_registry_mirrors": docker_mirrors
     }
   end
 end
