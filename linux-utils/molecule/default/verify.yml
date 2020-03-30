@@ -1,0 +1,21 @@
+---
+- name: Verify
+  hosts: all
+  tasks:
+
+  - name: Set package names to check
+    set_fact:
+      package_names: ["mc", "htop", "net-tools", "ncdu", "wget", "git", "nano",
+        "traceroute", "colordiff", "jq", "pv",
+        "{% if ansible_os_family == 'Debian' %}dnsutils{% else %}bind-utils{% endif %}",
+        "{% if ansible_os_family == 'Debian' %}mtr-tiny{% else %}mtr{% endif %}"
+      ]
+
+  - name: Gather package facts
+    package_facts:
+      manager: auto
+
+  - name: Ensure all packages are installed
+    assert:
+          that: "('{{ item }}' in ansible_facts.packages) | bool"
+    loop: "{{ package_names }}"
