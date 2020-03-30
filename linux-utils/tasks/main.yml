@@ -2,7 +2,7 @@
 # tasks file for linux-utils
 
 - name: Install APT packages
-  apt: 
+  apt:
     name:
       - mc
       - htop
@@ -15,7 +15,6 @@
       - nano
       - traceroute
       - colordiff
-      - net-tools
       - jq
       - pv
     update_cache: yes
@@ -37,7 +36,6 @@
       - nano
       - traceroute
       - colordiff
-      - net-tools
       - jq
       - pv
     state: present
