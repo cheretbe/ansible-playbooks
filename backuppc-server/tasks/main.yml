@@ -197,7 +197,9 @@
 
   - name: "Download BackupPC-XS {{ backuppc_server_backuppc_xs_version }}"
     get_url:
-      url: "https://github.com/backuppc/backuppc-xs/releases/download/{{ backuppc_server_backuppc_xs_version }}/BackupPC-XS-{{ backuppc_server_backuppc_xs_version }}.tar.gz"
+      url: "https://github.com/backuppc/backuppc-xs/releases/download/\
+             {{ backuppc_server_backuppc_xs_version }}/\
+             BackupPC-XS-{{ backuppc_server_backuppc_xs_version }}.tar.gz"
       dest: "{{ backuppc_server_temp.path }}"
     when: install_backuppc_xc
 
@@ -217,7 +219,9 @@
 
   - name: "Download Rsync-bpc {{ backuppc_server_rsync_bpc_version }}"
     get_url:
-      url: "https://github.com/backuppc/rsync-bpc/releases/download/{{ backuppc_server_rsync_bpc_version }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
+      url: "https://github.com/backuppc/rsync-bpc/releases/download/\
+             {{ backuppc_server_rsync_bpc_version }}/\
+             rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
       dest: "{{ backuppc_server_temp.path }}"
     when: install_rsync_bpc
 
@@ -254,7 +258,7 @@
         ./configure.pl --batch --cgi-dir /var/www/cgi-bin/BackupPC
         --data-dir /var/lib/backuppc
         --hostname {{ backuppc_server_host_name | default(ansible_fqdn) }}
-        --html-dir /var/www/html/BackupPC --html-dir-url /BackupPC 
+        --html-dir /var/www/html/BackupPC --html-dir-url /BackupPC
         --install-dir /usr/local/BackupPC
         --backuppc-user={{ backuppc_server_user_name }}
     when: install_backuppc and (not backuppc_upgrade_mode)
@@ -293,7 +297,7 @@
     become: true
     when: not backuppc_conf_info.stat.exists
 
-  - name: "Remove temporary directory {{ backuppc_server_temp.path | default('')}}"
+  - name: "Remove temporary directory {{ backuppc_server_temp.path | default('') }}"
     file:
       state: absent
       path: "{{ backuppc_server_temp.path }}"
