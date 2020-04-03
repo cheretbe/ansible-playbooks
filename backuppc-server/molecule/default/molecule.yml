@@ -1,0 +1,35 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+lint: |
+    set -e
+    yamllint .
+    # 305: Use shell only when shell functionality is required
+    ansible-lint -x 305
+    flake8
+platforms:
+  - name: ubuntu-bionic
+    image: "percygrunwald/docker-ubuntu1804-ansible:latest"
+    privileged: true
+    pre_build_image: true
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+provisioner:
+  name: ansible
+  playbooks:
+    prepare: ../common/playbooks/prepare.yml
+
+verifier:
+  name: testinfra
+  directory: ../common/tests/
+  env:
+    # EXPECTED_BACKUPPC_VERSION: 4.3.0
+    EXPECTED_BACKUPPC_VERSION: latest
+  options:
+    # These are actually pytest parameters (testinfra is a pytest plugin)
+    v: 2
+    # k: dummy
+    s: True

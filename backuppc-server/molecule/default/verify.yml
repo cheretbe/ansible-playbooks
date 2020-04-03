@@ -1,0 +1,15 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+
+  tasks:
+  - name: Populate service facts
+    service_facts:
+
+  - name: Check if backuppc service is enabled and running
+    assert:
+      that:
+        - ansible_facts.services['backuppc.service'].state == 'running'
+        - ansible_facts.services['backuppc.service'].status == 'enabled'
