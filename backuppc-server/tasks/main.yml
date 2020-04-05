@@ -183,6 +183,7 @@
 
   - name: Populate service facts
     service_facts:
+    become: True
 
   - name: Check if 'backuppc' service is present
     set_fact:
