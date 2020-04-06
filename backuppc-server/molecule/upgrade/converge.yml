@@ -1,0 +1,63 @@
+---
+- name: Converge
+  hosts: all
+
+  tasks:
+    - name: Check that if BackupPC is already installed
+      stat:
+        path: /usr/local/BackupPC/bin/BackupPC
+      register: converge_bin_stat_result
+
+    - name: Skip version 3.2.0 check
+      set_fact:
+        converge_check_3_2_0: "{{ False if converge_bin_stat_result.stat.exists else True }}"
+
+- name: Install version 4.3.0
+  vars:
+    ansible_user: ansible
+    backuppc_server_version: 4.3.0
+  import_playbook: ../../../backuppc_server_setup.yml
+
+- name: Upgrade
+  hosts: all
+  vars:
+    ansible_user: ansible
+
+  tasks:
+    - name: "Get BackupPC status"
+      uri:
+        url: http://localhost/BackupPC_Admin
+        return_content: yes
+        user: backuppc
+        password: backuppc
+      register: backuppc_status
+
+    - name: "Check if version 4.3.0 has been installed correctly"
+      assert:
+        that:
+          - "'version 4.3.0' in backuppc_status.content"
+      when: "converge_check_3_2_0"
+
+    - name: Read original values for defaults
+      include_vars:
+        file: ../../defaults/main.yml
+        name: original_defaults
+    - name: Reset original values for defaults
+      set_fact: {"{{ item.key }}": "{{ item.value }}"}
+      loop: "{{ original_defaults|dict2items }}"
+
+    - name: Read original values for vars
+      include_vars:
+        file: ../../vars/main.yml
+        name: original_vars
+    - name: Reset original values for vars
+      set_fact: {"{{ item.key }}": "{{ item.value }}"}
+      loop: "{{ original_vars|dict2items }}"
+
+    - name: "Set backuppc version to 'latest'"
+      set_fact:
+        backuppc_server_version: latest
+
+    - name: "Upgrade backuppc-server to the latest version"
+      include_role:
+        name: "backuppc-server"
