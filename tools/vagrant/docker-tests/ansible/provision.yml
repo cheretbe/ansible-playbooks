@@ -23,4 +23,5 @@
 
     - name: Install PIP packages
       pip:
-        name: ["molecule[docker]", "docker", "ansible-lint", "flake8", "testinfra"]
+        name: ["molecule[docker]", "docker", "ansible-lint", "flake8",
+               "testinfra", "invoke"]
