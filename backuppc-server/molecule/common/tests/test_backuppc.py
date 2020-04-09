@@ -32,4 +32,5 @@ def test_backuppc_status_page(host):
             "curl -u backuppc:backuppc "
             "-s http://localhost/BackupPC_Admin | grep -q "
             "'%s'", version_to_check
-        ).rc == 0
+        ).rc == 0, \
+        f"Could not find version string '{version_to_check}'"

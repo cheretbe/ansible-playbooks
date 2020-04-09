@@ -14,6 +14,20 @@ def test_regular(context):
 
 
 @invoke.task
+def test_upgrade(context):
+    """Test regular role run and then an upgrade"""
+    context.run("molecule destroy -s default")
+    context.run("molecule converge -s default", env={"TEST_BACKUPPC_VERSION": "4.3.0"})
+    context.run("molecule idempotence -s default", env={"TEST_BACKUPPC_VERSION": "4.3.0"})
+    context.run("molecule verify -s default", env={"EXPECTED_BACKUPPC_VERSION": "4.3.0"})
+
+    context.run("molecule converge -s default")
+    context.run("molecule idempotence -s default")
+    context.run("molecule verify -s default", env={"EXPECTED_BACKUPPC_VERSION": "latest"})
+    context.run("molecule destroy -s default")
+
+
+@invoke.task
 def test_failing(context):
     """Test the role failing on non-supported platform"""
     context.run("molecule destroy -s failing")

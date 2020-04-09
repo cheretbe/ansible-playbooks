@@ -3,7 +3,8 @@
   hosts: all
   vars:
     ansible_user: ansible
-    # backuppc_server_version: 4.3.0
+    # https://nikhilism.com/post/2016/understanding-ansible-jinja2-default-filter/
+    backuppc_server_version: "{{ lookup('env','TEST_BACKUPPC_VERSION') | default('latest', true) }}"
   tasks:
     - name: "Include backuppc-server"
       include_role:

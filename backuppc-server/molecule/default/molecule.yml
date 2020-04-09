@@ -27,9 +27,9 @@ verifier:
   directory: ../common/tests/
   env:
     # EXPECTED_BACKUPPC_VERSION: 4.3.0
-    EXPECTED_BACKUPPC_VERSION: latest
+    EXPECTED_BACKUPPC_VERSION: ${EXPECTED_BACKUPPC_VERSION:-latest}
   options:
     # These are actually pytest parameters (testinfra is a pytest plugin)
-    v: 2
+    v: true
     # k: dummy
-    s: True
+    # s: true
