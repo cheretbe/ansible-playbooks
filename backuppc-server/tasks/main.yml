@@ -1,6 +1,11 @@
 ---
 # tasks file for backuppc-server
 
+- name: Check distribution
+  fail:
+    msg: "Only Ubuntu 18.04 is supported at the moment"
+  when: not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "18.04")
+
 - name: Install dependencies
   apt:
     name:  ["apache2", "apache2-utils", "libapache2-mod-perl2", "smbclient",
