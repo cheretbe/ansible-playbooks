@@ -16,8 +16,6 @@ provisioner:
   playbooks:
     prepare: ${PREPARE_PLAYBOOK}
 verifier:
-  name: ansible
-verifier:
   name: testinfra
   # directory: ../common/tests/
   file: tests/test_1.py

@@ -1,0 +1,13 @@
+- name: Set up test environment
+  hosts: all
+
+  tasks:
+    - name: Make sure /var/lib/backuppc does not exist
+      file:
+        state: absent
+        path: /var/lib/backuppc
+
+    - name: Make sure /custom/data/dir does not exist
+      file:
+        state: absent
+        path: /custom/data/dir
