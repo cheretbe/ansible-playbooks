@@ -1,6 +1,0 @@
-- name: Set up test environment
-  hosts: all
-
-  tasks:
-    - debug:
-        msg: "there you go"

@@ -40,10 +40,33 @@ def test_data_directory(context):
     context.run(
                 "molecule test -s data-dir",
                 env={
-                    "PREPARE_PLAYBOOK": "prepare1.yml",
-                    "TESTINFRA_FILTER": "test_dummy1"
+                    "PREPARE_PLAYBOOK": "prepare_no_backuppc_dir.yml",
+                    "TESTINFRA_FILTER": "test_no_custom_dir"
                     }
                 )
+    context.run(
+                "molecule test -s data-dir",
+                env={
+                    "PREPARE_PLAYBOOK": "prepare_no_backuppc_dir_custom_data_dir.yml",
+                    "TEST_DATA_DIR": "/custom/data/dir",
+                    "TESTINFRA_FILTER": "test_custom_dir"
+                    }
+                )
+    run_result = context.run(
+                "molecule test -s data-dir",
+                warn=True,
+                env={
+                    "PREPARE_PLAYBOOK": "prepare_backuppc_dir_wrong_symlink.yml",
+                    "TEST_DATA_DIR": "/custom/data/dir",
+                    "TESTINFRA_FILTER": "test_custom_dir"
+                    }
+                )
+    assert (run_result.return_code != 0), \
+        "Molecule converge call is expected to fail"
+    assert any("/var/lib/backuppc exists and is not linked to /custom/data/dir. Please fix the symlink before continuing." in s
+               for s in run_result.stderr.splitlines()
+               ), \
+        "Unexpected error message"
 
 
 @invoke.task
