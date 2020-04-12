@@ -1,0 +1,43 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: ubuntu-bionic
+    image: "percygrunwald/docker-ubuntu1804-ansible:latest"
+    privileged: true
+    pre_build_image: true
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+provisioner:
+  name: ansible
+  playbooks:
+    prepare: ${PREPARE_PLAYBOOK}
+verifier:
+  name: ansible
+verifier:
+  name: testinfra
+  # directory: ../common/tests/
+  file: tests/test_1.py
+  options:
+    # These are actually pytest parameters (testinfra is a pytest plugin)
+    v: true
+    k: ${TESTINFRA_FILTER}
+    # s: true
+scenario:
+  test_sequence:
+    # - dependency
+    # - lint
+    # - cleanup
+    - destroy
+    # - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    # - cleanup
+    - destroy

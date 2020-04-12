@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_user: ansible
+    backuppc_server_data_directory_test: true
+    # https://nikhilism.com/post/2016/understanding-ansible-jinja2-default-filter/
+    backuppc_server_custom_data_dir: "{{ lookup('env','TEST_DATA_DIR') | default(None, true) }}"
+  tasks:
+    - name: "Include backuppc-server"
+      include_role:
+        name: "backuppc-server"

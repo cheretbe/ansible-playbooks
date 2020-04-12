@@ -34,6 +34,17 @@ def test_upgrade(context):
                 )
     context.run("molecule destroy -s default")
 
+@invoke.task
+def test_data_directory(context):
+    """Test data directory creation"""
+    context.run(
+                "molecule test -s data-dir",
+                env={
+                    "PREPARE_PLAYBOOK": "prepare1.yml",
+                    "TESTINFRA_FILTER": "test_dummy1"
+                    }
+                )
+
 
 @invoke.task
 def test_failing(context):
@@ -51,6 +62,6 @@ def test_failing(context):
     context.run("molecule destroy -s failing")
 
 
-@invoke.task(test_regular, test_failing)
+@invoke.task(test_regular, test_data_directory, test_failing)
 def test(context):
     """Run all tests"""
