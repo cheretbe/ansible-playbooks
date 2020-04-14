@@ -15,11 +15,14 @@ platforms:
   - name: centos-8
     image: pycontribs/centos:8
     pre_build_image: true
+  - name: ubuntu-focal
+    image: geerlingguy/docker-ubuntu2004-ansible
+    pre_build_image: true
   - name: ubuntu-bionic
-    image: percygrunwald/docker-ubuntu1804-ansible:latest
+    image: geerlingguy/docker-ubuntu1804-ansible
     pre_build_image: true
   - name: ubuntu-xenial
-    image: percygrunwald/docker-ubuntu1604-ansible:latest
+    image: geerlingguy/docker-ubuntu1604-ansible
     pre_build_image: true
 provisioner:
   name: ansible
