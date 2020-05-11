@@ -6,25 +6,43 @@
     msg: "Only Ubuntu 18.04 and 16.04 are supported at the moment"
   when: not (ansible_distribution == "Ubuntu" and (ansible_distribution_release == "bionic" or ansible_distribution_release == "xenial"))
 
-- name: Add Zabbix repository key
-  apt_key:
-    url: http://repo.zabbix.com/zabbix-official-repo.key
-    state: present
-
-- name: Add Zabbix repository
-  apt_repository:
-    repo: deb http://repo.zabbix.com/zabbix/{{ zabbix_repo_version }}/ubuntu {{ ansible_distribution_release }} main
-    state: present
-
-- name: Add Zabbix repository (sources)
-  apt_repository:
-    repo: deb-src http://repo.zabbix.com/zabbix/{{ zabbix_repo_version }}/ubuntu {{ ansible_distribution_release }} main
-    state: present
-
 - name: Update and upgrade apt packages
-  become: yes
   apt:
     upgrade: "yes"
     update_cache: yes
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
+  become: true
+
+- name: Install gpg-agent package
+  apt:
+    name:  ["gpg-agent"]
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+    update_cache: no
+  become: true
+
+- name: Add Zabbix repository key
+  apt_key:
+    url: http://repo.zabbix.com/zabbix-official-repo.key
+    state: present
+  become: true
+
+- name: Add Zabbix repository
+  apt_repository:
+    repo: deb http://repo.zabbix.com/zabbix/{{ zabbix_repo_version }}/ubuntu {{ ansible_distribution_release }} main
+    state: present
+  become: true
+
+- name: Add Zabbix repository (sources)
+  apt_repository:
+    repo: deb-src http://repo.zabbix.com/zabbix/{{ zabbix_repo_version }}/ubuntu {{ ansible_distribution_release }} main
+    state: present
+  become: true
+
+- name: Update apt package list
+  apt:
+    update_cache: yes
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    force_apt_get: yes
+  become: true
