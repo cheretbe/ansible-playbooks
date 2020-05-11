@@ -1,11 +1,6 @@
 ---
 # tasks file for zabbix-repo
 
-- name: Check distribution
-  fail:
-    msg: "Only Ubuntu 18.04 and 16.04 are supported at the moment"
-  when: not (ansible_distribution == "Ubuntu" and (ansible_distribution_release == "bionic" or ansible_distribution_release == "xenial"))
-
 - name: Update and upgrade apt packages
   apt:
     upgrade: "yes"
