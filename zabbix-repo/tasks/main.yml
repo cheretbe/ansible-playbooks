@@ -9,6 +9,11 @@
     force_apt_get: yes
   become: true
 
+# Convert repo version variable to a fact, so that other roles could use it
+- name: Set Zabbix version fact
+  set_fact:
+    zabbix_repo_version: "{{ zabbix_repo_version }}"
+
 - name: Install gpg-agent package
   apt:
     name:  ["gpg-agent"]
