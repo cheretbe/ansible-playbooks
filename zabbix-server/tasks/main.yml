@@ -1,56 +1,80 @@
 ---
 # tasks file for zabbix-server
 
+- name: Check distribution
+  assert:
+    fail_msg: "Only Ubuntu 18.04 and 20.04 are supported"
+    that:
+      - ansible_distribution == "Ubuntu"
+      - ansible_distribution_release in ["bionic", "focal"]
+
+- name: Set common package names list
+  set_fact:
+    zabbix_server_packages: ["zabbix-server-mysql", "zabbix-frontend-php", "zabbix-agent"]
+
+- name: Set additional package names for Zabbix 4.4+
+  set_fact:
+    zabbix_server_packages: "{{ zabbix_server_packages }} + ['zabbix-apache-conf']"
+  when: "zabbix_repo_version is version('4.4', '>=')"
+
+- name: Update PIP version for Python 2
+  set_fact:
+    zabbix_server_pip: pip
+    zabbix_server_pip_package_name: python-pip
+  when: ansible_python.version_info[0] == "2"
+
 - name: Set PIP package name
   set_fact:
-    pip_package_name: "{{ (ansible_python.version_info[0] == '3') | ternary('python3-pip', 'python-pip') }}"
+    zabbix_server_packages: "{{ zabbix_server_packages }} + ['{{ zabbix_server_pip_package_name }}']"
 
 - name: Install needed packages
   apt:
-    name:  ["apache2", "libapache2-mod-php", "php", "php-pear", "php-cgi",
-            "php-common", "libapache2-mod-php", "php-mbstring", "php-net-socket",
-            "php-gd", "php-mysql", "php-gettext", "php-bcmath", "mariadb-server",
-            "{{ pip_package_name }}",
-
-            "zabbix-server-mysql", "zabbix-frontend-php", "zabbix-agent",
-            "zabbix-get"]
+    name: "{{ zabbix_server_packages }}"
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
     update_cache: no
+  become: true
 
 # The following will not work on CentOS
 # https://stackoverflow.com/questions/12521114/getting-the-canonical-time-zone-name-in-shell-script
 - name: Get current timezone
-  shell: cat /etc/timezone
+  command: cat /etc/timezone
   changed_when: false
   register: zabbix_server_timezone
 
-- name: Config timezone for PHP
+- name: Set timezone for PHP
   ini_file:
     path: "{{ zabbix_server_apache2_php_ini_path[ansible_distribution_release] }}"
     section: Date
     option: date.timezone
     value: "{{ zabbix_server_timezone.stdout_lines[0] }}"
-    backup: True
+    backup: true
+  become: true
 
-- name: Write custom '/etc/zabbix/apache.conf'
-  template:
-    src: apache.conf.j2
+- name: Set timezone in '/etc/zabbix/apache.conf'
+  lineinfile:
     dest: /etc/zabbix/apache.conf
-    owner: root
-    group: root
-    mode: 0644
-  register: zabbix_server_apache_conf
+    regexp: "^        # php_value date.timezone"
+    line: "        php_value date.timezone {{ zabbix_server_timezone.stdout_lines[0] }}"
+    backup: true
+    backrefs: true
+  become: true
+  loop: [1, 2]
+  notify: Restart apache2 service
 
-- name: Reload apache2 config
-  systemd:
-    name: apache2
-    state: reloaded
-  when: zabbix_server_apache_conf.changed
-
+# This package is required by mysql_db module
 - name: Install Python PyMySQL package
   pip:
     name: PyMySQL
+    executable: "{{ zabbix_server_pip }}"
+  become: true
+
+- name: Enable and start 'mysql' service
+  systemd:
+    name: mysql
+    state: started
+    enabled: yes
+  become: true
 
 - name: "Create MySQL database '{{ zabbix_server_db_name }}'"
   mysql_db:
@@ -60,6 +84,7 @@
     collation: utf8_bin
     login_unix_socket: /var/run/mysqld/mysqld.sock
   register: zabbix_server_db_create
+  become: true
 
 - name: "Grant access to '{{ zabbix_server_db_user }}' on '{{ zabbix_server_db_name }}'"
   mysql_user:
@@ -69,19 +94,33 @@
     priv: "{{ zabbix_server_db_name }}.*:ALL"
     state: present
     login_unix_socket: /var/run/mysqld/mysqld.sock
+  no_log: true
 
-- name: Create Zabbix DB structure
-  shell:  "/bin/zcat /usr/share/doc/zabbix-server-mysql/create.sql.gz | /usr/bin/mysql -u {{ zabbix_server_db_user }} -p{{ zabbix_server_db_password }} {{ zabbix_server_db_name }}"
+- name: Create Zabbix DB structure # noqa503 (disable conversion to a handler suggestion)
+  shell: >-
+    set -o pipefail;
+    /bin/zcat /usr/share/doc/zabbix-server-mysql/create.sql.gz |
+    /usr/bin/mysql -u {{ zabbix_server_db_user }}
+    -p{{ zabbix_server_db_password }} {{ zabbix_server_db_name }}
   when: zabbix_server_db_create.changed
+  args:
+    executable: /bin/bash
 
-- name: Write custom '/etc/zabbix/zabbix_server.conf'
-  template:
-    src: zabbix_server.conf.j2
-    dest: /etc/zabbix/zabbix_server.conf
-    owner: root
-    group: root
-    mode: 0644
-  register: zabbix_server_conf
+- name: Set options in '/etc/zabbix/zabbix_server.conf'
+  ini_file:
+    path: /etc/zabbix/zabbix_server.conf
+    section: null
+    option: "{{ item.key }}"
+    value: "{{ item.value }}"
+    backup: true
+  become: true
+  with_dict: {
+    "DBName": "{{ zabbix_server_db_name }}",
+    "DBUser": "{{ zabbix_server_db_user }}",
+    "DBPassword": "{{ zabbix_server_db_password }}"
+  }
+  no_log: true
+  notify: Restart zabbix-server service
 
 - name: Auto-finish GUI configuration wizard
   template:
@@ -90,23 +129,14 @@
     owner: www-data
     group: www-data
     mode: 0644
-  register: zabbix_server_gui
   when: zabbix_server_finish_gui_wizard
+  become: true
+  notify: Restart zabbix-server service
 
-- name: Restart 'zabbix-server' service
+- name: Enable and start 'zabbix-server' and 'zabbix-agent' services
   systemd:
-    name: zabbix-server
-    state: restarted
-  when: zabbix_server_conf.changed or zabbix_server_gui.changed
-
-- name: Enable and start 'zabbix-server' service
-  systemd:
-    name: zabbix-server
+    name: "{{ item }}"
     state: started
     enabled: yes
-
-- name: Enable and start 'zabbix-agent' service
-  systemd:
-    name: zabbix-agent
-    state: started
-    enabled: yes
+  become: true
+  with_items: ["zabbix-server", "zabbix-agent"]

@@ -1,6 +1,6 @@
 ---
 
-zabbix_server_db_name: zabbixdb
-zabbix_server_db_user: zabbixuser
+zabbix_server_db_name: zabbix
+zabbix_server_db_user: zabbix
 zabbix_server_db_password: Password
 zabbix_server_finish_gui_wizard: true

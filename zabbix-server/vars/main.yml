@@ -1,7 +1,12 @@
 ---
 
 zabbix_server_apache2_php_ini_path:
-  bionic:
-    "/etc/php/7.2/apache2/php.ini"
   xenial:
     "/etc/php/7.0/apache2/php.ini"
+  bionic:
+    "/etc/php/7.2/apache2/php.ini"
+  focal:
+    "/etc/php/7.4/apache2/php.ini"
+
+zabbix_server_pip: "pip3"
+zabbix_server_pip_package_name: "python3-pip"
