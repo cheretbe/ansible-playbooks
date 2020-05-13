@@ -95,6 +95,7 @@
     state: present
     login_unix_socket: /var/run/mysqld/mysqld.sock
   no_log: true
+  become: true
 
 - name: Create Zabbix DB structure # noqa503 (disable conversion to a handler suggestion)
   shell: >-
@@ -105,6 +106,7 @@
   when: zabbix_server_db_create.changed
   args:
     executable: /bin/bash
+  become: true
 
 - name: Set options in '/etc/zabbix/zabbix_server.conf'
   ini_file:
