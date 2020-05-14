@@ -1,0 +1,56 @@
+---
+- name: Prepare
+  hosts: all
+
+  tasks:
+  - name: "Add 'ansible' user "
+    user:
+      name: ansible
+
+  - name: Allow passwordless sudo call for 'ansible' user
+    copy:
+      dest: "/etc/sudoers.d/ansible"
+      content: |
+        ansible ALL=(ALL) NOPASSWD: ALL
+      owner: root
+      group: root
+      mode: u=rw,g=r,o-rwx
+
+  - name: "Check if '/etc/dpkg/dpkg.cfg.d/excludes' exists"
+    stat:
+      path: /etc/dpkg/dpkg.cfg.d/excludes
+    register: dpkg_excludes_info
+
+  - name: Enable create.sql.gz installation
+    lineinfile: 
+      dest: /etc/dpkg/dpkg.cfg.d/excludes
+      # insertafter: "^path-exclude=/usr/share/doc/\\*"
+      line: "path-include=/usr/share/doc/zabbix-server-mysql/create.sql.gz"
+    when: dpkg_excludes_info.stat.exists
+
+  - name: Install curl package
+    apt:
+      name: curl
+      update_cache: yes
+    become: true
+
+  - name: Apply mariadb service startup fix for Ubuntu 20.04
+    block:
+      - name: Install mariadb-server package
+        apt:
+          name: mariadb-server
+        become: true
+
+      - name: Apply mariadb service startup fix
+        ini_file:
+          path: /lib/systemd/system/mariadb.service
+          section: Service
+          option: SendSIGKILL
+          value: "yes"
+          backup: true
+        become: true
+
+      - name: Reload the systemd manager configuration
+        command: systemctl daemon-reload
+        become: true
+    when: ansible_distribution == "Ubuntu" and ansible_distribution_release == "focal"

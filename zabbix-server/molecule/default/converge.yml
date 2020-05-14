@@ -1,0 +1,17 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_user: ansible
+
+  tasks:
+    - set_fact:
+        zabbix_repo_version: "{{ lookup('env','TEST_ZABBIX_VERSION') }}"
+      when: lookup('env','TEST_ZABBIX_VERSION') != ''
+
+    - name: "Include zabbix-repo"
+      include_role:
+        name: "zabbix-repo"
+    - name: "Include zabbix-server"
+      include_role:
+        name: "zabbix-server"

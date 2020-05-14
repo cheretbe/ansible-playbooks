@@ -1,0 +1,41 @@
+---
+dependency:
+  name: galaxy
+
+driver:
+  name: docker
+
+lint: |
+    set -e
+    yamllint .
+    ansible-lint
+    flake8
+
+platforms:
+  - name: ubuntu-bionic
+    image: "geerlingguy/docker-ubuntu1804-ansible"
+    privileged: true
+    pre_build_image: true
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: ubuntu-focal
+    image: "geerlingguy/docker-ubuntu2004-ansible"
+    privileged: true
+    pre_build_image: true
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+
+provisioner:
+  name: ansible
+
+verifier:
+  name: testinfra
+  directory: ../tests/
+  env:
+    EXPECTED_ZABBIX_VERSION: "${EXPECTED_ZABBIX_VERSION:-5.0}"
+  options:
+    # These are actually pytest parameters (testinfra is a pytest plugin)
+    v: true
+    # s: true
