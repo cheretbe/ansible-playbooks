@@ -5,9 +5,13 @@
     ansible_user: ansible
 
   tasks:
-    - set_fact:
+    - name: Set Zabbix version fact
+      set_fact:
         zabbix_repo_version: "{{ lookup('env','TEST_ZABBIX_VERSION') }}"
-      when: lookup('env','TEST_ZABBIX_VERSION') != ''
+      # [602] Don't compare to empty string
+      # Not sure what to use instead
+      # https://github.com/ansible/ansible-lint/issues/457
+      when: lookup('env','TEST_ZABBIX_VERSION') != '' # noqa602
 
     - name: "Include zabbix-repo"
       include_role:

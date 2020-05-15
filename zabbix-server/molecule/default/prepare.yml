@@ -22,9 +22,8 @@
     register: dpkg_excludes_info
 
   - name: Enable create.sql.gz installation
-    lineinfile: 
+    lineinfile:
       dest: /etc/dpkg/dpkg.cfg.d/excludes
-      # insertafter: "^path-exclude=/usr/share/doc/\\*"
       line: "path-include=/usr/share/doc/zabbix-server-mysql/create.sql.gz"
     when: dpkg_excludes_info.stat.exists
 
@@ -51,6 +50,7 @@
         become: true
 
       - name: Reload the systemd manager configuration
-        command: systemctl daemon-reload
+        systemd:
+          daemon_reload: yes
         become: true
     when: ansible_distribution == "Ubuntu" and ansible_distribution_release == "focal"
