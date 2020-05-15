@@ -16,6 +16,11 @@ def test_default_version(context):
     print(f"Invoke: === {test_default_version.__doc__} ===")
     context.run("molecule test")
 
+# Installation of 4.0 on Ubuntu 20.04 is broken. DB schema creation fails with
+# the message:
+# ERROR 1118 (42000) at line 1278: Row size too large (> 8126)
+# The workaround (in case version 4.0 support becomes necessary):
+# https://support.zabbix.com/browse/ZBX-16465?focusedCommentId=373359&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#comment-373359 # noqa: E501
 
 # @invoke.task
 # def test_version_4_0(context):
