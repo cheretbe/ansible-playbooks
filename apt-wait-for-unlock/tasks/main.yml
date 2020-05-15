@@ -1,0 +1,13 @@
+---
+# tasks file for apt-wait-for-unlock
+
+- name: Make sure dpkg frontend lock is released
+  command: lsof /var/lib/dpkg/lock-frontend
+  register: result
+  failed_when: false
+  changed_when: false
+  until: result.rc != 0
+  retries: 20
+  delay: 10
+  become: true
+  when: ansible_os_family == "Debian"
