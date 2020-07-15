@@ -1,0 +1,39 @@
+---
+# tasks file for win-scheduled-command-wrapper
+
+- name: Check if password variable is defined
+  fail:
+    msg: "Variable 'win_scheduled_command_wrapper_password' must be defined"
+  when: not win_scheduled_command_wrapper_password is defined
+
+- name: Create temporary directory
+  win_tempfile:
+    state: directory
+    suffix: scheduled
+  register: task_temp_dir
+
+# - debug: var=win_scheduled_command_wrapper_password
+# - debug: var=task_temp_dir.path
+
+- name: Upload temporary wrapper script
+  win_copy:
+    src: run_scheduled_command.ps1
+    dest: "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"
+
+- name: Create scheduled task
+  win_scheduled_task:
+    name: TaskName2
+    description: Run a PowerShell script
+    actions:
+    - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
+      arguments: '-ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\run_scheduled_command.ps1"'
+    username: vagrant
+    password: "{{ win_scheduled_command_wrapper_password }}"
+    logon_type: password
+    run_level: highest
+    state: present
+
+# - name: Remove temporary directory if still exists
+#   win_file:
+#     path: "{{ task_temp_dir.path }}"
+#     state: absent
