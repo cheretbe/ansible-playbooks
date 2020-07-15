@@ -1,0 +1,11 @@
+---
+
+- name: Test VM provision
+  hosts: all
+
+  tasks:
+    # - name: Print host information
+    #   debug:
+    #     msg: "{{ ansible_fqdn }}: {{ ansible_distribution }} {{ ansible_distribution_version}}"
+
+    - include_role: name="../../../win-scheduled-command-wrapper"
