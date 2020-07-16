@@ -9,20 +9,29 @@
 - name: Create temporary directory
   win_tempfile:
     state: directory
-    suffix: scheduled
   register: task_temp_dir
+
+- name: Generate scheduled task name
+  set_fact:
+    win_scheduled_task_name: "ansible_{{ 99999999 | random | to_uuid }}"
 
 # - debug: var=win_scheduled_command_wrapper_password
 # - debug: var=task_temp_dir.path
+# - debug: var=win_scheduled_task_name
+
+# - name: Upload temporary wrapper script
+#   win_copy:
+#     src: run_scheduled_command.ps1
+#     dest: "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"
 
 - name: Upload temporary wrapper script
-  win_copy:
-    src: run_scheduled_command.ps1
+  win_template:
+    src: run_scheduled_command.ps1.j2
     dest: "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"
 
 - name: Create scheduled task
   win_scheduled_task:
-    name: TaskName2
+    name: "{{ win_scheduled_task_name }}"
     description: Run a PowerShell script
     actions:
     - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
