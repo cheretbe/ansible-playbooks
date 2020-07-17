@@ -1,10 +1,15 @@
 ---
 # tasks file for win-scheduled-command-wrapper
 
-- name: Check if password variable is defined
+- name: Check if 'win_scheduled_command_wrapper_password' variable is defined
   fail:
     msg: "Variable 'win_scheduled_command_wrapper_password' must be defined"
   when: not win_scheduled_command_wrapper_password is defined
+
+- name: Check if 'win_scheduled_command' variable is defined
+  fail:
+    msg: "Variable 'win_scheduled_command' must be defined"
+  when: not win_scheduled_command is defined
 
 - name: Create temporary directory
   win_tempfile:
