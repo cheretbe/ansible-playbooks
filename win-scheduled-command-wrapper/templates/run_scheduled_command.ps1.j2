@@ -1,14 +1,44 @@
+[CmdletBinding()]
+param()
+
 Set-StrictMode -Version Latest
 $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
 
 $taskTempDir = "{{ task_temp_dir.path }}"
 $taskName = "{{ win_scheduled_task_name }}"
 
-# Write-Output "There you go"
-# "There you go" | Out-File -Append -FilePath "c:\test.txt"
-# "{{ task_temp_dir.path }}" | Out-File -Append -FilePath "c:\test.txt"
-# "{{ win_scheduled_task_name }}" | Out-File -Append -FilePath "c:\test.txt"
+$pipeName = ("\\.\pipe\{0}" -f $taskName)
+$pipe = New-Object System.IO.Pipes.NamedPipeServerStream($pipeName, [System.IO.Pipes.PipeDirection]::In)
 
-# throw "test exception"
+Write-Verbose ("Starting sheduled task '{0}'" -f $taskName)
+# Start-ScheduledTask -TaskName $taskName
 
-{{ win_scheduled_command }}
+Write-Verbose ("Waiting for the sheduled task '{0}' to connect back" -f $taskName)
+$connWaitTask = $pipe.WaitForConnectionAsync()
+$waitTimeout = New-TimeSpan -Minutes 3
+$stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
+while (-not $connWaitTask.IsCompleted) {
+  if ($stopWatch.elapsed -gt $waitTimeout)
+    { throw ("Timeout waiting for the sheduled task '{0}' to connect back" -f $taskName) }
+} # while
+Write-Verbose "Connected"
+
+$schCmdExitCode = $NULL
+
+$pipeReader = new-object System.IO.StreamReader($pipe)
+while ($pipe.IsConnected) {
+  $pipe_data = $pipeReader.ReadLine()
+  if ($NULL -ne $pipe_data) {
+    if ($pipe_data.StartsWith("SCH_CMD_EXIT_CODE:")) {
+      $schCmdExitCode = [int]($pipe_data.Split(":")[1])
+    } else {
+      Write-Output $pipe_data
+    } #if
+  } #if
+} # while
+Write-Verbose "Diconnected from the scheduled task"
+
+if ($NULL -eq $schCmdExitCode)
+  { throw "Failed to get scheduled command exit code" }
+
+Write-Output ("schCmdExitCode: {0}" -f $schCmdExitCode)

@@ -11,28 +11,36 @@
     msg: "Variable 'win_scheduled_command' must be defined"
   when: not win_scheduled_command is defined
 
-- name: Create temporary directory
-  win_tempfile:
+# - name: Create temporary directory
+#   win_tempfile:
+#     state: directory
+#   register: task_temp_dir
+
+- name: Debug 1
+  set_fact:
+    task_temp_dir:
+      path: C:\Users\vagrant\AppData\Local\Temp\Debug
+
+- name: Debug 2
+  win_file:
+    path: "{{ task_temp_dir.path }}"
     state: directory
-  register: task_temp_dir
+
+
 
 - name: Generate scheduled task name
   set_fact:
     win_scheduled_task_name: "ansible_{{ 99999999 | random | to_uuid }}"
 
-# - debug: var=win_scheduled_command_wrapper_password
-# - debug: var=task_temp_dir.path
-# - debug: var=win_scheduled_task_name
-
-# - name: Upload temporary wrapper script
-#   win_copy:
-#     src: run_scheduled_command.ps1
-#     dest: "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"
-
-- name: Upload temporary wrapper script
+- name: Upload temporary runner script
   win_template:
     src: run_scheduled_command.ps1.j2
     dest: "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"
+
+- name: Upload temporary wrapper script
+  win_template:
+    src: scheduled_command_wrapper.ps1.j2
+    dest: "{{ task_temp_dir.path }}\\scheduled_command_wrapper.ps1"
 
 - name: Create scheduled task
   win_scheduled_task:
@@ -40,7 +48,7 @@
     description: Run a PowerShell script
     actions:
     - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
-      arguments: '-ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\run_scheduled_command.ps1"'
+      arguments: '-ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\scheduled_command_wrapper.ps1"'
     username: vagrant
     password: "{{ win_scheduled_command_wrapper_password }}"
     logon_type: password

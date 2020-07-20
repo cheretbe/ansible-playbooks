@@ -77,5 +77,5 @@ param(
 }
 
 . {
-  Get-childitem
+  {{ win_scheduled_command }}
 } | PipeOutput

@@ -1,0 +1,39 @@
+Set-StrictMode -Version Latest
+$ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
+
+function PipeOutput {
+[CmdletBinding()]
+param(
+  [Parameter(Mandatory=$TRUE,ValueFromPipeline=$TRUE,ValueFromPipelinebyPropertyName=$FALSE)] $inputObject
+)
+  Begin {
+    $pipeName = "\\.\pipe\{{ win_scheduled_task_name }}"
+    $pipe = New-Object -TypeName System.IO.Pipes.NamedPipeClientStream -ArgumentList @(
+      ".",  # localhost
+      $pipeName,
+      [System.IO.Pipes.PipeDirection]::Out
+    )
+    $pipe.Connect()
+    $pipeWriter = New-Object System.IO.StreamWriter($pipe)
+  }
+
+  Process {
+    $pipeWriter.Write(($inputObject | Out-String))
+    $pipeWriter.Flush()
+    $inputObject
+  }
+
+  End {
+    $pipe.Close()
+  }
+}
+
+. {
+  $exitCode = 0
+  try {
+    {{ win_scheduled_command }}
+  } catch {
+    $exitCode = 1
+  }
+  Write-Output ("SCH_CMD_EXIT_CODE:{0}" -f $exitCode)
+} *>&1 | PipeOutput
