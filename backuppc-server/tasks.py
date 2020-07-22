@@ -1,9 +1,24 @@
 import invoke
+import colorama
 
 
 def assert_text_in_stderr(run_result, text):
     assert any(text in s for s in run_result.stderr.splitlines()), \
         f"Unexpected error message: stderr does not contain text '{text}'"
+
+def print_header(header_text):
+    print(
+        colorama.Fore.CYAN + colorama.Style.BRIGHT +
+        f" {header_text} ".center(80, "=") +
+        colorama.Style.RESET_ALL
+    )
+
+def print_sub_header(sub_header_text):
+    print(
+        colorama.Fore.CYAN + colorama.Style.BRIGHT + "--" +
+        f" {sub_header_text} ".ljust(78, "-") +
+        colorama.Style.RESET_ALL
+    )
 
 
 @invoke.task(default=True)
@@ -48,6 +63,9 @@ def test_upgrade(context):
 def test_data_directory(context):
     """Test data directory creation"""
 
+    print_header("Test data directory creation")
+
+    print_sub_header("prepare_no_backuppc_dir.yml")
     # backuppc_server_custom_data_dir parameter is not set
     # The role should create /var/lib/backuppc and set is as a home directory
     # for backuppc-server user
@@ -58,6 +76,7 @@ def test_data_directory(context):
             "TESTINFRA_FILTER": "test_no_custom_dir"}
     )
 
+    print_sub_header("prepare_no_backuppc_dir_custom_data_dir.yml")
     # backuppc_server_custom_data_dir parameter is set, /var/lib/backuppc does
     # not exist, custom data directory exists
     # The role should create /var/lib/backuppc as a symlink to the custom data
@@ -71,6 +90,7 @@ def test_data_directory(context):
             "TESTINFRA_FILTER": "test_custom_dir"}
     )
 
+    print_sub_header("prepare_no_backuppc_dir_no_custom_data_dir.yml")
     # backuppc_server_custom_data_dir parameter is set, /var/lib/backuppc does
     # not exist, custom data directory does not exist
     # The role should create /var/lib/backuppc as a symlink to the custom data
@@ -84,6 +104,7 @@ def test_data_directory(context):
             "TESTINFRA_FILTER": "test_custom_dir"}
     )
 
+    print_sub_header("prepare_backuppc_dir_wrong_symlink.yml")
     # backuppc_server_custom_data_dir parameter is set, /var/lib/backuppc exists
     # as a symlink to directory other than specified custom data directory
     # The role should fail
