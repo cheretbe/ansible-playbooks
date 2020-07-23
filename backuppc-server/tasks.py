@@ -62,26 +62,29 @@ def test_upgrade(context):
     """Test regular role run and then an upgrade"""
     print_header(test_upgrade.__doc__)
 
-    print_sub_header("Install version 4.3.0")
+    print_sub_header("Install version 4.3.1")
     run_command(context, "molecule destroy -s default")
     run_command(
         context,
         "molecule converge -s default",
-        env={"TEST_BACKUPPC_VERSION": "4.3.0"}
+        env={"TEST_BACKUPPC_VERSION": "4.3.1"}
     )
-    run_command(context, 
+    run_command(
+        context,
         "molecule idempotence -s default",
-        env={"TEST_BACKUPPC_VERSION": "4.3.0"}
+        env={"TEST_BACKUPPC_VERSION": "4.3.1"}
     )
-    run_command(context, 
+    run_command(
+        context,
         "molecule verify -s default",
-        env={"EXPECTED_BACKUPPC_VERSION": "4.3.0"}
+        env={"EXPECTED_BACKUPPC_VERSION": "4.3.1"}
     )
 
     print_sub_header("Upgrade to the latest version")
     run_command(context, "molecule converge -s default")
     run_command(context, "molecule idempotence -s default")
-    run_command(context, 
+    run_command(
+        context,
         "molecule verify -s default",
         env={"EXPECTED_BACKUPPC_VERSION": "latest"}
     )
