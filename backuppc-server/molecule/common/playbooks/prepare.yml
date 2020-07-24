@@ -2,8 +2,17 @@
   hosts: all
 
   tasks:
-    - name: Install dependencies
+    - name: Install packages needed for testing
       apt:
         name:  ["curl", "net-tools", "jq"]
         update_cache: yes
       when: ansible_os_family == "Debian"
+
+    - name: "Add 'ansible' user"
+      user:
+        name: ansible
+
+    - name: Allow passwordless sudo for 'ansible' user
+      copy:
+        dest: /etc/sudoers.d/ansible
+        content: ansible ALL=(root) NOPASSWD:ALL
