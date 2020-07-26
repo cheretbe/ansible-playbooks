@@ -16,6 +16,13 @@ platforms:
     command: ""
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: ubuntu-focal
+    image: "geerlingguy/docker-ubuntu2004-ansible"
+    privileged: true
+    pre_build_image: true
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
 provisioner:
   name: ansible
   playbooks:

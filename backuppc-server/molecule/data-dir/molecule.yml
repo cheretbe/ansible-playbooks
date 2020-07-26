@@ -5,7 +5,14 @@ driver:
   name: docker
 platforms:
   - name: ubuntu-bionic
-    image: "percygrunwald/docker-ubuntu1804-ansible:latest"
+    image: "geerlingguy/docker-ubuntu1804-ansible"
+    privileged: true
+    pre_build_image: true
+    command: ""
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: ubuntu-focal
+    image: "geerlingguy/docker-ubuntu2004-ansible"
     privileged: true
     pre_build_image: true
     command: ""
@@ -14,6 +21,7 @@ platforms:
 provisioner:
   name: ansible
   playbooks:
+    # [!] Every prepary playbook should include ../common/playbooks/prepare.yml
     prepare: ${PREPARE_PLAYBOOK}
 verifier:
   name: testinfra

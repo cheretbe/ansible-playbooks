@@ -1,4 +1,4 @@
-- name: Set up test environment
+- name: Set up test environment (common)
   hosts: all
 
   tasks:

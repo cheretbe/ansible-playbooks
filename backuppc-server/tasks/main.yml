@@ -3,15 +3,16 @@
 
 - name: Check distribution
   fail:
-    msg: "Only Ubuntu 18.04 is supported at the moment"
-  when: not (ansible_distribution == "Ubuntu" and ansible_distribution_version == "18.04")
+    msg: "Only Ubuntu 18.04 and 20.04 are supported"
+  when: (ansible_distribution != "Ubuntu") or
+        (ansible_distribution_version not in ["18.04", "20.04"])
 
 - name: Install dependencies
   apt:
     name:  ["apache2", "apache2-utils", "libapache2-mod-perl2", "smbclient",
-            "rrdtool", "libapache2-mod-scgi", "libarchive-zip-perl",
-            "libfile-listing-perl", "libxml-rss-perl", "libcgi-session-perl",
-            "make", "gcc", "par2", "libacl1", "libacl1-dev",
+            "rrdtool", "libarchive-zip-perl", "libfile-listing-perl",
+            "libxml-rss-perl", "libcgi-session-perl", "make", "gcc", "par2",
+            "libacl1", "libacl1-dev",
             # this is for Ansible's htpasswd module
             "python3-passlib"]
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
