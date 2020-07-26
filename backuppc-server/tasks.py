@@ -42,11 +42,53 @@ def run_command(context, *args, **kwargs):
         )
         raise
 
+def do_upgrade_test(
+        context, from_backuppc_version, from_backuppc_xs_version=None,
+        from_backuppc_rsync_bpc_version=None
+    ):
+
+    from_version_env = {"TEST_BACKUPPC_VERSION": from_backuppc_version}
+    if not from_backuppc_xs_version is None:
+        from_version_env.update({"TEST_BACKUPPC_XS_VERSION": from_backuppc_xs_version})
+    if not from_backuppc_rsync_bpc_version is None:
+        from_version_env.update({"TEST_BACKUPPC_RSYNC_BPC_VERSION": from_backuppc_rsync_bpc_version})
+
+    print_sub_header(f"Install version {from_backuppc_version}")
+    run_command(context, "molecule destroy -s default")
+    run_command(
+        context,
+        "molecule converge -s default",
+        env=from_version_env
+    )
+    run_command(
+        context,
+        "molecule idempotence -s default",
+        env=from_version_env
+    )
+    run_command(
+        context,
+        "molecule verify -s default",
+        env={"EXPECTED_BACKUPPC_VERSION": from_backuppc_version}
+    )
+
+    print_sub_header("Upgrade to the latest version")
+    run_command(context, "molecule converge -s default")
+    run_command(context, "molecule idempotence -s default")
+    run_command(
+        context,
+        "molecule verify -s default",
+        env={"EXPECTED_BACKUPPC_VERSION": "latest"}
+    )
+    run_command(context, "molecule destroy -s default")
+
 
 @invoke.task(default=True)
-def help(context):
+def show_help(context):
     """This help message"""
     context.run('invoke --list')
+
+    print("Examples:")
+    print("inv test-upgrade-from-version 4.3.1 0.59 3.1.2.1")
 
 
 @invoke.task
@@ -62,35 +104,24 @@ def test_upgrade(context):
     """Test regular role run and then an upgrade"""
     print_header(test_upgrade.__doc__)
 
-    print_sub_header("Install version 4.3.1")
-    run_command(context, "molecule destroy -s default")
-    run_command(
-        context,
-        "molecule converge -s default",
-        env={"TEST_BACKUPPC_VERSION": "4.3.1"}
-    )
-    run_command(
-        context,
-        "molecule idempotence -s default",
-        env={"TEST_BACKUPPC_VERSION": "4.3.1"}
-    )
-    run_command(
-        context,
-        "molecule verify -s default",
-        env={"EXPECTED_BACKUPPC_VERSION": "4.3.1"}
-    )
-
-    print_sub_header("Upgrade to the latest version")
-    run_command(context, "molecule converge -s default")
-    run_command(context, "molecule idempotence -s default")
-    run_command(
-        context,
-        "molecule verify -s default",
-        env={"EXPECTED_BACKUPPC_VERSION": "latest"}
-    )
-    run_command(context, "molecule destroy -s default")
+    do_upgrade_test(context=context, from_backuppc_version="4.3.1")
 
     print_success_message(test_upgrade.__doc__)
+
+
+@invoke.task
+def test_upgrade_from_version(
+        context, backuppc_version, backuppc_xs_version, backuppc_rsync_version
+    ):
+    """Test upgrade from a specific version to the latest one"""
+    print_header(test_upgrade.__doc__)
+
+    do_upgrade_test(
+        context=context,
+        from_backuppc_version=backuppc_version,
+        from_backuppc_xs_version=backuppc_xs_version,
+        from_backuppc_rsync_bpc_version=backuppc_rsync_version
+    )
 
 
 @invoke.task
