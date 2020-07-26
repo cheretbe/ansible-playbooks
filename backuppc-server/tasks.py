@@ -42,16 +42,21 @@ def run_command(context, *args, **kwargs):
         )
         raise
 
+
 def do_upgrade_test(
         context, from_backuppc_version, from_backuppc_xs_version=None,
         from_backuppc_rsync_bpc_version=None
-    ):
+):
 
     from_version_env = {"TEST_BACKUPPC_VERSION": from_backuppc_version}
-    if not from_backuppc_xs_version is None:
-        from_version_env.update({"TEST_BACKUPPC_XS_VERSION": from_backuppc_xs_version})
-    if not from_backuppc_rsync_bpc_version is None:
-        from_version_env.update({"TEST_BACKUPPC_RSYNC_BPC_VERSION": from_backuppc_rsync_bpc_version})
+    if from_backuppc_xs_version is not None:
+        from_version_env.update(
+            {"TEST_BACKUPPC_XS_VERSION": from_backuppc_xs_version}
+        )
+    if from_backuppc_rsync_bpc_version is not None:
+        from_version_env.update(
+            {"TEST_BACKUPPC_RSYNC_BPC_VERSION": from_backuppc_rsync_bpc_version}
+        )
 
     print_sub_header(f"Install version {from_backuppc_version}")
     run_command(context, "molecule destroy -s default")
@@ -112,7 +117,7 @@ def test_upgrade(context):
 @invoke.task
 def test_upgrade_from_version(
         context, backuppc_version, backuppc_xs_version, backuppc_rsync_version
-    ):
+):
     """Test upgrade from a specific version to the latest one"""
     print_header(test_upgrade.__doc__)
 
