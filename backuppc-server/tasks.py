@@ -213,7 +213,7 @@ def test_failing(context):
         "Molecule converge call is expected to fail"
     assert_text_in_stderr(
         run_result,
-        "Only Ubuntu 18.04 is supported at the moment"
+        "Only Ubuntu 18.04 and 20.04 are supported"
     )
 
     print_success_message(test_failing.__doc__)

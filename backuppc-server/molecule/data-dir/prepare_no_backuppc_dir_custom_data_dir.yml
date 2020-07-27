@@ -1,4 +1,4 @@
--  import_playbook: ../common/playbooks/prepare.yml
+- import_playbook: ../common/playbooks/prepare.yml
 
 - name: Set up test environment
   hosts: all

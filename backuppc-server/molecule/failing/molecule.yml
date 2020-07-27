@@ -23,6 +23,6 @@ scenario:
     - converge
     - idempotence
     # - side_effect
-    - verify
+    # - verify
     # - cleanup
     - destroy
