@@ -1,0 +1,11 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include ansible-awx-prerequisites"
+      include_role:
+        # name: "ansible-awx-prerequisites"
+        name: "docker-ce"
+
+    # - debug:
+    #     msg: "there yo go"

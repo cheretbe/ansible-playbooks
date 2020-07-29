@@ -1,0 +1,18 @@
+- name: Set up test environment
+  hosts: all
+
+  tasks:
+    - name: Install packages needed for testing
+      apt:
+        name:  ["python3-apt", "gpg"]
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: "Add 'ansible' user"
+      user:
+        name: ansible
+
+    - name: Allow passwordless sudo for 'ansible' user
+      copy:
+        dest: /etc/sudoers.d/ansible
+        content: ansible ALL=(root) NOPASSWD:ALL

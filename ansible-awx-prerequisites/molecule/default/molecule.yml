@@ -1,0 +1,21 @@
+---
+dependency:
+  name: galaxy
+lint: |
+    set -e
+    yamllint .
+    ansible-lint
+    # flake8
+driver:
+  name: lxd
+platforms:
+  - name: ubuntu-bionic
+    alias: ubuntu/bionic
+    host_http_port: 8080
+  - name: ubuntu-focal
+    alias: ubuntu/focal
+    host_http_port: 8081
+provisioner:
+  name: ansible
+verifier:
+  name: ansible

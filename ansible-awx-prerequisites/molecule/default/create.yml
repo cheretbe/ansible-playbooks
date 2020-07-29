@@ -1,0 +1,29 @@
+---
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: false
+
+  tasks:
+    - name: Create molecule instance(s)
+      lxd_container:
+        name: "{{ item.name }}"
+        state: started
+        config:
+          security.nesting: "true"
+        source:
+          type: image
+          mode: pull
+          server: https://images.linuxcontainers.org
+          protocol: simplestreams
+          alias: "{{ item.alias }}/amd64"
+        devices:
+          fwdport80:
+            connect: tcp:localhost:80
+            listen: "tcp:0.0.0.0:{{ item.host_http_port }}"
+            type: proxy
+        profiles: ["default"]
+        wait_for_ipv4_addresses: true
+        timeout: 600
+      with_items: "{{ molecule_yml.platforms }}"
