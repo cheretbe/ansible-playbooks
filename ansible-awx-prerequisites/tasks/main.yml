@@ -106,6 +106,7 @@
   unarchive:
     src: /tmp/awx-{{ ansible_awx_version }}.tar.gz
     dest: /tmp
+    remote_src: true
 
 - name: Create 'opt/awx' directory
   file:
