@@ -1,5 +1,5 @@
 ---
-# vars file for ansible-awx-prerequisites
+# vars file for awx-server
 
 all_docker_containers: []
 awx_docker_containers:

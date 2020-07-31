@@ -1,0 +1,11 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include awx-server"
+      include_role:
+        name: "awx-server"
+        # name: "docker-ce"
+
+    # - debug:
+    #     msg: "there yo go"
