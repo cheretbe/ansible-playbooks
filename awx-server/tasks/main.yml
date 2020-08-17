@@ -58,8 +58,8 @@
 
 - block:
   - name: Get currently installed AWX version
-    shell: 'docker exec awx_task /usr/bin/awx-manage version'
-    # shell: echo "4.3.1"
+    command: 'docker exec awx_task /usr/bin/awx-manage version'
+    # command: echo "4.3.1"
     changed_when: false
     register: installed_awx_version
 

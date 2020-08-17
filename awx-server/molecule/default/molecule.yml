@@ -4,7 +4,8 @@ dependency:
 lint: |
     set -e
     yamllint .
-    ansible-lint
+    # 403: Package installs should not use latest
+    ansible-lint -x 403
     # flake8
 driver:
   name: lxd
