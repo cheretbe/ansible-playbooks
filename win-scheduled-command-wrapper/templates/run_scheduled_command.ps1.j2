@@ -8,10 +8,42 @@ $taskTempDir = "{{ task_temp_dir.path }}"
 $taskName = "{{ win_scheduled_task_name }}"
 
 $pipeName = ("\\.\pipe\{0}" -f $taskName)
+
+$currentUser = ([Security.Principal.WindowsIdentity]::GetCurrent()).User
+# $currentUser = New-Object -TypeName 'System.Security.Principal.SecurityIdentifier' -ArgumentList @([System.Security.Principal.WellKnownSidType]::AuthenticatedUserSid, $NULL)
+$currentUser = New-Object -TypeName 'System.Security.Principal.SecurityIdentifier' -ArgumentList @([System.Security.Principal.WellKnownSidType]::WorldSid, $NULL)
+
+$pipeSec = New-Object -TypeName System.IO.Pipes.PipeSecurity
+$pipeAccessRule = New-Object -TypeName System.IO.Pipes.PipeAccessRule -ArgumentList @(
+    $currentUser,
+    # [System.IO.Pipes.PipeAccessRights]::ReadWrite,
+    [System.IO.Pipes.PipeAccessRights]::FullControl,
+    [System.Security.AccessControl.AccessControlType]::Allow
+)
+$pipeSec.AddAccessRule($pipeAccessRule)
+
+Write-Verbose ("Creating named pipe '{0}'" -f $pipeName)
+# https://docs.microsoft.com/en-us/dotnet/api/system.io.pipes.namedpipeserverstream.-ctor?view=netframework-4.8#System_IO_Pipes_NamedPipeServerStream__ctor_System_String_System_IO_Pipes_PipeDirection_System_Int32_System_IO_Pipes_PipeTransmissionMode_System_IO_Pipes_PipeOptions_System_Int32_System_Int32_System_IO_Pipes_PipeSecurity_
+# $pipe = New-Object System.IO.Pipes.NamedPipeServerStream(
+#   $pipeName,
+#   [System.IO.Pipes.PipeDirection]::In,
+#   # maxNumberOfServerInstances
+#   1,
+#   [System.IO.Pipes.PipeTransmissionMode]::Byte,
+#   [System.IO.Pipes.PipeOptions]::None,
+#   # inBufferSize
+#   0,
+#   # outBufferSize
+#   0,
+#   # pipeSecurity
+#   $pipeSec
+# )
+
 $pipe = New-Object System.IO.Pipes.NamedPipeServerStream($pipeName, [System.IO.Pipes.PipeDirection]::In)
 
+
 Write-Verbose ("Starting sheduled task '{0}'" -f $taskName)
-# Start-ScheduledTask -TaskName $taskName
+Start-ScheduledTask -TaskName $taskName
 
 Write-Verbose ("Waiting for the sheduled task '{0}' to connect back" -f $taskName)
 $connWaitTask = $pipe.WaitForConnectionAsync()
@@ -20,6 +52,7 @@ $stopWatch = [System.Diagnostics.Stopwatch]::StartNew()
 while (-not $connWaitTask.IsCompleted) {
   if ($stopWatch.elapsed -gt $waitTimeout)
     { throw ("Timeout waiting for the sheduled task '{0}' to connect back" -f $taskName) }
+  Start-Sleep -Milliseconds 100
 } # while
 Write-Verbose "Connected"
 
