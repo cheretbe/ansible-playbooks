@@ -11,18 +11,14 @@ param(
 )
   Begin {
     $pipeName = "\\.\pipe\{{ win_scheduled_task_name }}"
-    # $pipeName | Out-File -Append -FilePath "c:\users\vagrant\Desktop\debug.txt"
     Write-Verbose ("Connecting to named pipe '{0}'" -f $pipeName)
     $pipe = New-Object -TypeName System.IO.Pipes.NamedPipeClientStream -ArgumentList @(
       ".",  # localhost
       $pipeName,
       [System.IO.Pipes.PipeDirection]::Out
     )
-    # "1" | Out-File -Append -FilePath "c:\users\vagrant\Desktop\debug.txt"
     $pipe.Connect(1000)
-    # "2" | Out-File -Append -FilePath "c:\users\vagrant\Desktop\debug.txt"
     $pipeWriter = New-Object System.IO.StreamWriter($pipe)
-    # "3" | Out-File -Append -FilePath "c:\users\vagrant\Desktop\debug.txt"
   }
 
   Process {
@@ -41,7 +37,7 @@ param(
   try {
     {{ win_scheduled_command }}
   } catch {
-    # "error" | Out-File -Append -FilePath "c:\users\vagrant\Desktop\debug.txt"
+    $_
     $exitCode = 1
   }
   Write-Output ("SCH_CMD_EXIT_CODE:{0}" -f $exitCode)

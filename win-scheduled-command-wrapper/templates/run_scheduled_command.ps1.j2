@@ -74,4 +74,5 @@ Write-Verbose "Diconnected from the scheduled task"
 if ($NULL -eq $schCmdExitCode)
   { throw "Failed to get scheduled command exit code" }
 
-Write-Output ("schCmdExitCode: {0}" -f $schCmdExitCode)
+Write-Verbose ("schCmdExitCode: {0}" -f $schCmdExitCode)
+exit $schCmdExitCode

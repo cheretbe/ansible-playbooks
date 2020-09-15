@@ -11,22 +11,20 @@
     msg: "Variable 'win_scheduled_command' must be defined"
   when: not win_scheduled_command is defined
 
-# - name: Create temporary directory
-#   win_tempfile:
-#     state: directory
-#   register: task_temp_dir
-
-- name: Debug 1
-  set_fact:
-    task_temp_dir:
-      path: C:\Users\vagrant\AppData\Local\Temp\Debug
-
-- name: Debug 2
-  win_file:
-    path: "{{ task_temp_dir.path }}"
+- name: Create temporary directory
+  win_tempfile:
     state: directory
+  register: task_temp_dir
 
+# - name: Debug 1
+#   set_fact:
+#     task_temp_dir:
+#       path: C:\Users\vagrant\AppData\Local\Temp\Debug
 
+# - name: Debug 2
+#   win_file:
+#     path: "{{ task_temp_dir.path }}"
+#     state: directory
 
 - name: Generate scheduled task name
   set_fact:
@@ -45,7 +43,7 @@
 - name: Create scheduled task
   win_scheduled_task:
     name: "{{ win_scheduled_task_name }}"
-    description: Run a PowerShell script
+    description: Ansible PowerShell script wrapper helper
     actions:
     - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
       arguments: '-ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\scheduled_command_wrapper.ps1"'
@@ -55,7 +53,15 @@
     run_level: highest
     state: present
 
-# - name: Remove temporary directory if still exists
-#   win_file:
-#     path: "{{ task_temp_dir.path }}"
-#     state: absent
+- name: Execute runner script with cleanup
+  block:
+    - name: Execute runner script
+      win_command: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"'
+  always:
+    - name: Remove temporary directory
+      win_file:
+        path: "{{ task_temp_dir.path }}"
+        state: absent
+
+- debug:
+    msg: There you go
