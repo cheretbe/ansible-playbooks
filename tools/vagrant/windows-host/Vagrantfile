@@ -19,7 +19,11 @@ Vagrant.configure("2") do |config|
     ansible.extra_vars = {
       "ansible_winrm_scheme": "http",
       "win_scheduled_command_wrapper_password": "#{ENV['AO_DEFAULT_VAGRANT_PASSWORD']}",
-      "win_scheduled_command": "& cmd.exe /c ver_err"
+      "win_scheduled_command_run_level": "limited",
+      # "win_scheduled_command": "& cmd.exe /c ver_err"
+      "win_scheduled_command": "(" \
+          "New-Object -TypeName 'Security.Principal.WindowsPrincipal' -ArgumentList ([Security.Principal.WindowsIdentity]::GetCurrent())" \
+        ").IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)"
     }
   end
 end

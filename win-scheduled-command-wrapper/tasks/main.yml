@@ -40,6 +40,9 @@
     src: scheduled_command_wrapper.ps1.j2
     dest: "{{ task_temp_dir.path }}\\scheduled_command_wrapper.ps1"
 
+- debug:
+    msg: "{{ win_scheduled_command_run_level }}"
+
 - name: Create scheduled task
   win_scheduled_task:
     name: "{{ win_scheduled_task_name }}"
@@ -50,18 +53,23 @@
     username: vagrant
     password: "{{ win_scheduled_command_wrapper_password }}"
     logon_type: password
-    run_level: highest
+    run_level: "{{ win_scheduled_command_run_level }}"
     state: present
 
 - name: Execute runner script with cleanup
   block:
     - name: Execute runner script
       win_command: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"'
-  always:
-    - name: Remove temporary directory
-      win_file:
-        path: "{{ task_temp_dir.path }}"
-        state: absent
+      register: run_test
+  # always:
+  #   - name: Remove temporary directory
+      # win_file:
+      #   path: "{{ task_temp_dir.path }}"
+      #   state: absent
+    # - name: Remove scheduled task
+    #   win_scheduled_task:
+    #     name: "{{ win_scheduled_task_name }}"
+    #     state: absent
 
 - debug:
-    msg: There you go
+    var: run_test
