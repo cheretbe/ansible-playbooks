@@ -53,6 +53,8 @@
     username: vagrant
     password: "{{ win_scheduled_command_wrapper_password }}"
     logon_type: password
+    # https://github.com/cheretbe/ansible-playbooks/issues/5
+    # TODO: Do some tests with run_level: limited
     run_level: "{{ win_scheduled_command_run_level }}"
     state: present
 
