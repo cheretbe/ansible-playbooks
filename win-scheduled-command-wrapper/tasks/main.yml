@@ -62,6 +62,7 @@
   block:
     - name: Execute runner script
       win_command: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\\run_scheduled_command.ps1"'
+      register: win_scheduled_command_run_result
   always:
     - name: Remove temporary directory
       win_file:
