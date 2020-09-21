@@ -40,8 +40,8 @@
     src: scheduled_command_wrapper.ps1.j2
     dest: "{{ task_temp_dir.path }}\\scheduled_command_wrapper.ps1"
 
-- debug:
-    msg: "{{ win_scheduled_command_run_level }}"
+# - debug:
+#     msg: "{{ win_scheduled_command_run_level }}"
 
 - name: Create scheduled task
   win_scheduled_task:
@@ -50,7 +50,7 @@
     actions:
     - path: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe
       arguments: '-ExecutionPolicy Bypass -NonInteractive -File "{{ task_temp_dir.path }}\scheduled_command_wrapper.ps1"'
-    username: vagrant
+    username: "{{ win_scheduled_command_user_name }}"
     password: "{{ win_scheduled_command_wrapper_password }}"
     logon_type: password
     # https://github.com/cheretbe/ansible-playbooks/issues/5
