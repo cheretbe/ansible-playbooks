@@ -57,6 +57,19 @@ Vagrant.configure("2") do |config|
       salt.pillar({"use_awx" => use_awx})
     end
 
+    ansible.vm.provision "shell",
+      name: "Ansible installation in a virtual environment",
+      keep_color: true, privileged: false,
+      inline: <<-SHELL
+        if [ ! -f ~/.cache/venv/py3/bin/activate ]; then
+          sudo apt install -y -q python3-venv build-essential python3-dev
+          python3 -m venv ~/.cache/venv/py3
+          . ~/.cache/venv/py3/bin/activate
+          pip install wheel
+          pip install -r /opt/ansible-playbooks/tools/util/requirements.txt
+        fi
+      SHELL
+
     if use_awx then
       ansible.vm.provision "shell", name: "AWX installation",
         keep_color: true, privileged: false,
