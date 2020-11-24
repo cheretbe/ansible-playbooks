@@ -1,0 +1,59 @@
+---
+# tasks file for nagios-client
+
+- name: Set common packages
+  set_fact:
+    nagios_client_apt_packages: [
+      "git", "libconfig-json-perl", "nagios-nrpe-server", "python-tz",
+      "python-dateutil", "python-lxml"
+    ]
+
+- name: Add packages specific to Ubuntu Bionic and Xenial
+  set_fact:
+    nagios_client_apt_packages: >
+      {{ nagios_client_apt_packages + ['python', 'nagios-plugins', 'python-requests'] }}
+  when: ansible_distribution_release == "bionic" or ansible_distribution_release == "xenial"
+
+- name: Add smartmontools package when not running in a VM
+  set_fact:
+    nagios_client_apt_packages: >
+      {{ nagios_client_apt_packages + ['smartmontools'] }}
+  when: ansible_virtualization_role != "guest"
+
+  # "nagios-plugins", python
+
+  # python-tz python-dateutil python-requests python-lxml
+
+- debug:
+    var: nagios_client_apt_packages
+
+- name: Install prerequisite packages
+  package: 
+    name: "{{ nagios_client_apt_packages }}"
+    state: present
+
+- name: Checkout custom plugins git repo
+  git:
+    repo: https://github.com/cheretbe/nagios-plugins.git
+    dest: /var/lib/nagios/nagios-plugins
+
+- name: "Add sudoers file to enable passwordless sudo commands for nagios user"
+  template:
+    src: etc_sudoers_d_nagios.j2
+    dest: /etc/sudoers.d/nagios
+    owner: root
+    group: root
+    mode: 044
+
+# - name: Check distribution
+#   fail:
+#     msg: "Only Ubuntu 18.04 and 16.04 are supported at the moment"
+#   when: not (ansible_distribution == "Ubuntu" and (ansible_distribution_release == "bionic" or ansible_distribution_release == "xenial"))
+
+#   - name: "Download BackupPC-XS {{ backuppc_server_backuppc_xs_version }}"
+#     get_url:
+#       url: "https://github.com/backuppc/backuppc-xs/releases/download/\
+#              {{ backuppc_server_backuppc_xs_version }}/\
+#              BackupPC-XS-{{ backuppc_server_backuppc_xs_version }}.tar.gz"
+#       dest: "{{ backuppc_server_temp.path }}"
+#     when: install_backuppc_xc
