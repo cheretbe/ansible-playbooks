@@ -2,10 +2,15 @@
 # Any changes made here will be overwritten
 
 # Allow update script to restart NRPE service
-#nagios ALL=NOPASSWD: /usr/sbin/service nagios-nrpe-server stop
-#nagios ALL=NOPASSWD: /usr/sbin/service nagios-nrpe-server start
+nagios ALL=NOPASSWD: /usr/sbin/service nagios-nrpe-server stop
+nagios ALL=NOPASSWD: /usr/sbin/service nagios-nrpe-server start
 
+{# Physical machines only #}
 {% if ansible_virtualization_role != "guest" %}
+# Allow NRPE process access to smart parameters
+nagios ALL=(root)NOPASSWD:/usr/sbin/smartctl{% endif %}
+
+{% if nagios_client_zfs_checks %}
 # Allow NRPE process access to ZFS pool status
-#nagios  ALL=NOPASSWD: /var/lib/nagios/nagios-plugins/check_zpools/check_zpools.sh -p ALL -w 80 -c 90
+nagios  ALL=NOPASSWD: /var/lib/nagios/nagios-plugins/check_zpools/check_zpools.sh -p ALL -w 80 -c 90
 {% endif %}
