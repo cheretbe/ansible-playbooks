@@ -1,7 +1,5 @@
----  # noqa 106
+---
 # tasks file for nagios-client
- # noqa 106
-    # noqa 106
 
 - name: Set common packages
   set_fact:
@@ -15,6 +13,15 @@
     nagios_client_apt_packages: >
       {{ nagios_client_apt_packages + ['python', 'nagios-plugins', 'python-requests'] }}
   when: ansible_distribution_release == "bionic" or ansible_distribution_release == "xenial"
+
+- name: Add packages specific to Ubuntu Focal
+  set_fact:
+    nagios_client_apt_packages: >
+      {{ nagios_client_apt_packages + [
+          'python-is-python2', 'monitoring-plugins', 'python-idna', 'python-certifi',
+          'xz-utils'
+      ] }}
+  when: ansible_distribution_release == "focal"
 
 # TODO: add separate role for smartmontools (with custom config) and use it here
 - name: Add smartmontools package when not running in a VM
@@ -37,6 +44,16 @@
     # 10 min
     cache_valid_time: 600
   become: true
+
+- name: Manually download and install Python 2 packages, missing in Ubuntu Focal
+  apt:
+    deb: "{{ item }}"
+    state: present
+  become: true
+  when: ansible_distribution_release == "focal"
+  with_items:
+      - "http://security.ubuntu.com/ubuntu/pool/main/p/python-urllib3/python-urllib3_1.24.1-1ubuntu1_all.deb"
+      - "http://security.ubuntu.com/ubuntu/pool/main/r/requests/python-requests_2.21.0-1_all.deb"
 
 - name: Checkout custom plugins git repo
   git:
