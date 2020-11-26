@@ -1,0 +1,8 @@
+---
+# handlers file for nagios-client
+
+- name: Restart Nagios NRPE service
+  service:
+    name: nagios-nrpe-server
+    state: restarted
+  become: true

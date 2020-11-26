@@ -83,6 +83,7 @@
     # Don't replace file if it already exists
     force: no
   become: true
+  notify: Restart Nagios NRPE service
 
 - name: Create log directory for update script
   file:
