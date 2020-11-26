@@ -1,5 +1,7 @@
----
+---  # noqa 106
 # tasks file for nagios-client
+ # noqa 106
+    # noqa 106
 
 - name: Set common packages
   set_fact:
@@ -28,14 +30,19 @@
   when: ansible_os_family == "Debian"
 
 - name: Install prerequisite packages
-  package: 
+  apt:
     name: "{{ nagios_client_apt_packages }}"
     state: present
+    update_cache: yes
+    # 10 min
+    cache_valid_time: 600
   become: true
 
 - name: Checkout custom plugins git repo
   git:
     repo: https://github.com/cheretbe/nagios-plugins.git
+    # 401 - Git checkouts must contain explicit version
+    version: HEAD # noqa 401
     dest: /var/lib/nagios/nagios-plugins
   become_user: nagios
   become: true

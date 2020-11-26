@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include nagios-client"
+      include_role:
+        name: "nagios-client"
