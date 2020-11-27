@@ -23,11 +23,9 @@
       ] }}
   when: ansible_distribution_release == "focal"
 
-# TODO: add separate role for smartmontools (with custom config) and use it here
-- name: Add smartmontools package when not running in a VM
-  set_fact:
-    nagios_client_apt_packages: >
-      {{ nagios_client_apt_packages + ['smartmontools'] }}
+- name: Configure smartmontools when not running in a VM
+  include_role:
+    name: ../smartmontools
   when: ansible_virtualization_role != "guest"
 
 # - debug:
@@ -121,7 +119,7 @@
 
 - name: "Add log rotation rule for update script log"
   template:
-    src: etc_cron_d_nagios-plugins-update.j2
+    src: etc_logrotate.d_nagios-plugins-update.j2
     dest: /etc/logrotate.d/nagios-plugins-update
     owner: root
     group: root

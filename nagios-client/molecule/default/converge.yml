@@ -5,3 +5,5 @@
     - name: "Include nagios-client"
       include_role:
         name: "nagios-client"
+      # vars:
+      #   smartmontools_force_vm: true
