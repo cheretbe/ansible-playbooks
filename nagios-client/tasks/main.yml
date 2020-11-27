@@ -73,6 +73,18 @@
     mode: 0440
   become: true
 
+- name: Set 'allowed_hosts' parameter in '/etc/nagios/nrpe_local.cfg'
+  ini_file:
+    path: /etc/nagios/nrpe_local.cfg
+    section: ""
+    no_extra_spaces: true
+    option: allowed_hosts
+    value: "{{ nagios_client_allowed_hosts }}"
+    backup: true
+  become: true
+  notify: Restart Nagios NRPE service
+
+
 - name: "Add custom NRPE settings template"
   template:
     src: etc_nagios_nrpe_d_ansible_custom_cfg.j2
