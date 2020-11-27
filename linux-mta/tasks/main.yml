@@ -22,6 +22,7 @@
       value: "{{ linux_mta_postfix_relayhost }}"
       vtype: string
   when: (ansible_os_family == "Debian") and postfix_relay_mode|bool
+  become: true
 
 - name: Configure APT postfix package (local only)
   debconf:
@@ -30,6 +31,7 @@
     value: "Local only"
     vtype: select
   when: (ansible_os_family == "Debian") and (not postfix_relay_mode|bool)
+  become: true
 
 - name: Install APT packages
   apt: 
@@ -37,9 +39,11 @@
       - postfix
       - mailutils
       - mutt
-    # Fix for warning message "Could not find aptitude. Using apt-get instead"
-    force_apt_get: yes
+    update_cache: yes
+    # 10 min
+    cache_valid_time: 600
   when: ansible_os_family == "Debian"
+  become: true
 
 # - name: Install YUM packages
 #   yum:
@@ -55,7 +59,9 @@
     group: root
     mode: 0644
   register: linux_mta_etc_aliases_update
+  become: true
 
 - name: Re-initialize aliases database
   command: /usr/bin/newaliases
   when: linux_mta_etc_aliases_update.changed
+  become: true
