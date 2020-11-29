@@ -1,0 +1,57 @@
+- hosts: all
+  tasks:
+  - block:
+    - name: Create temporary directory
+      tempfile:
+        state: directory
+        prefix: 'backuppc-'
+      register: init_container_temp
+
+    - debug:
+        msg: "Temporary directory: {{ init_container_temp.path }}"
+
+    - name: Upload 'add_ansible_user.sh'
+      copy:
+        src: add_ansible_user.sh
+        dest: "{{ init_container_temp.path }}/add_ansible_user.sh"
+        mode: 0770
+
+    - name: Upload public key file '{{ init_container_key_file }}' as 'ansible_user_key.pub'
+      copy:
+        src: "{{ init_container_key_file }}"
+        dest: "{{ init_container_temp.path }}/ansible_user_key.pub"
+
+    - name: Copy 'add_ansible_user.sh' to the container
+      command: >
+        lxc file push -p 
+        {{ init_container_temp.path }}/add_ansible_user.sh
+        {{ init_container_name }}/root/temp/
+
+    - name: Copy 'ansible_user_key.pub' to the container
+      command: >
+        lxc file push -p 
+        {{ init_container_temp.path }}/ansible_user_key.pub
+        {{ init_container_name }}/root/temp/
+
+    - block:
+      - name: Run 'add_ansible_user.sh' in the container
+        command: >
+          lxc exec {{ init_container_name }} --
+          /root/temp/add_ansible_user.sh {{ init_container_ansible_user }}
+        register: init_container_script_result
+      always:
+        - debug:
+            var: init_container_script_result.stdout
+        - debug:
+            var: init_container_script_result.stderr
+
+    always:
+      - name: "Remove temporary directory {{ init_container_temp.path | default('') }}"
+        file:
+          state: absent
+          path: "{{ init_container_temp.path }}"
+      - name: "Remove 'add_ansible_user.sh' and 'ansible_user_key.pub' in the container"
+        command: >
+          lxc file delete
+          {{ init_container_name }}/root/temp/add_ansible_user.sh
+          {{ init_container_name }}/root/temp/ansible_user_key.pub
