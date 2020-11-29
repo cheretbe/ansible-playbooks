@@ -10,6 +10,6 @@
     - linux-timezone
     - linux-unattended-upgrades
   tasks:
-    include_role:
-    name: smartmontools
-    when: ansible_virtualization_role != "guest"
+    - include_role:
+        name: smartmontools
+      when: ansible_virtualization_role != "guest"
