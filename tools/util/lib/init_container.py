@@ -5,7 +5,6 @@ import subprocess
 import pathlib
 import ansible.inventory.manager
 import ansible.parsing.dataloader
-import PyInquirer
 import common
 
 def get_lxd_host_name():
@@ -19,21 +18,10 @@ def get_lxd_host_name():
     if len(inv_hosts) == 0:
         sys.exit("ERROR: Ansible inventory host list is empty")
 
-    answers = PyInquirer.prompt([
-        {
-            "type": "list",
-            "name": "selection",
-            "message": "Select Ansible-managed LXD host (Ctrl+C to cancel)",
-            # Doesn't work for now. See https://github.com/CITGuru/PyInquirer/issues/17
-            # and https://github.com/CITGuru/PyInquirer/issues/90
-            # "default": 2,
-            "choices": inv_hosts
-        }
-    ])
-    if not answers:
-        sys.exit(1)
-
-    return answers["selection"]
+    return common.select_from_list(
+        "Select Ansible-managed LXD host (Ctrl+C to cancel)",
+        inv_hosts
+    )
 
 
 def main():
