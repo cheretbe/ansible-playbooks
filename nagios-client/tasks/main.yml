@@ -4,7 +4,7 @@
 - name: Set common packages
   set_fact:
     nagios_client_apt_packages: [
-      "git", "libconfig-json-perl", "nagios-nrpe-server", "python-tz",
+      "acl", "git", "libconfig-json-perl", "nagios-nrpe-server", "python-tz",
       "python-dateutil", "python-lxml"
     ]
 
