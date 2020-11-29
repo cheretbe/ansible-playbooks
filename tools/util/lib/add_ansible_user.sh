@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -euo pipefail
+
 if [ -z ${1+x} ]; then
   echo >&2 "ERROR: Mandatory parameter is missing (Ansible user name)"
   exit 1

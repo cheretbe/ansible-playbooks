@@ -1,24 +1,8 @@
 import os
-import sys
 import json
 import pathlib
 import paramiko
-import PyInquirer
-
-def read_input(message, default_val, is_password=False):
-    answers = PyInquirer.prompt(
-        questions=[
-            {
-                "type": "password" if is_password else "input",
-                "name": "value",
-                "message": message,
-                "default": "" if default_val is None else default_val
-            }
-        ]
-    )
-    if not answers:
-        sys.exit(1)
-    return answers["value"]
+import common
 
 def exec_ssh_command(ssh_client, cmd):
     stdin, stdout, stderr = ssh_client.exec_command(
@@ -41,6 +25,7 @@ def ssh_upload_file(sftp_client, src_file_path, dst_file_path):
     sftp_client.put(src_file_path, dst_file_path)
 
 def main():
+    # [!] The config is shared with init_container.py
     config_file_name = os.path.expanduser("~/.cache/cheretbe/ansible-utils/host_init_cfg.json")
     if os.path.isfile(config_file_name):
         with open(config_file_name) as conf_f:
@@ -48,11 +33,11 @@ def main():
     else:
         config = {}
 
-    config["ssh_host"] = read_input("Host name", config.get("ssh_host"))
-    config["ssh_username"] = read_input("SSH user name", config.get("ssh_username"))
-    ssh_password = read_input("SSH password", "", is_password=True)
-    config["ansible_user"] = read_input("Ansible user name", config.get("ansible_user"))
-    config["ansible_public_key"] = read_input(
+    config["ssh_host"] = common.read_input("Host name", config.get("ssh_host"))
+    config["ssh_username"] = common.read_input("SSH user name", config.get("ssh_username"))
+    ssh_password = common.read_input("SSH password", "", is_password=True)
+    config["ansible_user"] = common.read_input("Ansible user name", config.get("ansible_user"))
+    config["ansible_public_key"] = common.read_input(
         "Ansible user public key file", config.get("ansible_public_key")
     )
 
