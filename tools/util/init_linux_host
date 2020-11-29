@@ -1,0 +1,8 @@
+#!/bin/bash
+
+set -euo pipefail
+
+script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+${script_dir}/lib/setup_venv.sh
+
+"${HOME}/.cache/venv/ansible-tools-py3/bin/python3" "${script_dir}/lib/init_linux_host.py"
