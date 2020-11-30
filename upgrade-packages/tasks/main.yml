@@ -1,0 +1,13 @@
+---
+# tasks file for upgrade-packages
+
+- name: Update and upgrade apt packages
+  become: yes
+  apt:
+    upgrade: "yes"
+    update_cache: yes
+    # 1 hour
+    cache_valid_time: 3600
+    # Fix for warning message "Could not find aptitude. Using apt-get instead"
+    # force_apt_get: yes
+  when: ansible_os_family == "Debian"
