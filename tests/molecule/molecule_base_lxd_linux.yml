@@ -1,0 +1,40 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: lxd
+platforms:
+  - name: ubuntu-focal
+    alias: ubuntu/focal
+  - name: ubuntu-bionic
+    alias: ubuntu/bionic
+  - name: ubuntu-xenial
+    alias: ubuntu/xenial
+  - name: centos-8
+    alias: centos/8
+  - name: centos-7
+    alias: centos/7
+provisioner:
+  name: ansible
+  playbooks:
+    create: ../create_lxd.yml
+    destroy: ../destroy_lxd.yml
+
+verifier:
+  name: ansible
+
+scenario:
+  test_sequence:
+    # - dependency
+    # - lint
+    # - cleanup
+    - destroy
+    # - syntax
+    - create
+    # - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    # - cleanup
+    - destroy

@@ -1,0 +1,6 @@
+---
+- name: Converge
+  hosts: all
+
+- import_playbook: ../../../linux_server_setup.yml
+# - import_playbook: ../../../ping.yml
