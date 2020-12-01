@@ -1,0 +1,72 @@
+require "yaml"
+
+docker_mirrors = []
+if File.file?("local-config.yml")
+  local_config = YAML.load_file("local-config.yml")
+  unless local_config.nil?
+    docker_mirrors = local_config.fetch("docker_mirrors", docker_mirrors)
+  end
+end
+
+$btrfs_hdd_name = "btrfs_hdd.vdi"
+
+# TODO: replace this with disk options whe this feature stops being experimental
+# https://www.vagrantup.com/docs/disks/virtualbox/usage
+class VagrantPlugins::ProviderVirtualBox::Action::SetName
+  alias_method :original_call, :call
+  def call(env)
+    driver = env[:machine].provider.driver
+    vm_path = ""
+    driver.execute("showvminfo", driver.uuid, "--machinereadable").split("\n").each do |info_line|
+      info_name, info_value = info_line.split("=", 2)
+      if info_name == "CfgFile" then
+        vm_path = File.dirname(info_value.gsub('"', ""))
+      end
+    end
+    btrfs_hdd_path = File.join(vm_path, $btrfs_hdd_name)
+    unless File.exist?(btrfs_hdd_path)
+      env[:ui].detail("Creating virtual drive #{$btrfs_hdd_name}")
+      driver.execute("createhd", "--filename", btrfs_hdd_path, "--variant",
+        "Standard", "--size", (8*1024).to_s
+      )
+    end
+    env[:ui].detail("Attaching virtual drive #{$btrfs_hdd_name} to the VM")
+    driver.execute("storageattach", driver.uuid,  "--storagectl", "SCSI",
+      "--port", "2", "--device", "0", "--type", "hdd", "--medium", btrfs_hdd_path
+    )
+
+    original_call(env)
+  end
+end
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "cheretbe/docker-tests"
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize ["modifyvm", :id, "--groups", "/__vagrant"]
+  end
+  config.vm.hostname = "container-tests"
+
+  config.vm.synced_folder "../../../", "/ansible-playbooks"
+  config.vm.network "forwarded_port", guest: 80, host: 8081
+
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "ansible/provision.yml"
+    ansible.compatibility_mode = "2.0"
+    ansible.extra_vars = {
+      "ansible_python_interpreter": "/usr/bin/python3",
+      "docker_ce_registry_mirrors": docker_mirrors
+    }
+  end
+
+  config.vm.provision "shell",
+    name: "LXD config",
+    keep_color: true, privileged: true,
+    inline: <<-SHELL
+      lxc profile device show default 2>/dev/null | grep nic > /dev/null
+      if [ $? -ne 0 ]; then
+        echo "Initializing LXD"
+        lxd init --auto --storage-backend=btrfs --storage-pool=/mnt/lxd
+      fi
+    SHELL
+
+end

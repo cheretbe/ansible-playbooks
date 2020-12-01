@@ -1,0 +1,45 @@
+---
+- name: Test VM provision
+  hosts: all
+  become: yes
+
+  # Docker should be installed at this point, we run it just so that
+  # local "docker_ce_registry_mirrors" setting is propagated
+  tasks:
+    - include_role: name="/ansible-playbooks/apt-wait-for-unlock"
+    - include_role: name="/ansible-playbooks/docker-ce"
+
+    - name: Create a BTRFS partition for LXD storage
+      parted:
+        device: /dev/sdc
+        number: 1
+        state: present
+        fs_type: btrfs
+
+    - name: Create a BTRFS filesystem for LXD storage
+      community.general.filesystem:
+        fstype: btrfs
+        dev: /dev/sdc1
+
+    - name: Create mount point
+      file:
+        path: /mnt/lxd
+        state: directory
+        mode: '0755'
+
+    - name: Mount LXD storage file system
+      mount:
+        path: /mnt/lxd
+        src: /dev/sdc1
+        fstype: btrfs
+        state: mounted
+
+    - name: Install PIP package - Molecule LXD driver
+      pip:
+        name: [molecule-lxd]
+
+    - name: Add 'vagrant' user to 'lxd' group
+      user:
+        name: vagrant
+        groups: lxd
+        append: yes
