@@ -6,6 +6,7 @@ if [ "${BASH_SOURCE[0]}" -ef "$0" ]; then
 fi
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+${script_dir}/lib/setup_venv.sh
 
 # -u, --dry-run: do not create anything; merely print a name
 env_var_pipe=$(mktemp -u)
@@ -30,7 +31,8 @@ exec {pipe_fd}<>${env_var_pipe}
 # exits (including kills and crashes).
 rm $env_var_pipe
 
-python3 ${script_dir}/run_role.py --env-var-pipe-handle ${pipe_fd}
+"${HOME}/.cache/venv/ansible-tools-py3/bin/python3" \
+  ${script_dir}/lib/run_role.py --env-var-pipe-handle ${pipe_fd}
 
 # Write an empty line to the end of the pipe in case child process has crashed
 # and has never got a chance to write to the pipe. This will prevent current

@@ -14,6 +14,7 @@ import ansible.parsing.dataloader
 import ansible.parsing.vault
 # https://github.com/ansible/ansible/blob/stable-2.10/lib/ansible/vars/manager.py
 import ansible.vars.manager
+import common
 
 def iterate_variables(var_list):
     local_copy = var_list.copy()
@@ -64,25 +65,15 @@ def get_target(inventory):
     choices.append(PyInquirer.Separator("==== Hosts ===="))
     choices.extend([{"name": f"  {host.name}", "value": host} for host in inv_hosts])
 
-    answers = PyInquirer.prompt([
-        {
-            "type": "list",
-            "name": "selection",
-            "message": "Select a group or a host (Ctrl+C to cancel)",
-            # Doesn't work for now. See https://github.com/CITGuru/PyInquirer/issues/17
-            # and https://github.com/CITGuru/PyInquirer/issues/90
-            # "default": 2,
-            "choices": choices
-        }
-    ])
-    if not answers:
-        sys.exit(1)
+    return common.select_from_list(
+        "Select a group or a host (Ctrl+C to cancel)",
+        choices
+    )
 
-    return answers["selection"]
 
 def get_role():
-    # ../..
-    roles_dir = pathlib.Path(__file__).resolve().parents[2]
+    # ../../..
+    roles_dir = pathlib.Path(__file__).resolve().parents[3]
     roles = []
     for child_obj in roles_dir.iterdir():
         if child_obj.is_dir():
@@ -90,34 +81,18 @@ def get_role():
                 roles.append(child_obj.name)
     roles.sort()
 
-    answers = PyInquirer.prompt([
-        {
-            "type": "list",
-            "name": "selection",
-            "message": "Select a role to run (Ctrl+C to cancel)",
-            # Doesn't work for now. See https://github.com/CITGuru/PyInquirer/issues/17
-            # and https://github.com/CITGuru/PyInquirer/issues/90
-            # "default": 2,
-            "choices": roles
-        }
-    ])
-    if not answers:
-        sys.exit(1)
-    return str(roles_dir / answers["selection"])
+    return str(roles_dir / common.select_from_list(
+        "Select a role to run (Ctrl+C to cancel)",
+        roles
+    ))
+
 
 def check_vault_env_variable():
     if os.environ.get("ANSIBLE_VAULT_PASSWORD") is None:
-        answers = PyInquirer.prompt([
-            {
-                "type": "password",
-                "name": "password",
-                "message": "Enter vault password (Ctrl+C to cancel)",
-            }
-        ])
-        if not answers:
-            sys.exit(1)
-        os.environ["ANSIBLE_VAULT_PASSWORD"] = answers["password"]
-        return answers["password"]
+        pwd = common.read_input("Enter vault password", "", is_password=True)
+        os.environ["ANSIBLE_VAULT_PASSWORD"] = pwd
+        return pwd
+
     return ""
 
 
