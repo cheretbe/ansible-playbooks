@@ -25,7 +25,7 @@
 
 - name: Configure smartmontools when not running in a VM
   include_role:
-    name: ../smartmontools
+    name: "{{ role_path }}/../smartmontools"
   when: ansible_virtualization_role != "guest"
 
 # - debug:
