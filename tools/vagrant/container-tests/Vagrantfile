@@ -1,10 +1,13 @@
 require "yaml"
+require (File.dirname(__FILE__) + "/../common/common")
 
 docker_mirrors = []
+package_cache_host = ""
 if File.file?("local-config.yml")
   local_config = YAML.load_file("local-config.yml")
   unless local_config.nil?
     docker_mirrors = local_config.fetch("docker_mirrors", docker_mirrors)
+    package_cache_host = local_config.fetch("package_cache_host", package_cache_host)
   end
 end
 
@@ -49,12 +52,15 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "../../../", "/ansible-playbooks"
   config.vm.network "forwarded_port", guest: 80, host: 8081
 
+  set_local_package_cache_host(config, package_cache_host)
+
   config.vm.provision "ansible_local" do |ansible|
     ansible.playbook = "ansible/provision.yml"
     ansible.compatibility_mode = "2.0"
     ansible.extra_vars = {
       "ansible_python_interpreter": "/usr/bin/python3",
-      "docker_ce_registry_mirrors": docker_mirrors
+      "docker_ce_registry_mirrors": docker_mirrors,
+      "package_cache_host": package_cache_host
     }
   end
 

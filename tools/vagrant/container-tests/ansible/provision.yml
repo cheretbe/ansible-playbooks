@@ -36,10 +36,16 @@
 
     - name: Install PIP package - Molecule LXD driver
       pip:
-        name: [molecule-lxd]
+        name: [molecule_lxd]
 
     - name: Add 'vagrant' user to 'lxd' group
       user:
         name: vagrant
         groups: lxd
         append: yes
+
+    - name: Export PACKAGE_CACHE_HOST env variable
+      copy:
+        content: "export PACKAGE_CACHE_HOST={{ package_cache_host }}"
+        dest: /etc/profile.d/test_settings.sh
+      when: package_cache_host != ''
