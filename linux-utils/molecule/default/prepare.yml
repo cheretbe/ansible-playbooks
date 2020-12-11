@@ -1,0 +1,3 @@
+---
+# - import_playbook: ../common/playbooks/prepare.yml
+- import_playbook: ../../../tests/molecule/common/set_local_package_cache.yml
