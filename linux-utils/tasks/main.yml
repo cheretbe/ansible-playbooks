@@ -1,6 +1,9 @@
 ---
 # tasks file for linux-utils
 
+- include_role: name="../apt-wait-for-unlock"
+  when: ansible_os_family == "Debian"
+
 - name: Install APT packages
   apt:
     name:
@@ -18,8 +21,8 @@
       - jq
       - pv
     update_cache: yes
-    # Fix for warning message "Could not find aptitude. Using apt-get instead"
-    force_apt_get: yes
+    # 1 hour
+    cache_valid_time: 3600
   when: ansible_os_family == "Debian"
 
 - name: Install YUM packages
