@@ -23,6 +23,7 @@
     update_cache: yes
     # 1 hour
     cache_valid_time: 3600
+  become: yes
   when: ansible_os_family == "Debian"
 
 - name: Install YUM packages
@@ -42,4 +43,5 @@
       - jq
       - pv
     state: present
+  become: yes
   when: ansible_os_family == "RedHat"
