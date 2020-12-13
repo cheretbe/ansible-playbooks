@@ -1,16 +1,6 @@
 ---
-- import_playbook: ../../../tests/molecule/common/set_local_package_cache.yml
-
 - name: Prepare
   hosts: all
 
-  tasks:
-    - name: Add the user 'ansible-test'
-      user:
-        name: ansible-test
-
-    - name: Allow passwordless sudo for 'ansible-test' user
-      copy:
-        dest: /etc/sudoers.d/ansible_test
-        content: ansible-test ALL=(root) NOPASSWD:ALL
-        mode: 0640
+- import_playbook: ../../../tests/molecule/common/set_local_package_cache.yml
+- import_playbook: ../../../tests/molecule/common/add_test_user.yml

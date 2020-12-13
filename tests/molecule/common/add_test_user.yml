@@ -1,0 +1,14 @@
+---
+- name: Add test user
+  hosts: all
+
+  tasks:
+    - name: Add the user 'ansible-test'
+      user:
+        name: ansible-test
+
+    - name: Allow passwordless sudo for 'ansible-test' user
+      copy:
+        dest: /etc/sudoers.d/ansible_test
+        content: ansible-test ALL=(root) NOPASSWD:ALL
+        mode: 0640
