@@ -3,7 +3,7 @@ base:
 #    - etc_hosts
     - linux-utils
 
-  'ansible':
+  'ansible-vm':
     - ansible-server
     - ansible-server-config
 
