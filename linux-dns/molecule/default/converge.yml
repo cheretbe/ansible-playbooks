@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_user: vagrant
+
+  tasks:
+    - name: "Include linux-dns"
+      include_role:
+        name: "linux-dns"

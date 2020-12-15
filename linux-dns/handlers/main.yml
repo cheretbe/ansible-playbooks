@@ -1,0 +1,8 @@
+---
+# handlers file for linux-dns
+
+- name: Restart systemd-resolved service
+  service:
+    name: systemd-resolved.service
+    state: restarted
+  become: true

@@ -1,6 +1,7 @@
 ---
 - name: Add test user
   hosts: all
+  become: true
 
   tasks:
     - name: Add the user 'ansible-test'
