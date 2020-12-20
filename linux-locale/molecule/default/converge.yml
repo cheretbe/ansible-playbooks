@@ -1,0 +1,13 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_user: ansible-test
+    linux_locale_locales_to_generate:
+      - { language_country: "en_US", encoding: "UTF-8" }
+      - { language_country: "es_ES", encoding: "UTF-8" }
+    linux_locale_default_LC: es_ES.UTF-8
+  tasks:
+    - name: "Include linux-locale"
+      include_role:
+        name: "linux-locale"

@@ -1,32 +1,46 @@
 ---
 # tasks file for linux-locale
 
-- name: Generate ru_RU.UTF-8 locale
+- name: Generate locales using locale_gen
   locale_gen:
-    name: ru_RU.UTF-8
+    name: "{{ item.language_country }}.{{ item.encoding }}"
     state: present
+  become: yes
+  loop: "{{ linux_locale_locales_to_generate }}"
   when: ansible_os_family == "Debian"
+
+- name: Make sure 'initscripts' package is installed on CentOS 7
+  yum:
+    name: initscripts
+    state: present
+  become: yes
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+
+- name: Make sure 'glibc-locale-source' package is installed on CentOS 8
+  yum:
+    name: glibc-locale-source
+    state: present
+  become: yes
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
 
   # locale_gen module fails on CentOS:
   # https://github.com/ansible/ansible/issues/44708
-  # Use this as a temporary workaround
-- name: Generate locales "{% for set in locales %}{{ set.language_country }}.{{ set.encoding }}{% if not loop.last %},{% endif %}{% endfor %}"
-  become: yes
+  # Under the hood it uses locale-gen which is provided by Debian/Ubuntu only
+- name: Generate locales using localedef
   command: localedef -c -i {{ item.language_country }} -f {{ item.encoding }} {{ item.language_country }}.{{ item.encoding }}
   changed_when: false
-  loop: "{{ locales | flatten(1) }}"
+  loop: "{{ linux_locale_locales_to_generate | flatten(1) }}"
+  become: yes
   when: ansible_os_family == "RedHat"
 
-- name: Update /etc/default/locale
-  copy:
-    src: "locale.conf"
-    dest: /etc/default/locale
-    backup: yes
-  when: ansible_os_family == "Debian"
+- name: Set system locale config file location
+  set_fact:
+    linux_locale_config_file:  "{{ linux_locale_config_file_by_os[ansible_os_family] }}"
 
-- name: Update /etc/locale.conf
-  copy:
-    src: "locale.conf"
-    dest: /etc/locale.conf
+- name: "Set system locale config"
+  template:
+    src: "locale.conf.j2"
+    dest: "{{ linux_locale_config_file }}"
+    mode: 0644
     backup: yes
-  when: ansible_os_family == "RedHat"
+  become: yes
