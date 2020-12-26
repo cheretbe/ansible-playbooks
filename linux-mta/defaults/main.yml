@@ -1,9 +1,12 @@
 ---
 
+# Change to true to not apply this role to a host
+linux_mta_no_config: false
+
 # Change to a host's FQDN to set postfix configuration type to "Internet with
-# smarthost" and use this host aa a relay
+# smarthost" and use this host as a relay
 # By default sets postfix to "Local only" configuration
 linux_mta_postfix_relayhost: false
 
-# Change to an external or local email address to redirect root's mail to it
+# Change to an external or local email address(es) to redirect root's mail to it
 linux_mta_root_mail_recipient: false

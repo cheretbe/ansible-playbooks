@@ -1,0 +1,95 @@
+---
+
+- block:
+  - include_role: name="../apt-wait-for-unlock"
+
+  - name: Make sure apt 'sendmail' package is not installed
+    apt:
+      name: sendmail
+      state: absent
+      purge: yes
+
+  # We select "No configuration" option to prevent configuration being
+  # overwritten on possible future dpkg-reconfigure calls
+  # Use 'debconf-show postfix' or 'debconf-get-selections | grep postfix' to view
+  # all available questions
+  - name: Configure apt 'postfix' package (No configuration)
+    debconf:
+      name: postfix
+      question: "postfix/main_mailer_type"
+      value: "No configuration"
+      vtype: select
+    become: yes
+
+  - name: Install apt 'postfix' package
+    apt:
+      name: postfix
+      update_cache: yes
+      # 1 hour
+      cache_valid_time: 3600
+    become: yes
+
+  when: ansible_os_family == "Debian"
+
+- block:
+  - name: Make sure yum 'sendmail' package is not installed
+    yum:
+      name: sendmail
+      state: absent
+    become: yes
+
+  - name: Install yum 'postfix' package
+    yum:
+      name: postfix
+      state: present
+    become: yes
+
+  when: ansible_os_family == "RedHat"
+
+# Create empty /etc/postfix/main.cf if it doesn't exist so that
+# postconf call to determine postfix version doesn't fail
+- name: Touch '/etc/postfix/main.cf'
+  copy:
+    content: ""
+    dest: //etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: 0644
+    force: no
+  become: yes
+
+- name: Query postfix version
+  command: sudo -i postconf -h mail_version
+  changed_when: false
+  register: linux_mta_postfix_version
+  # This is to suppress a warning: Consider using 'become', 'become_method',
+  # and 'become_user' rather than running sudo. We need a login shell to
+  # find postconf executable automatically
+  args:
+    warn: no
+
+- name: Set postfix version fact
+  set_fact:
+    linux_mta_postfix_version: "{{ linux_mta_postfix_version.stdout_lines[0] }}"
+
+- name: Update postfix config file
+  template:
+    src: etc_postfix_main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  become: yes
+  notify: Restart 'postfix' service
+
+- name: Update system aliases table
+  template:
+    src: etc_aliases.j2
+    dest: /etc/aliases
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  become: yes
+  notify: Re-initialize aliases database

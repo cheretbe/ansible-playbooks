@@ -1,0 +1,12 @@
+---
+# handlers file for linux-mta
+
+- name: Restart 'postfix' service
+  service:
+    name: postfix
+    state: restarted
+  become: yes
+
+- name: Re-initialize aliases database
+  command: /usr/bin/newaliases
+  become: yes
