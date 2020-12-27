@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_user: ansible-test
+  tasks:
+    - name: "Include linux-mta"
+      include_role:
+        name: "linux-mta"
