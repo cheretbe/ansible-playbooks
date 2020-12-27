@@ -46,31 +46,31 @@
 
   when: ansible_os_family == "RedHat"
 
-# Create empty /etc/postfix/main.cf if it doesn't exist so that
-# postconf call to determine postfix version doesn't fail
-- name: Touch '/etc/postfix/main.cf'
-  copy:
-    content: ""
-    dest: //etc/postfix/main.cf
-    owner: root
-    group: root
-    mode: 0644
-    force: no
-  become: yes
+# # Create empty /etc/postfix/main.cf if it doesn't exist so that
+# # postconf call to determine postfix version doesn't fail
+# - name: Touch '/etc/postfix/main.cf'
+#   copy:
+#     content: ""
+#     dest: //etc/postfix/main.cf
+#     owner: root
+#     group: root
+#     mode: 0644
+#     force: no
+#   become: yes
 
-- name: Query postfix version
-  command: sudo -i postconf -h mail_version
-  changed_when: false
-  register: linux_mta_postfix_version
-  # This is to suppress a warning: Consider using 'become', 'become_method',
-  # and 'become_user' rather than running sudo. We need a login shell to
-  # find postconf executable automatically
-  args:
-    warn: no
+# - name: Query postfix version
+#   command: sudo -i postconf -h mail_version
+#   changed_when: false
+#   register: linux_mta_postfix_version
+#   # This is to suppress a warning: Consider using 'become', 'become_method',
+#   # and 'become_user' rather than running sudo. We need a login shell to
+#   # find postconf executable automatically
+#   args:
+#     warn: no
 
-- name: Set postfix version fact
-  set_fact:
-    linux_mta_postfix_version: "{{ linux_mta_postfix_version.stdout_lines[0] }}"
+# - name: Set postfix version fact
+#   set_fact:
+#     linux_mta_postfix_version: "{{ linux_mta_postfix_version.stdout_lines[0] }}"
 
 - name: Update postfix config file
   template:

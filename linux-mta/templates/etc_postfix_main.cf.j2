@@ -4,13 +4,15 @@
 alias_maps = hash:/etc/aliases
 append_dot_mydomain = no
 biff = no
-{% if linux_mta_postfix_version is version('3.0', '>=') %}
+{# CentOS 7 has an old version of postfix, that doesn't support compatibility_level option #}
+{% if not ((ansible_os_family == "RedHat") and (ansible_distribution_major_version == "7")) %}
 compatibility_level = 2
 {% endif %}
 inet_interfaces = loopback-only
 mailbox_size_limit = 0
 mynetworks = 127.0.0.0/8
 recipient_delimiter = +
+inet_protocols = ipv4
 
 {% if linux_mta_postfix_relayhost %}
 relayhost = {{ linux_mta_postfix_relayhost }}
