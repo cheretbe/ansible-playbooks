@@ -1,0 +1,10 @@
+---
+- name: Install packages
+  hosts: all
+  gather_facts: no
+  tasks:
+  - name: Make sure 'cronie' package is installed
+    package:
+      name: cronie
+      state: present
+    when: ansible_os_family == "RedHat"

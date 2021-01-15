@@ -1,0 +1,40 @@
+---
+
+- name: Get cron file info
+  stat:
+    path: /etc/cron.d/ansible_unattended_upgrade_reboot
+  register: cron_file_info
+
+- block:
+    - name: Verify that cron file is present
+      assert:
+        that:
+          - cron_file_info.stat.exists
+
+    - name: "Verify that cron file contains valid reboot settings"
+      lineinfile:
+        name: /etc/cron.d/ansible_unattended_upgrade_reboot
+        line: "{{ molecule_test_cron_reboot_line }}"
+        state: present
+      check_mode: yes
+      register: cron_line
+      failed_when: (cron_line is changed) or (cron_line is failed)
+
+  when: ansible_os_family == "RedHat"
+
+- block:
+    - name: Verify that cron file is absent
+      assert:
+        that:
+          - not cron_file_info.stat.exists
+
+    - name: "Verify that apt config contains reboot time"
+      lineinfile:
+        name: /etc/apt/apt.conf.d/90-ansible-unattended-upgrades
+        line: "{{ molecule_test_reboot_line }}"
+        state: present
+      check_mode: yes
+      register: apt_line
+      failed_when: (apt_line is changed) or (apt_line is failed)
+
+  when: ansible_os_family == "Debian"

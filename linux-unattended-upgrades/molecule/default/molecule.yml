@@ -1,0 +1,21 @@
+---
+lint: |
+  set -e
+  ansible-lint
+  # flake8 --max-line-length 100
+
+scenario:
+  test_sequence:
+    # - dependency
+    - lint
+    # - cleanup
+    - destroy
+    # - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    # - cleanup
+    - destroy

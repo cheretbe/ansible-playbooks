@@ -1,0 +1,11 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_user: ansible-test
+    unattended_automatic_reboot: true
+    # unattended_automatic_reboot_time: "23:45"
+  tasks:
+    - name: "Include linux-unattended-upgrades"
+      include_role:
+        name: "linux-unattended-upgrades"

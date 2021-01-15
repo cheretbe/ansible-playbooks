@@ -1,0 +1,77 @@
+---
+
+- name: Set package names to install for CentOS 7
+  set_fact:
+    unanttended_upgrades_centos_packages: yum-cron, python3
+  when: ansible_distribution_major_version == "7"
+
+- name: Set package names to install for CentOS 8
+  set_fact:
+    unanttended_upgrades_centos_packages: dnf-utils, dnf-automatic, python3
+  when: ansible_distribution_major_version == "8"
+
+- name: "Install CentOS packages"
+  package:
+    name: "{{ unanttended_upgrades_centos_packages }}"
+    state: present
+  become: yes
+
+- name: Enable dnf-automatic timer (CentOS 8)
+  systemd:
+    name: dnf-automatic.timer
+    state: started
+    enabled: yes
+  become: yes
+  when: ansible_distribution_major_version == "8"
+
+- name: Make sure '/opt/ansible-scripts/unattended_upgrades' directory exists
+  file:
+    path: /opt/ansible-scripts/unattended_upgrades
+    recurse: yes
+    state: directory
+    mode: 0755
+  become: yes
+
+- name: Copy '/opt/ansible-scripts/unattended_upgrades/check_if_reboot_is_needed.py'
+  copy:
+    src: opt_ansible-scripts_unattended_upgrades_check_if_reboot_is_needed.py
+    dest: /opt/ansible-scripts/unattended_upgrades/check_if_reboot_is_needed.py
+    owner: root
+    group: root
+    mode: '0755'
+  become: yes
+
+- block:
+
+  - name: Set automatic reboot time
+    set_fact:
+      unanttended_upgrades_cron_reboot_hours: >-
+        {{ unattended_automatic_reboot_time.split(":")[0] }}
+      unanttended_upgrades_cron_reboot_minutes: >-
+        {{ unattended_automatic_reboot_time.split(":")[1] }}
+
+  - name: Check validity of automatic reboot time
+    assert:
+      that:
+        - (unanttended_upgrades_cron_reboot_hours | int) >= 0
+        - (unanttended_upgrades_cron_reboot_hours | int) <= 23
+        - (unanttended_upgrades_cron_reboot_minutes | int) >= 0
+        - (unanttended_upgrades_cron_reboot_minutes | int) <= 59
+
+  - name: Create '/etc/cron.d/ansible_unattended_upgrade_reboot' cron job
+    template:
+      src: etc_cron.d_ansible_unattended_upgrade_reboot
+      dest: /etc/cron.d/ansible_unattended_upgrade_reboot
+      owner: root
+      group: root
+      mode: 0644
+    become: yes
+
+  when: unattended_automatic_reboot | bool
+
+- name: Check '/etc/cron.d/ansible_unattended_upgrade_reboot' presence
+  file:
+    path: /etc/cron.d/ansible_unattended_upgrade_reboot
+    state: absent
+  become: yes
+  when: not (unattended_automatic_reboot | bool)

@@ -5,15 +5,17 @@ unattended_origins_patterns:
   - '"${distro_id}ESM:${distro_codename}";'
   - '"${distro_id}:${distro_codename}-updates";'
 
-#Unattended-Upgrade::Automatic-Reboot
-# Automatically reboot *WITHOUT CONFIRMATION* if a
-# the file /var/run/reboot-required is found after the upgrade
+# Ubuntu: Unattended-Upgrade::Automatic-Reboot
+#  Automatically reboot *WITHOUT CONFIRMATION* if
+#  the file /var/run/reboot-required is found after the upgrade
+# CentOS: install a cron job to check if reboot is needed
 unattended_automatic_reboot: false
 
-#Unattended-Upgrade::Automatic-Reboot-Time
-# If automatic reboot is enabled and needed, reboot at the specific
-# time instead of immediately
-unattended_automatic_reboot_time: false
+# Ubuntu: Unattended-Upgrade::Automatic-Reboot-Time
+#  If automatic reboot is enabled and needed, reboot at the specific
+#  time instead of immediately
+# CentOS: Activation time for reboot cron job
+unattended_automatic_reboot_time: "02:00"
 
 #Unattended-Upgrade::Mail
 # Send email to this address for problems or packages upgrades

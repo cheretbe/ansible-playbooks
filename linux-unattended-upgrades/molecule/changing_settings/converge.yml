@@ -1,0 +1,74 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ansible_user: ansible-test
+  tasks:
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (default settings)"
+      include_role:
+        name: "linux-unattended-upgrades"
+
+    - name: Verify auto-reboot settings
+      include_role:
+        name: "../tests/verify_auto_reboot_settings"
+      vars:
+        molecule_test_auto_reboot: false
+
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (automatic reboot)"
+      include_role:
+        name: "linux-unattended-upgrades"
+      vars:
+        unattended_automatic_reboot: true
+
+    - name: Verify auto-reboot settings
+      include_role:
+        name: "../tests/verify_auto_reboot_settings"
+      vars:
+        molecule_test_auto_reboot: true
+
+    - name: Verify reboot time config
+      include_role:
+        name: "../tests/verify_auto_reboot_time"
+      vars:
+        molecule_test_cron_reboot_line: >-
+          00 02 * * * root systemd-cat -t ansible-unattended-upgrades
+          /opt/ansible-scripts/unattended_upgrades/check_if_reboot_is_needed.py
+        molecule_test_reboot_line: >-
+          Unattended-Upgrade::Automatic-Reboot-Time "02:00";
+
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (automatic reboot at specific time)"
+      include_role:
+        name: "linux-unattended-upgrades"
+      vars:
+        unattended_automatic_reboot: true
+        unattended_automatic_reboot_time: "23:45"
+
+    - name: Verify auto-reboot settings
+      include_role:
+        name: "../tests/verify_auto_reboot_settings"
+      vars:
+        molecule_test_auto_reboot: true
+
+    - name: Verify custom reboot time config
+      include_role:
+        name: "../tests/verify_auto_reboot_time"
+      vars:
+        molecule_test_cron_reboot_line: >-
+          45 23 * * * root systemd-cat -t ansible-unattended-upgrades
+          /opt/ansible-scripts/unattended_upgrades/check_if_reboot_is_needed.py
+        molecule_test_reboot_line: >-
+          Unattended-Upgrade::Automatic-Reboot-Time "23:45";
+
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (default settings once again)"
+      include_role:
+        name: "linux-unattended-upgrades"
+
+    - name: Verify auto-reboot settings
+      include_role:
+        name: "../tests/verify_auto_reboot_settings"
+      vars:
+        molecule_test_auto_reboot: false

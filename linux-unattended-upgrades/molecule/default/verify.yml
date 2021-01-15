@@ -1,0 +1,10 @@
+---
+- name: Verify
+  hosts: all
+  tasks:
+
+    - name: Verify auto-reboot settings
+      include_role:
+        name: "../tests/verify_auto_reboot_settings"
+      vars:
+        molecule_test_auto_reboot: false
