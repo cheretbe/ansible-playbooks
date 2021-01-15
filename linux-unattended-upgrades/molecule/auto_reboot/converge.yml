@@ -2,7 +2,8 @@
 - name: Converge
   hosts: all
   vars:
-    ansible_user: ansible-test
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
     unattended_automatic_reboot: true
     # unattended_automatic_reboot_time: "23:45"
   tasks:

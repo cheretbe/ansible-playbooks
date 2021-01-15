@@ -55,7 +55,8 @@ def get_molecule_scenarios(context):
 
 
 def run_molecule(context, command, scenario=None, lxd=False):
+    molecule_env = {"MOLECULE_USER_NAME": "root"} if lxd else None
     molecule_command = f"molecule --base-config {get_base_config_path(lxd)} {command}"
     if scenario is not None:
         molecule_command += f" -s {scenario}"
-    run_command(context, molecule_command)
+    run_command(context, molecule_command, env=molecule_env)
