@@ -2,9 +2,16 @@
 - name: Add test user
   hosts: all
   become: true
+  gather_facts: no
 
   tasks:
-    - name: Add the user 'ansible-test'
+    - name: Make sure 'sudo' package is installed
+      package:
+        name: sudo
+        state: present
+      when: ansible_os_family == "RedHat"
+
+    - name: Add 'ansible-test' user
       user:
         name: ansible-test
 

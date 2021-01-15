@@ -17,8 +17,8 @@ platforms:
 provisioner:
   name: ansible
   playbooks:
-    create: ../create_lxd.yml
-    destroy: ../destroy_lxd.yml
+    create: ../../../tests/molecule/create_lxd.yml
+    destroy: ../../../tests/molecule/destroy_lxd.yml
 
 verifier:
   name: ansible
