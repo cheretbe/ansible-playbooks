@@ -1,0 +1,43 @@
+---
+- name: Set host name fact
+  set_fact:
+    test_host_name: "{{ ansible_host }}"
+
+- name: Set molecule driver fact
+  set_fact:
+    test_molecule_driver: "{{ hostvars[ansible_host]['molecule_yml']['driver']['name'] }}"
+
+- name: Fix LXD backend name
+  set_fact:
+    test_molecule_driver: lxc
+  when: test_molecule_driver == "lxd"
+
+- name: Build pytest command (py.pytest)
+  set_fact:
+    test_pytest_cmd: py.test
+
+- name: Build pytest command (extra parameters)
+  set_fact:
+    test_pytest_cmd: "{{ test_pytest_cmd }} {{ test_extra_params }}"
+  when: test_extra_params is defined
+
+- name: Build pytest command (testinfra parameters)
+  set_fact:
+    test_pytest_cmd: >-
+      {{ test_pytest_cmd }} --hosts='{{ test_molecule_driver }}://{{ test_host_name }}' {{ test_dir }}
+
+- debug:
+    msg: "{{ test_pytest_cmd }}"
+
+- name: "Run tests"
+  local_action:
+    module: "command"
+    _raw_params: "{{ test_pytest_cmd }}"
+
+# - block:
+#   - debug:
+#       msg: "***************"
+#   - debug:
+#       msg: "{{ item }}"
+#   with_items: "{{ test_dir }}"
+
