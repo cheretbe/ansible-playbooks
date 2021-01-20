@@ -1,10 +1,13 @@
 ---
 - name: Verify
   hosts: all
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    test_converge_ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
   tasks:
 
-    - name: Verify auto-reboot settings
-      include_role:
-        name: "../tests/verify_auto_reboot_settings"
+    - name: "Verify unattended upgrades settings"
+      include_tasks:
+        file: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
-        molecule_test_auto_reboot: false
+        test_dir: "{{ playbook_dir }}/../tests"
