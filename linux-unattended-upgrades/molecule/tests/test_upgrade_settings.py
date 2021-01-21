@@ -15,19 +15,6 @@ def file_contains_line(host, file_name, line):
     file_lines = host.file(file_name).content_string.split("\n")
     return line in file_lines
 
-@pytest.fixture()
-def autoreboot_param(pytestconfig):
-    return pytestconfig.getoption("autoreboot")
-
-@pytest.fixture()
-def reboot_time_param(pytestconfig):
-    return pytestconfig.getoption("reboot_time")
-
-def test_PoC(pytestconfig):
-    print("\n\n")
-    print("#####====>" + pytestconfig.getoption("reboot_time"))
-    print("\n\n")
-
 def test_settings(host):
     reboot_script = host.file(
         "/opt/ansible-scripts/unattended_upgrades/check_if_reboot_is_needed.py"
