@@ -1,16 +1,32 @@
 import pytest
 
+def get_parameter_value(host, ansible_var_name, param_value, default_value):
+    if host.backend.HAS_RUN_ANSIBLE:
+        ansible_var_value = host.ansible.get_variables().get(ansible_var_name, None)
+    else:
+        ansible_var_value = None
+    return_value = ansible_var_value if param_value is None else param_value
+    if return_value is None:
+        return_value = default_value
+    return return_value
+
+
 def file_contains_line(host, file_name, line):
     file_lines = host.file(file_name).content_string.split("\n")
     return line in file_lines
 
 @pytest.fixture()
-def autoreboot(pytestconfig):
+def autoreboot_param(pytestconfig):
     return pytestconfig.getoption("autoreboot")
 
 @pytest.fixture()
-def reboot_time(pytestconfig):
+def reboot_time_param(pytestconfig):
     return pytestconfig.getoption("reboot_time")
+
+def test_PoC(pytestconfig):
+    print("\n\n")
+    print("#####====>" + pytestconfig.getoption("reboot_time"))
+    print("\n\n")
 
 def test_settings(host):
     reboot_script = host.file(
@@ -30,7 +46,20 @@ def test_settings(host):
             assert file_contains_line(host, "/etc/dnf/automatic.conf", "apply_updates = yes")
         assert reboot_script.mode == 0o755
 
-def test_reboot_settings(host, autoreboot, reboot_time): # pylint: disable=redefined-outer-name
+def test_reboot_settings(host, pytestconfig):
+    autoreboot = get_parameter_value(
+        host=host,
+        ansible_var_name="unattended_automatic_reboot",
+        param_value=pytestconfig.getoption("autoreboot"),
+        default_value=False
+    )
+    reboot_time = get_parameter_value(
+        host=host,
+        ansible_var_name="unattended_automatic_reboot_time",
+        param_value=pytestconfig.getoption("reboot_time"),
+        default_value="02:00"
+    )
+
     cron_file = host.file("/etc/cron.d/ansible_unattended_upgrade_reboot")
 
     if host.system_info.distribution == "ubuntu":
