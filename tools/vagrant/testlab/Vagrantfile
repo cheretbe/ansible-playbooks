@@ -186,6 +186,8 @@ Vagrant.configure("2") do |config|
     end
 
     centos_8.vbguest.auto_update = true
+    # centos_8.vbguest.installer_options = {enablerepo: true}
+    centos_8.vbguest.installer_options = { allow_kernel_upgrade: true }
 
     centos_8.vm.synced_folder "./root_srv/salt", "/srv/salt"
     centos_8.vm.hostname = "centos-8"
