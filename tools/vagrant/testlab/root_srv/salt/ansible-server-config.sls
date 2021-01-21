@@ -13,6 +13,13 @@ ansible.local.inventory:
     - user: vagrant
     - group: vagrant
 
+ansible.local.inventory_vault:
+  file.managed:
+    - source: salt://config/local_inventory_vault_vars.yml
+    - name: /home/vagrant/local_inventory_vault_vars.yml
+    - user: vagrant
+    - group: vagrant
+
 ansible.awx.inventory:
   file.managed:
     - source: salt://config/awx_inventory.tower.yml
