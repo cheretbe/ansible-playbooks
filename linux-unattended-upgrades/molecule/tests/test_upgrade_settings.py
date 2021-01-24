@@ -15,15 +15,30 @@ def file_contains_line(host, file_name, line):
     file_lines = host.file(file_name).content_string.split("\n")
     return line in file_lines
 
-def test_settings(host):
+def test_settings(host, pytestconfig):
+    origins = get_parameter_value(
+        host=host,
+        ansible_var_name="unattended_allowed_origins",
+        param_value=pytestconfig.getoption("origins"),
+        default_value=[
+            '"${distro_id}:${distro_codename}";',
+            '"${distro_id}:${distro_codename}-security";',
+            '"${distro_id}ESM:${distro_codename}";',
+            '"${distro_id}:${distro_codename}-updates";'
+        ]
+    )
+
     reboot_script = host.file(
         "/opt/ansible-scripts/unattended_upgrades/check_if_reboot_is_needed.py"
     )
 
     if host.system_info.distribution == "ubuntu":
+        apt_conf_file = host.file("/etc/apt/apt.conf.d/90-ansible-unattended-upgrades")
         assert host.package("unattended-upgrades").is_installed
-        assert host.file("/etc/apt/apt.conf.d/90-ansible-unattended-upgrades").exists
+        assert apt_conf_file.exists
         assert not reboot_script.exists
+        for origin in origins:
+            assert apt_conf_file.contains(origin)
     elif host.system_info.distribution == "centos":
         if host.system_info.release == '7':
             assert host.package("yum-cron").is_installed

@@ -2,20 +2,21 @@
 // Any changes made here will be overwritten
 
 // Overrides for '20auto-upgrades'
-
 APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 APT::Periodic::Download-Upgradeable-Packages "1";
 APT::Periodic::AutocleanInterval "7";
 
 // Overrides for '50unattended-upgrades'
-
 Unattended-Upgrade::Allowed-Origins {
-{% for origin in unattended_origins_patterns %}
+{% for origin in unattended_allowed_origins %}
+  {{ origin }}
+{% endfor %}
+{#  #}
+{% for origin in unattended_additional_allowed_origins %}
   {{ origin }}
 {% endfor %}
 };
-
 Unattended-Upgrade::Remove-Unused-Dependencies "true";
 
 {% if unattended_automatic_reboot %}
@@ -24,7 +25,7 @@ Unattended-Upgrade::Remove-Unused-Dependencies "true";
 Unattended-Upgrade::Automatic-Reboot "true";
 {% endif %}
 
-{% if unattended_automatic_reboot_time %}
+{% if unattended_automatic_reboot and unattended_automatic_reboot_time %}
 // If automatic reboot is enabled and needed, reboot at the specific
 // time instead of immediately
 //  Default: "now"

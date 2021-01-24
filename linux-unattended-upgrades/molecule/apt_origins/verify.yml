@@ -1,0 +1,107 @@
+---
+- name: Verify
+  hosts: all
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    test_converge_ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+
+  tasks:
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (default settings)"
+      include_role:
+        name: "linux-unattended-upgrades"
+      vars:
+        ansible_user: "{{ test_converge_ansible_user }}"
+
+    - name: "Verify unattended upgrades settings"
+      include_tasks:
+        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../tests"
+
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (custom standard origins, no additional ones)"
+      include_role:
+        name: "linux-unattended-upgrades"
+      vars:
+        ansible_user: "{{ test_converge_ansible_user }}"
+        unattended_allowed_origins:
+          - "test1:stable;"
+          - "test2:stable;"
+          - "test3:stable;"
+
+    - name: "Verify unattended upgrades settings"
+      include_tasks:
+        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../tests"
+        test_extra_params: >-
+          --origins=test1:stable;
+          --origins=test2:stable;
+          --origins=test3:stable;
+
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (default standard origins, custom additional ones)"
+      include_role:
+        name: "linux-unattended-upgrades"
+      vars:
+        ansible_user: "{{ test_converge_ansible_user }}"
+        unattended_additional_allowed_origins:
+          - "add_test1:stable;"
+          - "add_test2:stable;"
+          - "add_test3:stable;"
+
+    - name: "Verify unattended upgrades settings"
+      include_tasks:
+        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../tests"
+        test_extra_params: >-
+          --origins='"${distro_id}:${distro_codename}";'
+          --origins='"${distro_id}:${distro_codename}-security";'
+          --origins='"${distro_id}ESM:${distro_codename}";'
+          --origins='"${distro_id}:${distro_codename}-updates";'
+          --origins='add_test1:stable;'
+          --origins='add_test2:stable;'
+          --origins='add_test3:stable;'
+
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (custom standard origins, custom additional ones)"
+      include_role:
+        name: "linux-unattended-upgrades"
+      vars:
+        ansible_user: "{{ test_converge_ansible_user }}"
+        unattended_allowed_origins:
+          - "test1:stable;"
+          - "test2:stable;"
+          - "test3:stable;"
+        unattended_additional_allowed_origins:
+          - "add_test1:stable;"
+          - "add_test2:stable;"
+          - "add_test3:stable;"
+
+    - name: "Verify unattended upgrades settings"
+      include_tasks:
+        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../tests"
+        test_extra_params: >-
+          --origins=test1:stable;
+          --origins=test2:stable;
+          --origins=test3:stable;
+          --origins='add_test1:stable;'
+          --origins='add_test2:stable;'
+          --origins='add_test3:stable;'
+
+# ==============================================================================
+    - name: "Include linux-unattended-upgrades (default settings)"
+      include_role:
+        name: "linux-unattended-upgrades"
+      vars:
+        ansible_user: "{{ test_converge_ansible_user }}"
+
+    - name: "Verify unattended upgrades settings"
+      include_tasks:
+        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../tests"

@@ -11,7 +11,7 @@
 
 - name: Create custom unattended upgrades configuration file
   template:
-    src: unattended-upgrades.j2
+    src: etc_apt_apt.conf.d_90-ansible-unattended-upgrades.j2
     dest: /etc/apt/apt.conf.d/90-ansible-unattended-upgrades
     owner: root
     group: root
