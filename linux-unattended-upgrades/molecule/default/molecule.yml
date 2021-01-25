@@ -1,7 +1,9 @@
 ---
 lint: |
   set -e
-  ansible-lint --exclude molecule/default/verify.yml --exclude molecule/changing_settings/verify.yml
+  ansible-lint --exclude molecule/default/verify.yml \
+    --exclude molecule/changing_settings/verify.yml \
+    --exclude molecule/apt_origins/verify.yml
   # flake8 --max-line-length 100
 
 scenario:
