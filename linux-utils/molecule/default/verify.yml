@@ -1,21 +1,28 @@
 ---
 - name: Verify
   hosts: all
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    test_converge_ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
   tasks:
 
-  - name: Set package names to check
-    set_fact:
-      package_names: ["mc", "htop", "net-tools", "ncdu", "wget", "git", "nano",
-        "traceroute", "colordiff", "jq", "pv",
-        "{% if ansible_os_family == 'Debian' %}dnsutils{% else %}bind-utils{% endif %}",
-        "{% if ansible_os_family == 'Debian' %}mtr-tiny{% else %}mtr{% endif %}"
-      ]
+    - name: Set host name fact
+      set_fact:
+        test_host_name: "{{ ansible_host }}"
 
-  - name: Gather package facts
-    package_facts:
-      manager: auto
+    - name: Run tests
+      local_action:
+        module: "command"
+        _raw_params: "../../../tests/run_testinfra.py {{ playbook_dir }}/../../tests --backend {{ hostvars[ansible_host]['molecule_yml']['driver']['name'] }} --host-name {{ test_host_name }}"
+      register: test_results
+      failed_when: false
 
-  - name: Ensure all packages are installed
-    assert:
-          that: "('{{ item }}' in ansible_facts.packages) | bool"
-    loop: "{{ package_names }}"
+    - name: Checking test results
+      debug:
+        msg: "{{ test_results.stdout_lines + test_results.stderr_lines }}"
+      when: test_results.rc != 0
+
+    - name: Exit on error
+      fail:
+        msg: "Testinfra call returned non-zero exit status {{ test_results.rc }}"
+      when: test_results.rc != 0
