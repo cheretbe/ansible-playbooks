@@ -26,6 +26,13 @@
   become: yes
   when: ansible_os_family == "Debian"
 
+- name: Make sure EPEL repo is enabled
+  yum:
+    name: epel-release
+    state: present
+  become: yes
+  when: ansible_os_family == "RedHat"
+
 - name: Install YUM packages
   yum:
     name:
