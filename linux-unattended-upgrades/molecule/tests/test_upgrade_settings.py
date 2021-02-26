@@ -43,7 +43,6 @@ def test_settings(host, pytestconfig):
         if host.system_info.release == '7':
             assert host.package("yum-cron").is_installed
             assert file_contains_line(host, "/etc/yum/yum-cron.conf", "apply_updates = yes")
-            assert False
         elif host.system_info.release == '8':
             assert host.package("dnf-automatic").is_installed
             assert file_contains_line(host, "/etc/dnf/automatic.conf", "apply_updates = yes")
