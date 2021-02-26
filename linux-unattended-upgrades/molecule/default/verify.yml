@@ -9,4 +9,4 @@
     - name: "Verify unattended upgrades settings"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
-        test_dir: "{{ playbook_dir }}/../tests"
+        test_dir: "{{ playbook_dir }}/../../tests"

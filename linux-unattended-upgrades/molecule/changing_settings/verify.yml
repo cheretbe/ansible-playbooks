@@ -16,7 +16,7 @@
     - name: "Verify unattended upgrades settings"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
-        test_dir: "{{ playbook_dir }}/../tests"
+        test_dir: "{{ playbook_dir }}/../../tests"
 
     # ==========================================================================
     - name: "Include linux-unattended-upgrades (automatic reboot)"
@@ -29,7 +29,7 @@
     - name: "Verify unattended upgrades settings"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
-        test_dir: "{{ playbook_dir }}/../tests"
+        test_dir: "{{ playbook_dir }}/../../tests"
         test_extra_params: "--autoreboot --reboot-time=02:00"
 
     # ==========================================================================
@@ -44,7 +44,7 @@
     - name: "Verify unattended upgrades settings"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
-        test_dir: "{{ playbook_dir }}/../tests"
+        test_dir: "{{ playbook_dir }}/../../tests"
         test_extra_params: "--autoreboot --reboot-time=23:45"
 
     # ==========================================================================
@@ -57,4 +57,4 @@
     - name: "Verify unattended upgrades settings"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
-        test_dir: "{{ playbook_dir }}/../tests"
+        test_dir: "{{ playbook_dir }}/../../tests"
