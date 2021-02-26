@@ -15,8 +15,8 @@
     state: present
   become: yes
 
-  # 208 File permissions unset or incorrect. We want to save existing permissions
-- name: Set 'apply_updates' parameter in '/etc/yum/yum-cron.conf' (CentOS 7) # noqa 208
+  # Permissions unset or incorrect. We want to save existing permissions
+- name: Set 'apply_updates' parameter in '/etc/yum/yum-cron.conf' (CentOS 7)  # noqa risky-file-permissions
   ini_file:
     path: /etc/yum/yum-cron.conf
     section: commands
@@ -26,7 +26,7 @@
   become: yes
   when: ansible_distribution_major_version == "7"
 
-- name: Set 'apply_updates' parameter in '/etc/dnf/automatic.conf' (CentOS 8) # noqa 208
+- name: Set 'apply_updates' parameter in '/etc/dnf/automatic.conf' (CentOS 8)  # noqa risky-file-permissions
   ini_file:
     path: /etc/dnf/automatic.conf
     section: commands
@@ -62,30 +62,29 @@
   become: yes
 
 - block:
+    - name: Set automatic reboot time
+      set_fact:
+        unanttended_upgrades_cron_reboot_hours: >-
+          {{ unattended_automatic_reboot_time.split(":")[0] }}
+        unanttended_upgrades_cron_reboot_minutes: >-
+          {{ unattended_automatic_reboot_time.split(":")[1] }}
 
-  - name: Set automatic reboot time
-    set_fact:
-      unanttended_upgrades_cron_reboot_hours: >-
-        {{ unattended_automatic_reboot_time.split(":")[0] }}
-      unanttended_upgrades_cron_reboot_minutes: >-
-        {{ unattended_automatic_reboot_time.split(":")[1] }}
+    - name: Check validity of automatic reboot time
+      assert:
+        that:
+          - (unanttended_upgrades_cron_reboot_hours | int) >= 0
+          - (unanttended_upgrades_cron_reboot_hours | int) <= 23
+          - (unanttended_upgrades_cron_reboot_minutes | int) >= 0
+          - (unanttended_upgrades_cron_reboot_minutes | int) <= 59
 
-  - name: Check validity of automatic reboot time
-    assert:
-      that:
-        - (unanttended_upgrades_cron_reboot_hours | int) >= 0
-        - (unanttended_upgrades_cron_reboot_hours | int) <= 23
-        - (unanttended_upgrades_cron_reboot_minutes | int) >= 0
-        - (unanttended_upgrades_cron_reboot_minutes | int) <= 59
-
-  - name: Create '/etc/cron.d/ansible_unattended_upgrade_reboot' cron job
-    template:
-      src: etc_cron.d_ansible_unattended_upgrade_reboot
-      dest: /etc/cron.d/ansible_unattended_upgrade_reboot
-      owner: root
-      group: root
-      mode: 0644
-    become: yes
+    - name: Create '/etc/cron.d/ansible_unattended_upgrade_reboot' cron job
+      template:
+        src: etc_cron.d_ansible_unattended_upgrade_reboot
+        dest: /etc/cron.d/ansible_unattended_upgrade_reboot
+        owner: root
+        group: root
+        mode: 0644
+      become: yes
 
   when: unattended_automatic_reboot | bool
 

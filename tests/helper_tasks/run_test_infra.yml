@@ -30,14 +30,6 @@
     msg: "{{ test_pytest_cmd }}"
 
 - name: "Run tests"
-  local_action:
-    module: "command"
-    _raw_params: "{{ test_pytest_cmd }}"
-
-# - block:
-#   - debug:
-#       msg: "***************"
-#   - debug:
-#       msg: "{{ item }}"
-#   with_items: "{{ test_dir }}"
-
+  command: "{{ test_pytest_cmd }}"
+  delegate_to: localhost
+  changed_when: false

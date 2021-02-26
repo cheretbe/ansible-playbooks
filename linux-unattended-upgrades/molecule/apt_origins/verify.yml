@@ -14,8 +14,7 @@
         ansible_user: "{{ test_converge_ansible_user }}"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "{{ playbook_dir }}/../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
 
@@ -31,8 +30,7 @@
           - "test3:stable;"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "{{ playbook_dir }}/../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
         test_extra_params: >-
@@ -52,8 +50,7 @@
           - "add_test3:stable;"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "{{ playbook_dir }}/../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
         test_extra_params: >-
@@ -81,8 +78,7 @@
           - "add_test3:stable;"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "{{ playbook_dir }}/../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
         test_extra_params: >-
@@ -101,7 +97,6 @@
         ansible_user: "{{ test_converge_ansible_user }}"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "{{ playbook_dir }}/../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
