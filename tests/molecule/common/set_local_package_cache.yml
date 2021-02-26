@@ -10,5 +10,5 @@
         dest: /etc/apt/apt.conf.d/02proxy
         mode: 0644
       when:
-        - lookup('env', 'PACKAGE_CACHE_HOST') != '' # noqa 602
+        - lookup('env', 'PACKAGE_CACHE_HOST') != ''  # noqa empty-string-compare
         - ansible_os_family == "Debian"

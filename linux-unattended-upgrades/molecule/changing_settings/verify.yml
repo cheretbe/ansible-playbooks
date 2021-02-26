@@ -6,7 +6,7 @@
     test_converge_ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
 
   tasks:
-# ==============================================================================
+    # ==========================================================================
     - name: "Include linux-unattended-upgrades (default settings)"
       include_role:
         name: "linux-unattended-upgrades"
@@ -14,12 +14,11 @@
         ansible_user: "{{ test_converge_ansible_user }}"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
 
-# ==============================================================================
+    # ==========================================================================
     - name: "Include linux-unattended-upgrades (automatic reboot)"
       include_role:
         name: "linux-unattended-upgrades"
@@ -28,13 +27,12 @@
         unattended_automatic_reboot: true
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
         test_extra_params: "--autoreboot --reboot-time=02:00"
 
-# ==============================================================================
+    # ==========================================================================
     - name: "Include linux-unattended-upgrades (automatic reboot at specific time)"
       include_role:
         name: "linux-unattended-upgrades"
@@ -44,13 +42,12 @@
         unattended_automatic_reboot_time: "23:45"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
         test_extra_params: "--autoreboot --reboot-time=23:45"
 
-# ==============================================================================
+    # ==========================================================================
     - name: "Include linux-unattended-upgrades (default settings once again)"
       include_role:
         name: "linux-unattended-upgrades"
@@ -58,7 +55,6 @@
         ansible_user: "{{ test_converge_ansible_user }}"
 
     - name: "Verify unattended upgrades settings"
-      include_tasks:
-        file: "../../../tests/helper_tasks/run_test_infra.yml"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../tests"
