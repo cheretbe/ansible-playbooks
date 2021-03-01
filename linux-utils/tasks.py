@@ -20,7 +20,7 @@ def show_help(context):
     print("\nExamples:")
     print("inv test")
     print("inv converge")
-    print("inv molecule list -s auto_reboot --lxd")
+    print("inv molecule list --lxd")
 
 
 @invoke.task

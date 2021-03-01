@@ -1,7 +1,7 @@
 ---
 lint: |
   set -e
-  ansible-lint --exclude molecule/default/verify.yml
+  ansible-lint
 
 scenario:
   test_sequence:
@@ -18,3 +18,12 @@ scenario:
     - verify
     # - cleanup
     - destroy
+
+verifier:
+  name: testinfra
+  directory: ../../tests/
+  options:
+    # These are actually pytest parameters (testinfra is a pytest plugin)
+    v: true
+    # k: dummy
+    # s: true
