@@ -1,0 +1,34 @@
+---
+
+dependency:
+  name: galaxy
+driver:
+  name: vagrant
+platforms:
+  - name: ubuntu-xenial
+    box: ubuntu/xenial64
+  - name: ubuntu-bionic
+    box: ubuntu/bionic64
+  - name: ubuntu-focal
+    box: ubuntu/focal64
+
+provisioner:
+  name: ansible
+verifier:
+  name: ansible
+
+scenario:
+  test_sequence:
+    # - dependency
+    # - lint
+    # - cleanup
+    - destroy
+    # - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    # - cleanup
+    - destroy
