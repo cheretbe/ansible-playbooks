@@ -1,28 +1,11 @@
 ---
-dependency:
-  name: galaxy
-driver:
-  name: vagrant
 lint: |
   set -e
   ansible-lint
-  flake8
-platforms:
-  - name: centos-7
-    box: centos/7
-  - name: centos-8
-    box: centos/8
-  - name: ubuntu-xenial
-    box: ubuntu/xenial64
-  - name: ubuntu-bionic
-    box: ubuntu/bionic64
-  - name: ubuntu-focal
-    box: ubuntu/focal64
-provisioner:
-  name: ansible
+  pylint tests/
 verifier:
   name: testinfra
-  directory: ../tests/
+  directory: ../../tests/
   options:
     v: true
     # s: true
