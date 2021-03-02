@@ -19,31 +19,24 @@ def show_help(context):
 
     print("\nExamples:")
     print("inv test")
-    print("inv converge")
-    print("inv molecule list --lxd")
+    print("inv molecule list --driver lxd")
 
 
 @invoke.task
 def test(context):
     """Run all tests"""
     for scenario in test_utils.get_molecule_scenarios(context):
-        for use_lxd in [False, True]:
-            driver_name = "lxd" if use_lxd else "docker"
-            header_text = f"Molecule test {scenario} ({driver_name})"
+        for driver in ["docker", "lxd"]:
+            header_text = f"Molecule test {scenario} ({driver})"
             test_utils.print_header(header_text)
-            test_utils.run_molecule(context, "test", scenario, use_lxd)
+            test_utils.run_molecule(context, "test", scenario, driver)
             test_utils.print_success_message(header_text)
 
 
-@invoke.task
-def converge(context):
-    """Run Molecule converge using 'default' scenario for Docker"""
-    test_utils.run_molecule(context, "converge")
-
-
-@invoke.task(optional=['scenario, lxd'])
+@invoke.task(optional=['scenario, driver'])
 def molecule(
-        context, command, scenario=None, lxd=False
+        context, command, scenario=None, driver='docker'
 ):
     """Run custom Molecule command"""
-    test_utils.run_molecule(context, command, scenario, lxd)
+    print(f"driver: {driver}")
+    test_utils.run_molecule(context, command, scenario, driver)
