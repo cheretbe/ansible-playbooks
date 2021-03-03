@@ -1,35 +1,16 @@
 ---
-dependency:
-  name: galaxy
-driver:
-  name: docker
 lint: |
   set -e
-  # yamllint .
   ansible-lint
-  flake8
-platforms:
-  - name: centos-7
-    image: pycontribs/centos:7
-    pre_build_image: true
-    # privileged: true
-    # command: /sbin/init
-  - name: centos-8
-    image: pycontribs/centos:8
-    pre_build_image: true
-  - name: ubuntu-focal
-    image: geerlingguy/docker-ubuntu2004-ansible
-    pre_build_image: true
-  - name: ubuntu-bionic
-    image: geerlingguy/docker-ubuntu1804-ansible
-    pre_build_image: true
-  - name: ubuntu-xenial
-    image: geerlingguy/docker-ubuntu1604-ansible
-    pre_build_image: true
-provisioner:
-  name: ansible
+  pylint tests/
 verifier:
-  name: ansible
+  name: testinfra
+  directory: ../../tests/
+  options:
+    v: true
+    # s: true
+    default-lang: ru_RU.UTF-8
+    default-lc: es_ES.UTF-8
 scenario:
   test_sequence:
     # - dependency

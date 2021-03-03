@@ -1,7 +1,7 @@
 ---
 linux_locale_locales_to_generate:
-  - { language_country: "en_US", encoding: "UTF-8" }
-  - { language_country: "ru_RU", encoding: "UTF-8" }
+  - {language_country: "en_US", encoding: "UTF-8"}
+  - {language_country: "ru_RU", encoding: "UTF-8"}
 
 linux_locale_default_lang: en_US.UTF-8
 # linux_locale_default_language: "en:ru:es"

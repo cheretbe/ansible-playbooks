@@ -35,7 +35,7 @@
 
 - name: Set system locale config file location
   set_fact:
-    linux_locale_config_file:  "{{ linux_locale_config_file_by_os[ansible_os_family] }}"
+    linux_locale_config_file: "{{ linux_locale_config_file_by_os[ansible_os_family] }}"
 
 - name: "Set system locale config"
   template:

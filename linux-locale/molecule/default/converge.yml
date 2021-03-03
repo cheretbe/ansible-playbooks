@@ -2,10 +2,13 @@
 - name: Converge
   hosts: all
   vars:
-    ansible_user: ansible-test
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
     linux_locale_locales_to_generate:
-      - { language_country: "en_US", encoding: "UTF-8" }
-      - { language_country: "es_ES", encoding: "UTF-8" }
+      - {language_country: "en_US", encoding: "UTF-8"}
+      - {language_country: "es_ES", encoding: "UTF-8"}
+      - {language_country: "ru_RU", encoding: "UTF-8"}
+    linux_locale_default_lang: ru_RU.UTF-8
     linux_locale_default_LC: es_ES.UTF-8
   tasks:
     - name: "Include linux-locale"

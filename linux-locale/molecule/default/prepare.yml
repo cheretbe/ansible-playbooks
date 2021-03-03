@@ -1,6 +1,3 @@
 ---
-- name: Prepare
-  hosts: all
-
 - import_playbook: ../../../tests/molecule/common/set_local_package_cache.yml
 - import_playbook: ../../../tests/molecule/common/add_test_user.yml

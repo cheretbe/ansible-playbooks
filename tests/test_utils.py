@@ -1,7 +1,10 @@
 import pathlib
 import enum
-import invoke
+import warnings
 import colorama
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import invoke
 
 class MoleculeDriver(enum.Enum):
     docker = 1
@@ -72,3 +75,13 @@ def run_molecule(context, command, scenario, driver):
     if scenario is not None:
         molecule_command += f" -s {scenario}"
     run_command(context, molecule_command, env=molecule_env)
+
+def get_parameter_value(host, ansible_var_name, param_value, default_value):
+    if host.backend.HAS_RUN_ANSIBLE:
+        ansible_var_value = host.ansible.get_variables().get(ansible_var_name, None)
+    else:
+        ansible_var_value = None
+    return_value = ansible_var_value if param_value is None else param_value
+    if return_value is None:
+        return_value = default_value
+    return return_value
