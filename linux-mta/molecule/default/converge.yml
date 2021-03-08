@@ -2,8 +2,9 @@
 - name: Converge
   hosts: all
   vars:
-    ansible_user: ansible-test
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
   tasks:
-    - name: "Include linux-mta"
+    - name: Include linux-mta
       include_role:
-        name: "linux-mta"
+        name: linux-mta

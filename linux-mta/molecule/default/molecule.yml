@@ -1,78 +1,11 @@
 ---
-dependency:
-  name: galaxy
-driver:
-  name: docker
 lint: |
   set -e
-  # yamllint .
   ansible-lint
-  flake8
-platforms:
-  - name: centos-7
-    # image: geerlingguy/docker-centos7-ansible:latest
-    image: pycontribs/centos:7
-    pre_build_image: true
-    tmpfs:
-     - /run
-     - /tmp:exec
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    command: "/usr/sbin/init"
-
-  - name: centos-8
-    # image: geerlingguy/docker-centos8-ansible:latest
-    image: pycontribs/centos:8
-    pre_build_image: true
-    tmpfs:
-     - /run
-     - /tmp:exec
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    command: "/usr/sbin/init"
-
-  - name: ubuntu-focal
-    image: geerlingguy/docker-ubuntu2004-ansible
-    pre_build_image: true
-    tmpfs:
-     - /run
-     - /run/lock
-     - /tmp:exec
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /sys/fs/fuse:/sys/fs/fuse:ro
-    command: "/usr/lib/systemd/systemd"
-
-  - name: ubuntu-bionic
-    image: geerlingguy/docker-ubuntu1804-ansible
-    pre_build_image: true
-    tmpfs:
-     - /run
-     - /run/lock
-     - /tmp:exec
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /sys/fs/fuse:/sys/fs/fuse:ro
-    command: "/lib/systemd/systemd"
-
-  - name: ubuntu-xenial
-    image: geerlingguy/docker-ubuntu1604-ansible
-    pre_build_image: true
-    tmpfs:
-     - /run
-     - /run/lock
-     - /tmp:exec
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /sys/fs/fuse:/sys/fs/fuse:ro
-    command: "/lib/systemd/systemd"
-    privileged: true # Tired of applying ugly systemd hacks :(
-
-provisioner:
-  name: ansible
+  pylint --disable=fixme tests/
 verifier:
   name: testinfra
-  directory: ../tests/
+  directory: ../../tests/
   options:
     v: true
     # s: true
