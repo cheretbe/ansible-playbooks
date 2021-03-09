@@ -1,6 +1,20 @@
 ---
 # tasks file for linux-timezone
 
+- block:
+    - include_role: name="../apt-wait-for-unlock"
+
+    - name: Make sure 'dbus' package is installed
+      apt:
+        name: dbus
+        update_cache: yes
+        # 1 hour
+        cache_valid_time: 3600
+      become: yes
+
+  when: ansible_os_family == "Debian"
+
+
 - name: Set timezone to {{ linux_timezone_name }}
   timezone:
     name: "{{ linux_timezone_name }}"

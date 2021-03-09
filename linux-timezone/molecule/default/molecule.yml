@@ -1,0 +1,27 @@
+---
+lint: |
+  set -e
+  ansible-lint
+  pylint tests/
+verifier:
+  name: testinfra
+  directory: ../../tests/
+  options:
+    v: true
+    # s: true
+    timezone: "Pacific/Galapagos"
+scenario:
+  test_sequence:
+    # - dependency
+    - lint
+    # - cleanup
+    - destroy
+    # - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    # - cleanup
+    - destroy

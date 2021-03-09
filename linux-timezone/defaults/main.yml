@@ -1,2 +1,3 @@
 ---
+# Use 'timedatectl list-timezones' to list timzones known to system
 linux_timezone_name: "Europe/Kaliningrad"

@@ -1,0 +1,13 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Install yum 'initscripts' package
+      yum:
+        name: initscripts
+        state: present
+      become: yes
+      when: ansible_os_family == "RedHat"
+
+- import_playbook: ../../../tests/molecule/common/set_local_package_cache.yml
+- import_playbook: ../../../tests/molecule/common/add_test_user.yml
