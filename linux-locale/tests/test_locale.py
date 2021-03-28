@@ -21,7 +21,7 @@ def test_default_system_locale(host, pytestconfig):
     )
 
     locale_data = {}
-    for line in host.check_output('sudo su - ansible-test -c "locale"').splitlines():
+    for line in host.check_output('sudo su - -c "locale"').splitlines():
         lc_name, lc_value = line.split("=")
         locale_data[lc_name] = lc_value.replace('"', "")
 
