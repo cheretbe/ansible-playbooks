@@ -16,5 +16,6 @@ script_path="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
     linux-locale/tests \
     linux-mta/tests \
     linux-timezone/tests \
-    linux-unattended-upgrades/tests
+    linux-unattended-upgrades/tests \
+    smartmontools/tests
 )
