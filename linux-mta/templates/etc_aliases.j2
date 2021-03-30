@@ -5,3 +5,10 @@ postmaster:  root
 {% if linux_mta_root_mail_recipient %}
 root:        {{ linux_mta_root_mail_recipient }}
 {% endif %}
+{#  #}
+{% if linux_mta_aliases is defined %}
+
+{% for mail_alias in linux_mta_aliases %}
+{{ mail_alias }}
+{% endfor %}
+{% endif %}

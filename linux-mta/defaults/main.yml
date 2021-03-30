@@ -10,3 +10,8 @@ linux_mta_postfix_relayhost: false
 
 # Change to an external or local email address(es) to redirect root's mail to it
 linux_mta_root_mail_recipient: false
+
+# Additional /etc/aliases file entries
+# linux_mta_aliases:
+#   - "user1: user3"
+#   - "user2: user3"
