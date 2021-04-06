@@ -1,0 +1,10 @@
+ansible
+ansible-lint
+molecule[ansible]
+molecule-docker
+molecule-lxd
+molecule-vagrant
+pytest
+pytest-testinfra
+invoke
+colorama
