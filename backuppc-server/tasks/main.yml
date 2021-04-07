@@ -21,35 +21,40 @@
   become: true
   when: not (backuppc_server_data_directory_test|default(false)|bool)
 
-- name: "Setup custom data directory"
-  block:
-    - name: "Make sure custom data directory exists"
-      file:
-        path: "{{ backuppc_server_custom_data_dir }}"
-        state: directory
+- name: Setup data directory
+  include_tasks: setup_data_directory.yml
+  # when: false
+  # failed_when: false
 
-    - name: "Get /var/lib/backuppc stats"
-      stat:
-        path: /var/lib/backuppc
-      register: home_dir_info
+# - name: "Setup custom data directory"
+#   block:
+#     - name: "Make sure custom data directory exists"
+#       file:
+#         path: "{{ backuppc_server_custom_data_dir }}"
+#         state: directory
 
-    - name: "Check if /var/lib/backuppc is a valid symlink"
-      assert:
-        that:
-          - home_dir_info.stat.islnk
-          - home_dir_info.stat.lnk_source == backuppc_server_custom_data_dir
-        msg: >-
-          /var/lib/backuppc exists and is not linked to {{ backuppc_server_custom_data_dir }}.
-          Please fix the symlink before continuing.
-      when: home_dir_info.stat.exists
+#     - name: "Get /var/lib/backuppc stats"
+#       stat:
+#         path: /var/lib/backuppc
+#       register: home_dir_info
 
-    - name: Create /var/lib/backuppc symbolic link
-      file:
-        src: "{{ backuppc_server_custom_data_dir }}"
-        dest: /var/lib/backuppc
-        state: link
-  when: backuppc_server_custom_data_dir|length > 0
-  become: true
+#     - name: "Check if /var/lib/backuppc is a valid symlink"
+#       assert:
+#         that:
+#           - home_dir_info.stat.islnk
+#           - home_dir_info.stat.lnk_source == backuppc_server_custom_data_dir
+#         msg: >-
+#           /var/lib/backuppc exists and is not linked to {{ backuppc_server_custom_data_dir }}.
+#           Please fix the symlink before continuing.
+#       when: home_dir_info.stat.exists
+
+#     - name: Create /var/lib/backuppc symbolic link
+#       file:
+#         src: "{{ backuppc_server_custom_data_dir }}"
+#         dest: /var/lib/backuppc
+#         state: link
+#   when: backuppc_server_custom_data_dir|length > 0
+#   become: true
 
 - name: "Add user '{{ backuppc_server_user_name }}'"
   user:
@@ -59,6 +64,10 @@
     shell: /bin/false
   become: true
 
+# [!] We do this here, not in 'setup_data_directory', because obviously the user
+# needs to exist before setting permissions. But at the same time data directory
+# is used as a home and is created automatically without giving us a chance to
+# check symlink validity etc.
 - name: "Set permissions on custom data directory"
   file:
     path: "{{ backuppc_server_custom_data_dir }}"
@@ -68,9 +77,16 @@
   become: true
   when: backuppc_server_custom_data_dir|length > 0
 
-- name: End the play during data directory tests
-  meta: end_host
-  when: backuppc_server_data_directory_test|default(false)|bool
+- block:
+  - name: Debug
+    debug:
+      msg: End playbook
+  - meta: end_play
+
+
+# - name: End the play during data directory tests
+#   meta: end_host
+#   when: backuppc_server_data_directory_test|default(false)|bool
 
 - name: Get latest BackupPC version
   uri:
