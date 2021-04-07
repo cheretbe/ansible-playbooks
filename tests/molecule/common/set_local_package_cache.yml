@@ -2,6 +2,10 @@
   hosts: all
 
   tasks:
+    - name: Deprecated
+      fail:
+        msg: "Use include_tasks with helper_tasks/set_local_package_cache.yml instead"
+
     - name: Set local apt package cache
       copy:
         content: |

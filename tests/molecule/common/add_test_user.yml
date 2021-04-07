@@ -5,6 +5,10 @@
   gather_facts: false
 
   tasks:
+    - name: Deprecated
+      fail:
+        msg: "Use include_tasks with helper_tasks/add_test_user.yml instead"
+
     - name: Make sure 'sudo' package is installed
       package:
         name: sudo
