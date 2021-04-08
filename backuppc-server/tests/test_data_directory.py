@@ -1,7 +1,22 @@
+import sys
+import os
 import pytest
 
-def test_dummy(host):
-    pass
+sys.path.append(os.path.dirname(__file__) + "/../../tests")
+import test_utils  # pylint: disable=wrong-import-position,import-error
+
+@pytest.mark.datadir
+def test_dummy(host, pytestconfig):
+    custom_data_dir = test_utils.get_parameter_value(
+        host=host,
+        ansible_var_name="backuppc_server_custom_data_dir",
+        param_value=pytestconfig.getoption("custom_data_dir"),
+        default_value=""
+    )
+    print("------")
+    print(f"custom_data_dir: {custom_data_dir}")
+    print("------")
+
 
 # def get_parameter_value(host, ansible_var_name, param_value, default_value):
 #     if host.backend.HAS_RUN_ANSIBLE:
