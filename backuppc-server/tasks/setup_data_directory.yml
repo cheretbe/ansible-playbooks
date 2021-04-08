@@ -26,5 +26,5 @@
         src: "{{ backuppc_server_custom_data_dir }}"
         dest: /var/lib/backuppc
         state: link
-  when: backuppc_server_custom_data_dir|length > 0
+  when: backuppc_server_custom_data_dir | default("") | length > 0
   become: true

@@ -1,0 +1,14 @@
+---
+- name: Prepare
+  hosts: ubuntu-bionic, ubuntu-focal
+  become: true
+  # gather_facts: false
+
+  tasks:
+    - name: "Set local package cache"
+      include_tasks: "../../../tests/helper_tasks/set_local_package_cache.yml"
+
+    - name: "Add test user"
+      include_tasks: "../../../tests/helper_tasks/add_test_user.yml"
+      # vars:
+      #   test_dir: "{{ playbook_dir }}/../../tests"

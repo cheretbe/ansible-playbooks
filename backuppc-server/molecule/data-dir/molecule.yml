@@ -1,37 +1,5 @@
 ---
-dependency:
-  name: galaxy
-driver:
-  name: docker
-platforms:
-  - name: ubuntu-bionic
-    image: "geerlingguy/docker-ubuntu1804-ansible"
-    privileged: true
-    pre_build_image: true
-    command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  - name: ubuntu-focal
-    image: "geerlingguy/docker-ubuntu2004-ansible"
-    privileged: true
-    pre_build_image: true
-    command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-provisioner:
-  name: ansible
-  playbooks:
-    # [!] Every prepary playbook should include ../common/playbooks/prepare.yml
-    prepare: ${PREPARE_PLAYBOOK}
-verifier:
-  name: testinfra
-  # directory: ../common/tests/
-  file: tests/test_1.py
-  options:
-    # These are actually pytest parameters (testinfra is a pytest plugin)
-    v: true
-    k: ${TESTINFRA_FILTER}
-    # s: true
+
 scenario:
   test_sequence:
     # - dependency
@@ -47,3 +15,11 @@ scenario:
     - verify
     # - cleanup
     - destroy
+
+verifier:
+  name: testinfra
+  directory: ../../tests/
+  options:
+    v: true
+    # s: true
+    hosts: ubuntu-bionic,ubuntu-focal

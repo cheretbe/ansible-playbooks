@@ -1,12 +1,9 @@
 ---
 - name: Converge
-  hosts: all
+  hosts: ubuntu-bionic, ubuntu-focal
   vars:
-    ansible_user: ansible
-    backuppc_server_data_directory_test: true
-    # https://nikhilism.com/post/2016/understanding-ansible-jinja2-default-filter/
-    backuppc_server_custom_data_dir: "{{ lookup('env','TEST_DATA_DIR') | default(None, true) }}"
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
   tasks:
-    - name: "Include backuppc-server"
-      include_role:
-        name: "backuppc-server"
+    - name: "Include tasks from setup_data_directory.yml"
+      include_tasks: ../../tasks/setup_data_directory.yml
