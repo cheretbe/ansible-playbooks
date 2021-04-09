@@ -1,0 +1,65 @@
+---
+- name: Setup custom data directory
+  block:
+    - name: Make sure custom data directory exists
+      file:
+        path: "{{ backuppc_server_custom_data_dir }}"
+        state: directory
+
+    - name: "Get /var/lib/backuppc stats"
+      stat:
+        path: /var/lib/backuppc
+      register: home_dir_info
+
+    - name: Check if '/var/lib/backuppc' is a valid symlink
+      assert:
+        that:
+          - home_dir_info.stat.islnk
+          - home_dir_info.stat.lnk_source == backuppc_server_custom_data_dir
+        msg: >-
+          /var/lib/backuppc exists and is not linked to {{ backuppc_server_custom_data_dir }}.
+          Please fix the symlink before continuing.
+      when: home_dir_info.stat.exists
+
+    - name: "Create symbolic link '/var/lib/backuppc' to '{{ backuppc_server_custom_data_dir }}'"
+      file:
+        src: "{{ backuppc_server_custom_data_dir }}"
+        dest: /var/lib/backuppc
+        state: link
+  when: backuppc_server_custom_data_dir | default("") | length > 0
+  become: yes
+
+- name: Create home directory
+  file:
+    path: /var/lib/backuppc
+    state: directory
+    mode: 0750
+  become: yes
+  when: backuppc_server_custom_data_dir | default("") | length == 0
+
+- name: "Add user '{{ backuppc_server_user_name }}'"
+  user:
+    name: "{{ backuppc_server_user_name }}"
+    home: /var/lib/backuppc
+    create_home: no
+    system: yes
+    shell: /bin/false
+  become: yes
+
+- name: Set permissions on home directory
+  file:
+    path: /var/lib/backuppc
+    owner: "{{ backuppc_server_user_name }}"
+    group: "{{ backuppc_server_user_name }}"
+    mode: 0750
+  become: yes
+  when: backuppc_server_custom_data_dir | default("") | length == 0
+
+- name: Set permissions on custom data directory
+  file:
+    path: "{{ backuppc_server_custom_data_dir }}"
+    owner: "{{ backuppc_server_user_name }}"
+    group: "{{ backuppc_server_user_name }}"
+    mode: 0750
+  become: yes
+  when: backuppc_server_custom_data_dir | default("") | length > 0

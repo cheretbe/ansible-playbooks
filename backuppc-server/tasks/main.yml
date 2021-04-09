@@ -21,10 +21,8 @@
   become: true
   when: not (backuppc_server_data_directory_test|default(false)|bool)
 
-- name: Setup data directory
-  include_tasks: setup_data_directory.yml
-  # when: false
-  # failed_when: false
+- name: Setup server user
+  include_tasks: setup_user.yml
 
 # - name: "Setup custom data directory"
 #   block:
@@ -56,26 +54,26 @@
 #   when: backuppc_server_custom_data_dir|length > 0
 #   become: true
 
-- name: "Add user '{{ backuppc_server_user_name }}'"
-  user:
-    name: "{{ backuppc_server_user_name }}"
-    home: /var/lib/backuppc
-    system: yes
-    shell: /bin/false
-  become: true
+# - name: "Add user '{{ backuppc_server_user_name }}'"
+#   user:
+#     name: "{{ backuppc_server_user_name }}"
+#     home: /var/lib/backuppc
+#     system: yes
+#     shell: /bin/false
+#   become: true
 
-# [!] We do this here, not in 'setup_data_directory', because obviously the user
-# needs to exist before setting permissions. But at the same time data directory
-# is used as a home and is created automatically without giving us a chance to
-# check symlink validity etc.
-- name: "Set permissions on custom data directory"
-  file:
-    path: "{{ backuppc_server_custom_data_dir }}"
-    owner: "{{ backuppc_server_user_name }}"
-    group: "{{ backuppc_server_user_name }}"
-    mode: 0750
-  become: true
-  when: backuppc_server_custom_data_dir|length > 0
+# # [!] We do this here, not in 'setup_data_directory', because obviously the user
+# # needs to exist before setting permissions. But at the same time data directory
+# # is used as a home and is created automatically without giving us a chance to
+# # check symlink validity etc.
+# - name: "Set permissions on custom data directory"
+#   file:
+#     path: "{{ backuppc_server_custom_data_dir }}"
+#     owner: "{{ backuppc_server_user_name }}"
+#     group: "{{ backuppc_server_user_name }}"
+#     mode: 0750
+#   become: true
+#   when: backuppc_server_custom_data_dir|length > 0
 
 - block:
   - name: Debug

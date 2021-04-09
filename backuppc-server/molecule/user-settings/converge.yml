@@ -4,6 +4,7 @@
   vars:
     # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
     ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+    backuppc_server_user_name: backuppc-test-user
   tasks:
-    - name: "Include tasks from setup_data_directory.yml"
-      include_tasks: ../../tasks/setup_data_directory.yml
+    - name: Include tasks from setup_user.yml
+      include_tasks: ../../tasks/setup_user.yml

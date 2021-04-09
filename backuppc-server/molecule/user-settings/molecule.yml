@@ -23,5 +23,5 @@ verifier:
     v: true
     # s: true
     hosts: ubuntu-bionic,ubuntu-focal
-    m: datadir
-    # custom-data-dir: aaa
+    m: usersettings
+    user-name: backuppc-test-user
