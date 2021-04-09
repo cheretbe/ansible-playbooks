@@ -1,3 +1,9 @@
+```shell
+ansible-playbook ansible-playbooks/run_role.yml --extra-vars "role_name=backuppc-server" -l ubuntu-bionic:ubuntu-focal
+. ~/.cache/venv/py3/bin/activate
+pytest ansible-playbooks/backuppc-server/tests/ -v --connection=ansible --hosts=ubuntu-bionic,ubuntu-focal
+```
+
 `local-config.yml` example:
 ```yaml
 ---
