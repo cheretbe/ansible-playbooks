@@ -1,0 +1,17 @@
+- name: "Remove user '{{ backuppc_server_user_name }}'"
+  user:
+    name: "{{ backuppc_server_user_name }}"
+    state: absent
+  become: yes
+
+- name: Make sure '/var/lib/backuppc' does not exist
+  file:
+    state: absent
+    path: /var/lib/backuppc
+  become: yes
+
+- name: Make sure '/test/backuppc_test_dir' does not exist
+  file:
+    state: absent
+    path: /test/backuppc_test_dir
+  become: yes

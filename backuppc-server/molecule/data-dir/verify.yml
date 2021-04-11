@@ -1,34 +1,64 @@
 ---
-- name: Verify
+- name: Converge and verify
   hosts: ubuntu-bionic, ubuntu-focal
   vars:
     # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
-    test_converge_ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
     backuppc_server_user_name: backuppc-server
 
   tasks:
     # ==========================================================================
+    # backuppc_server_custom_data_dir parameter is not set
+    # The role should create /var/lib/backuppc and set is as a home directory
+    # for backuppc-server user
+    - name: Prepare data directories
+      include_tasks: prepare_no_backuppc_dir_no_custom_data_dir.yml
+
     - name: Include tasks from setup_user.yml (default settings)
       include_tasks: ../../tasks/setup_user.yml
-      vars:
-        ansible_user: "{{ test_converge_ansible_user }}"
 
     - name: "Verify data directory settings"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../../tests"
-        # test_extra_params: "--user-name backuppc-test-user"
+        test_extra_params: "-m usersettings"
 
-    # # ==========================================================================
-    # - name: "Include linux-unattended-upgrades (automatic reboot)"
-    #   include_role:
-    #     name: "linux-unattended-upgrades"
-    #   vars:
-    #     ansible_user: "{{ test_converge_ansible_user }}"
-    #     unattended_automatic_reboot: true
+    # ==========================================================================
+    # backuppc_server_custom_data_dir parameter is set, /var/lib/backuppc does
+    # not exist, custom data directory does not exist
+    # The role should create /var/lib/backuppc as a symlink to the custom data
+    # directory, set it as a home directory for backuppc-server user, create
+    # custom data directory and set correct onwnership/permissions on it
+    - name: Prepare data directories
+      include_tasks: prepare_no_backuppc_dir_no_custom_data_dir.yml
 
-    # - name: "Verify unattended upgrades settings"
-    #   include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
-    #   vars:
-    #     test_dir: "{{ playbook_dir }}/../../tests"
-    #     test_extra_params: "--autoreboot --reboot-time=02:00"
+    - name: Include tasks from setup_user.yml (non-existing data directory)
+      include_tasks: ../../tasks/setup_user.yml
+      vars:
+        backuppc_server_custom_data_dir: /test/backuppc_test_dir
+
+    - name: "Verify data directory settings"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../../tests"
+        test_extra_params: "-m usersettings --custom-data-dir=/test/backuppc_test_dir"
+
+    # ==========================================================================
+    # backuppc_server_custom_data_dir parameter is set, /var/lib/backuppc does
+    # not exist, custom data directory exists
+    # The role should create /var/lib/backuppc as a symlink to the custom data
+    # directory, set it as a home directory for backuppc-server user and
+    # set correct onwnership/permissions on custom data directory
+    - name: Prepare data directories
+      include_tasks: prepare_no_backuppc_dir_custom_data_dir.yml
+
+    - name: Include tasks from setup_user.yml (existing data directory)
+      include_tasks: ../../tasks/setup_user.yml
+      vars:
+        backuppc_server_custom_data_dir: /test/backuppc_test_dir
+
+    - name: "Verify data directory settings"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../../tests"
+        test_extra_params: "-m usersettings --custom-data-dir=/test/backuppc_test_dir"

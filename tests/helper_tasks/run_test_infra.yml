@@ -36,6 +36,9 @@
   failed_when: false
   register: test_results
 
+# - debug:
+#     msg: "{{ test_results.stdout_lines + test_results.stderr_lines }}"
+
 - name: Check test results
   debug:
     msg: |

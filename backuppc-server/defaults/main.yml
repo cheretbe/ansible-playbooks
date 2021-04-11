@@ -16,7 +16,6 @@ backuppc_server_user_name: "backuppc-server"
 # If this parameter is defined, /var/lib/backuppc created as a link
 # to specified directory
 # backuppc_server_custom_data_dir: "/path/to/a/directory"
-backuppc_server_custom_data_dir: ''
 
 # backuppc_server_apache_allow: "allow from 127.0.0.1 192.168.0.0/24"
 backuppc_server_apache_allow: "allow from all"

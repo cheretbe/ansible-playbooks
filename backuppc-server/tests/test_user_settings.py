@@ -29,13 +29,12 @@ def test_server_user(host, pytestconfig):
 
     if custom_data_dir_name:
         custom_data_dir = host.file(custom_data_dir_name)
-        # assert host.file("/var/lib/backuppc").exists
-        # assert host.file("/var/lib/backuppc").is_symlink
-        # assert host.file("/var/lib/backuppc").linked_to == "/custom/data/dir"
-        # assert host.file("/custom/data/dir").user == "backuppc-server"
-        # assert host.file("/custom/data/dir").group == "backuppc-server"
-        # assert host.file("/custom/data/dir").mode == 0o750
-        # assert host.user("backuppc-server").home == "/var/lib/backuppc"
+        assert home_dir.exists
+        assert home_dir.is_symlink
+        assert home_dir.linked_to == custom_data_dir_name
+        assert custom_data_dir.user == server_user_name
+        assert custom_data_dir.group == server_user_name
+        assert custom_data_dir.mode == 0o750
     else:
         assert home_dir.is_directory
         assert not home_dir.is_symlink

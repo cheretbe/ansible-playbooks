@@ -46,7 +46,7 @@
     shell: /bin/false
   become: yes
 
-- name: Set permissions on home directory
+- name: Set ownership on home directory
   file:
     path: /var/lib/backuppc
     owner: "{{ backuppc_server_user_name }}"
@@ -55,7 +55,7 @@
   become: yes
   when: backuppc_server_custom_data_dir | default("") | length == 0
 
-- name: Set permissions on custom data directory
+- name: Set permissions and ownership on custom data directory
   file:
     path: "{{ backuppc_server_custom_data_dir }}"
     owner: "{{ backuppc_server_user_name }}"
