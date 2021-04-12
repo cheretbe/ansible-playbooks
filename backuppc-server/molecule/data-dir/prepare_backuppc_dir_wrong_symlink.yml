@@ -1,0 +1,30 @@
+- name: "Remove user '{{ backuppc_server_user_name }}'"
+  user:
+    name: "{{ backuppc_server_user_name }}"
+    state: absent
+  become: yes
+
+- name: Make sure '/test/backuppc_test_dir' does not exist
+  file:
+    state: absent
+    path: /test/backuppc_test_dir
+  become: yes
+
+- name: Delete '/var/lib/backuppc'
+  file:
+    state: absent
+    path: /var/lib/backuppc
+  become: yes
+
+- name: Make sure /test/wrong_link exists
+  file:
+    state: directory
+    path: /test/wrong_link
+  become: yes
+
+- name: Create /var/lib/backuppc symbolic link
+  file:
+    src: /test/wrong_link
+    dest: /var/lib/backuppc
+    state: link
+  become: yes

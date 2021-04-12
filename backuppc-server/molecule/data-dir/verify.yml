@@ -62,3 +62,25 @@
       vars:
         test_dir: "{{ playbook_dir }}/../../tests"
         test_extra_params: "-m usersettings --custom-data-dir=/test/backuppc_test_dir"
+
+    # ==========================================================================
+    # backuppc_server_custom_data_dir parameter is set, /var/lib/backuppc exists
+    # as a symlink to directory other than specified custom data directory.
+    # The role should fail
+    - name: Prepare data directories
+      include_tasks: prepare_backuppc_dir_wrong_symlink.yml
+
+    - name: Include tasks from setup_user.yml (wrong symlink)
+      include_tasks: ../../tasks/setup_user.yml
+      vars:
+        backuppc_server_custom_data_dir: /test/backuppc_test_dir
+
+    # - name: Handle expected error
+      block:
+      - name: "Verify data directory settings"
+        import_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
+        vars:
+          test_dir: "{{ playbook_dir }}/../../tests"
+          test_extra_params: "-m usersettings --custom-data-dir=/test/backuppc_test_dir"
+      rescue:
+        asser: ansible_failed_task.name == 'aaa'
