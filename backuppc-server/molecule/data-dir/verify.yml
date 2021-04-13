@@ -72,8 +72,8 @@
 
     - name: Expected failure
       block:
-        - name: Import tasks from setup_user.yml (wrong symlink)
-          import_tasks: ../../tasks/setup_user.yml
+        - name: Include tasks from setup_user.yml (wrong symlink)
+          include_tasks: ../../tasks/setup_user.yml
           vars:
             backuppc_server_custom_data_dir: /test/backuppc_test_dir
       rescue:
