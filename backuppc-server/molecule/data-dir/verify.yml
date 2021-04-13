@@ -70,17 +70,18 @@
     - name: Prepare data directories
       include_tasks: prepare_backuppc_dir_wrong_symlink.yml
 
-    - name: Include tasks from setup_user.yml (wrong symlink)
-      include_tasks: ../../tasks/setup_user.yml
-      vars:
-        backuppc_server_custom_data_dir: /test/backuppc_test_dir
-
-    # - name: Handle expected error
+    - name: Expected failure
       block:
-      - name: "Verify data directory settings"
-        import_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
-        vars:
-          test_dir: "{{ playbook_dir }}/../../tests"
-          test_extra_params: "-m usersettings --custom-data-dir=/test/backuppc_test_dir"
+        - name: Import tasks from setup_user.yml (wrong symlink)
+          import_tasks: ../../tasks/setup_user.yml
+          vars:
+            backuppc_server_custom_data_dir: /test/backuppc_test_dir
       rescue:
-        asser: ansible_failed_task.name == 'aaa'
+        - name: Check failure details
+          assert:
+            that:
+              - ansible_failed_task.name == "Check if '/var/lib/backuppc' is a valid symlink"
+              - >
+                ansible_failed_result.msg ==
+                "/var/lib/backuppc exists and is not linked to /test/backuppc_test_dir.
+                Please fix the symlink before continuing."
