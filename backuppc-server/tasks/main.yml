@@ -7,6 +7,9 @@
   when: (ansible_distribution != "Ubuntu") or
         (ansible_distribution_version not in ["18.04", "20.04"])
 
+- name: Wait for dpkg frontend to unlock
+  include_role: name="../apt-wait-for-unlock"
+
 - name: Install dependencies
   apt:
     name:  ["apache2", "apache2-utils", "libapache2-mod-perl2", "smbclient",
