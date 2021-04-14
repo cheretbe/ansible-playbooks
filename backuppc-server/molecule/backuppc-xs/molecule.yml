@@ -1,0 +1,27 @@
+---
+
+scenario:
+  test_sequence:
+    # - dependency
+    # - lint
+    # - cleanup
+    - destroy
+    # - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    # - cleanup
+    - destroy
+
+verifier:
+  name: testinfra
+  directory: ../../tests/
+  options:
+    v: true
+    # s: true
+    hosts: ubuntu-bionic,ubuntu-focal
+    m: usersettings
+    user-name: backuppc-test-user

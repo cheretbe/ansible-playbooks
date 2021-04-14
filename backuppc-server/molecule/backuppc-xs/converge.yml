@@ -1,0 +1,17 @@
+---
+- name: Converge
+  hosts: ubuntu-bionic, ubuntu-focal
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+    backuppc_server_backuppc_xs_version: latest
+    backuppc_xc_installed_version: "0.0"
+    install_backuppc_xc: false
+    backuppc_service_is_present: false
+
+  tasks:
+    - name: Include tasks from install_backuppc_xs.yml
+      import_tasks: ../../tasks/install_backuppc_xs.yml
+
+    # - debug:
+    #     var: backuppc_build_dir
