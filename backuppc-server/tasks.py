@@ -20,6 +20,7 @@ def show_help(context):
     print("\nExamples:")
     print("inv test")
     print("inv molecule list --driver lxd")
+    print("inv molecule converge --scenario backuppc-xs")
 
 
 @invoke.task
