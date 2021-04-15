@@ -23,5 +23,4 @@ verifier:
     v: true
     # s: true
     hosts: ubuntu-bionic,ubuntu-focal
-    m: usersettings
-    user-name: backuppc-test-user
+    m: ver_backuppc_xs

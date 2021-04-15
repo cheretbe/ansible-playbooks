@@ -61,6 +61,9 @@
     become: true
     when: backuppc_service_is_present
 
+  - debug:
+      var: backuppc_build_dir.path
+
   - name: "Build and install BackupPC-XS"
     shell: "perl Makefile.PL && make && make test && make install"
     args:
