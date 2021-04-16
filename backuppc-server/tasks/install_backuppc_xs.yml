@@ -29,7 +29,7 @@
       {{ backuppc_xc_installed_version }} ==>
       {{ backuppc_server_backuppc_xs_version }}
 
-- name: Check if installed BackupPC-XS version needs upgrade
+- name: Check if installed BackupPC-XS version needs an upgrade
   set_fact:
     install_backuppc_xc: true
   when: "backuppc_xc_installed_version is version(backuppc_server_backuppc_xs_version, '<')"
@@ -46,14 +46,23 @@
     debug:
       var: backuppc_build_dir.path
 
-  - name: "Download BackupPC-XS {{ backuppc_server_backuppc_xs_version }}"
+  - name: Set BackupPC-XS release archive URL
+    set_fact:
+      backuppc_server_backuppc_xs_tar_url: "https://github.com/\
+        backuppc/backuppc-xs/releases/download/\
+        {{ backuppc_server_backuppc_xs_version }}/\
+        backuppc-xs-{{ backuppc_server_backuppc_xs_version }}.tar.gz"
+
+  - name: BackupPC-XS release archive URL
+    debug:
+      msg: "{{ backuppc_server_backuppc_xs_tar_url }}"
+
+  - name: "Download BackupPC-XS release archive"
     get_url:
-      url: "https://github.com/backuppc/backuppc-xs/releases/download/\
-             {{ backuppc_server_backuppc_xs_version }}/\
-             BackupPC-XS-{{ backuppc_server_backuppc_xs_version }}.tar.gz"
+      url: "{{ backuppc_server_backuppc_xs_tar_url }}"
       dest: "{{ backuppc_build_dir.path }}"
 
-  - name: "Extract BackupPC-XS-{{ backuppc_server_backuppc_xs_version }}.tar.gz"
+  - name: "Extract BackupPC-XS release archive"
     unarchive:
       src: "{{ backuppc_build_dir.path }}/BackupPC-XS-{{ backuppc_server_backuppc_xs_version }}.tar.gz"
       dest: "{{ backuppc_build_dir.path }}"

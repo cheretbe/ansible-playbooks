@@ -32,7 +32,7 @@
       {{ rsync_bpc_installed_version }} ==>
       {{ backuppc_server_rsync_bpc_version }}
 
-- name: Check if installed Rsync-bpc version needs upgrade to
+- name: Check if installed Rsync-bpc version needs an upgrade
   set_fact:
     install_rsync_bpc: true
   when: "rsync_bpc_installed_version is version(backuppc_server_rsync_bpc_version, '<')"
@@ -62,9 +62,7 @@
 
   - name: Download Rsync-bpc release archive
     get_url:
-      url: "https://github.com/backuppc/rsync-bpc/releases/download/\
-             {{ backuppc_server_rsync_bpc_version }}/\
-             rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
+      url: "{{ backuppc_server_rsync_bpc_tar_url }}"
       dest: "{{ backuppc_build_dir.path }}"
 
   - name: Extract Rsync-bpc release archive
