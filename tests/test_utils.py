@@ -74,7 +74,7 @@ def run_molecule(context, command, scenario, driver):
     molecule_command = f"molecule --base-config {get_base_config_path(driver_code)} {command}"
     if scenario is not None:
         molecule_command += f" -s {scenario}"
-    run_command(context, molecule_command, env=molecule_env)
+    run_command(context, molecule_command, env=molecule_env, echo=True)
 
 def get_parameter_value(host, ansible_var_name, param_value, default_value):
     if host.backend.HAS_RUN_ANSIBLE:
