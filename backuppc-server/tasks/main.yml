@@ -67,17 +67,17 @@
 #     backuppc_server_backuppc_xs_version: "{{ (backuppc_xc_latest_release.content | from_json).tag_name }}"
 #   when: "backuppc_server_backuppc_xs_version == 'latest'"
 
-- name: Get latest Rsync-bpc version
-  uri:
-    url: https://api.github.com/repos/backuppc/rsync-bpc/releases/latest
-    return_content: yes
-  register: rsync_bpc_latest_release
-  when: "backuppc_server_rsync_bpc_version == 'latest'"
+# - name: Get latest Rsync-bpc version
+#   uri:
+#     url: https://api.github.com/repos/backuppc/rsync-bpc/releases/latest
+#     return_content: yes
+#   register: rsync_bpc_latest_release
+#   when: "backuppc_server_rsync_bpc_version == 'latest'"
 
-- name: Update Rsync-bpc version variable
-  set_fact:
-    backuppc_server_rsync_bpc_version: "{{ (rsync_bpc_latest_release.content | from_json).tag_name }}"
-  when: "backuppc_server_rsync_bpc_version == 'latest'"
+# - name: Update Rsync-bpc version variable
+#   set_fact:
+#     backuppc_server_rsync_bpc_version: "{{ (rsync_bpc_latest_release.content | from_json).tag_name }}"
+#   when: "backuppc_server_rsync_bpc_version == 'latest'"
 
 
 - name: Try to get installed BackupPC version
@@ -127,27 +127,27 @@
 #     install_backuppc_xc: true
 #   when: "backuppc_xc_installed_version is version(backuppc_server_backuppc_xs_version, '<')"
 
-- name: Try to get installed Rsync-bpc version
-  command: /usr/local/bin/rsync_bpc --version
-  # shell: printf "rsync_bpc  version 3.0.9.13  protocol version 31\nCopyright (C) 1996-2015 by Andrew Tridgell, Wayne Davison, and others."
-  failed_when: false
-  changed_when: false
-  register: rsync_bpc_status
+# - name: Try to get installed Rsync-bpc version
+#   command: /usr/local/bin/rsync_bpc --version
+#   # shell: printf "rsync_bpc  version 3.0.9.13  protocol version 31\nCopyright (C) 1996-2015 by Andrew Tridgell, Wayne Davison, and others."
+#   failed_when: false
+#   changed_when: false
+#   register: rsync_bpc_status
 
-- name: Set Rsync-bpc version if installed
-  set_fact:
-    # We expect first line to contain text like this
-    # rsync_bpc  version 3.1.2.1  protocol version 31
-    # Surpisingly the output is in stderr
-    rsync_bpc_installed_version: "{{ rsync_bpc_status.stderr_lines[0].split()[2] }}"
-  when: rsync_bpc_status.rc == 0
+# - name: Set Rsync-bpc version if installed
+#   set_fact:
+#     # We expect first line to contain text like this
+#     # rsync_bpc  version 3.1.2.1  protocol version 31
+#     # Surpisingly the output is in stderr
+#     rsync_bpc_installed_version: "{{ rsync_bpc_status.stderr_lines[0].split()[2] }}"
+#   when: rsync_bpc_status.rc == 0
 
-- name: >-
-    Check if installed Rsync-bpc version {{ rsync_bpc_installed_version }}
-    needs upgrade to {{ backuppc_server_rsync_bpc_version }}"
-  set_fact:
-    install_rsync_bpc: true
-  when: "rsync_bpc_installed_version is version(backuppc_server_rsync_bpc_version, '<')"
+# - name: >-
+#     Check if installed Rsync-bpc version {{ rsync_bpc_installed_version }}
+#     needs upgrade to {{ backuppc_server_rsync_bpc_version }}"
+#   set_fact:
+#     install_rsync_bpc: true
+#   when: "rsync_bpc_installed_version is version(backuppc_server_rsync_bpc_version, '<')"
 
 
 
@@ -198,27 +198,27 @@
   #   become: true
   #   when: install_backuppc_xc
 
-  - name: "Download Rsync-bpc {{ backuppc_server_rsync_bpc_version }}"
-    get_url:
-      url: "https://github.com/backuppc/rsync-bpc/releases/download/\
-             {{ backuppc_server_rsync_bpc_version }}/\
-             rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
-      dest: "{{ backuppc_server_temp.path }}"
-    when: install_rsync_bpc
+  # - name: "Download Rsync-bpc {{ backuppc_server_rsync_bpc_version }}"
+  #   get_url:
+  #     url: "https://github.com/backuppc/rsync-bpc/releases/download/\
+  #            {{ backuppc_server_rsync_bpc_version }}/\
+  #            rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
+  #     dest: "{{ backuppc_server_temp.path }}"
+  #   when: install_rsync_bpc
 
-  - name: "Extract rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
-    unarchive:
-      src: "{{ backuppc_server_temp.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
-      dest: "{{ backuppc_server_temp.path }}"
-      remote_src: yes
-    when: install_rsync_bpc
+  # - name: "Extract rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
+  #   unarchive:
+  #     src: "{{ backuppc_server_temp.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
+  #     dest: "{{ backuppc_server_temp.path }}"
+  #     remote_src: yes
+  #   when: install_rsync_bpc
 
-  - name: "Build and install Rsync-bpc"
-    shell: "./configure && make && make install"
-    args:
-      chdir: "{{ backuppc_server_temp.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}"
-    become: true
-    when: install_rsync_bpc
+  # - name: "Build and install Rsync-bpc"
+  #   shell: "./configure && make && make install"
+  #   args:
+  #     chdir: "{{ backuppc_server_temp.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}"
+  #   become: true
+  #   when: install_rsync_bpc
 
   - name: "Download BackupPC {{ backuppc_server_version }}"
     get_url:
