@@ -1,5 +1,5 @@
 ---
-# Quite ugly workaround for and issue, that is not an issue from the point of
+# Quite ugly workaround for an issue, that is not an issue from the point of
 # view of Ansible team
 # https://github.com/ansible/ansible/issues/17500
 # https://github.com/ansible/ansible/issues/4297
