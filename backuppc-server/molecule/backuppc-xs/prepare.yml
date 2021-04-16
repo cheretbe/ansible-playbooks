@@ -5,10 +5,17 @@
   # gather_facts: false
 
   tasks:
-    - name: "Set local package cache"
+    - name: Set local package cache
       include_tasks: "../../../tests/helper_tasks/set_local_package_cache.yml"
 
-    - name: "Add test user"
+    - name: Add test user
       include_tasks: "../../../tests/helper_tasks/add_test_user.yml"
       # vars:
       #   test_dir: "{{ playbook_dir }}/../../tests"
+
+    - name: Install packages
+      apt:
+        name: ["perl-modules", "make", "gcc"]
+        update_cache: yes
+        # 1 hour
+        cache_valid_time: 3600

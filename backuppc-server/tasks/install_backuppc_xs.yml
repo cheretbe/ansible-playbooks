@@ -23,15 +23,16 @@
     backuppc_xc_installed_version: "{{ backuppc_xc_status.stdout_lines[0] }}"
   when: backuppc_xc_status.rc == 0
 
-- name: >-
-    Check if installed BackupPC-XS version {{ backuppc_xc_installed_version }}
-    needs upgrade to {{ backuppc_server_backuppc_xs_version }}"
+- name: BackupPC-XS versions (installed, upgrade)
+  debug:
+    msg: >-
+      {{ backuppc_xc_installed_version }} ==>
+      {{ backuppc_server_backuppc_xs_version }}
+
+- name: Check if installed BackupPC-XS version needs upgrade
   set_fact:
     install_backuppc_xc: true
   when: "backuppc_xc_installed_version is version(backuppc_server_backuppc_xs_version, '<')"
-
-# - debug:
-#     var: install_backuppc_xc
 
 - block:
   - name: Get temporary directory for building
@@ -40,6 +41,10 @@
       prefix: 'backuppc-'
     register: backuppc_build_dir
     when: backuppc_build_dir is not defined
+
+  - name: Build directory
+    debug:
+      var: backuppc_build_dir.path
 
   - name: "Download BackupPC-XS {{ backuppc_server_backuppc_xs_version }}"
     get_url:
@@ -60,9 +65,6 @@
       state: stopped
     become: true
     when: backuppc_service_is_present
-
-  - debug:
-      var: backuppc_build_dir.path
 
   - name: "Build and install BackupPC-XS"
     shell: "perl Makefile.PL && make && make test && make install"

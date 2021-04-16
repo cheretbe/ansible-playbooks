@@ -10,10 +10,6 @@
     backuppc_service_is_present: false
 
   tasks:
-    # - name: Include tasks from install_dependencies.yml
-    #   import_tasks: ../../tasks/install_dependencies.yml
-    # apt install perl-modules make gcc
-
     - name: Include tasks from install_backuppc_xs.yml
       import_tasks: ../../tasks/install_backuppc_xs.yml
 
