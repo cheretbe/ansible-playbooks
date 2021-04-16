@@ -38,16 +38,8 @@
   when: "rsync_bpc_installed_version is version(backuppc_server_rsync_bpc_version, '<')"
 
 - block:
-  - name: Get temporary directory for building
-    tempfile:
-      state: directory
-      prefix: 'backuppc-'
-    register: backuppc_build_dir
-    when: backuppc_build_dir is not defined
-
-  - name: Build directory
-    debug:
-      var: backuppc_build_dir.path
+  - name: Init build directory
+    include_tasks: init_build_dir.yml
 
   - name: Set Rsync-bpc release archive URL
     set_fact:

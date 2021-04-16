@@ -35,16 +35,8 @@
   when: "backuppc_xc_installed_version is version(backuppc_server_backuppc_xs_version, '<')"
 
 - block:
-  - name: Get temporary directory for building
-    tempfile:
-      state: directory
-      prefix: 'backuppc-'
-    register: backuppc_build_dir
-    when: backuppc_build_dir is not defined
-
-  - name: Build directory
-    debug:
-      var: backuppc_build_dir.path
+  - name: Init build directory
+    include_tasks: init_build_dir.yml
 
   - name: Set BackupPC-XS release archive URL
     set_fact:
