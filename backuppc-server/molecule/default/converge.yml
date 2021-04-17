@@ -1,12 +1,9 @@
 ---
 - name: Converge
-  hosts: all
+  hosts: ubuntu-bionic, ubuntu-focal
   vars:
-    ansible_user: ansible
-    # https://nikhilism.com/post/2016/understanding-ansible-jinja2-default-filter/
-    backuppc_server_version: "{{ lookup('env','TEST_BACKUPPC_VERSION') | default('latest', true) }}"
-    backuppc_server_backuppc_xs_version: "{{ lookup('env','TEST_BACKUPPC_XS_VERSION') | default('latest', true) }}"
-    backuppc_server_rsync_bpc_version: "{{ lookup('env','TEST_BACKUPPC_RSYNC_BPC_VERSION') | default('latest', true) }}"
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
   tasks:
     - name: "Include backuppc-server"
       include_role:

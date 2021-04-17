@@ -1,41 +1,13 @@
 ---
-dependency:
-  name: galaxy
-driver:
-  name: docker
+
 lint: |
     set -e
-    # yamllint .
-    # ansible-lint
-    # flake8
-platforms:
-  - name: ubuntu-bionic
-    image: "geerlingguy/docker-ubuntu1804-ansible"
-    privileged: true
-    pre_build_image: true
-    command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-  - name: ubuntu-focal
-    image: "geerlingguy/docker-ubuntu2004-ansible"
-    privileged: true
-    pre_build_image: true
-    command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-provisioner:
-  name: ansible
-  playbooks:
-    prepare: ../common/playbooks/prepare.yml
+    ansible-lint
 
 verifier:
   name: testinfra
-  directory: ../common/tests/
-  env:
-    # EXPECTED_BACKUPPC_VERSION: 4.3.0
-    EXPECTED_BACKUPPC_VERSION: ${EXPECTED_BACKUPPC_VERSION:-latest}
+  directory: ../../tests/
   options:
-    # These are actually pytest parameters (testinfra is a pytest plugin)
     v: true
-    # k: dummy
     # s: true
+    hosts: ubuntu-bionic,ubuntu-focal
