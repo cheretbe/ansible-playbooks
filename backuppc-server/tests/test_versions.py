@@ -41,3 +41,21 @@ def test_rsync_bpc_version(host, pytestconfig):
         "/usr/local/bin/rsync_bpc --version"
     ).stderr.splitlines()[0].split()[2]
     assert expected_rsync_bpc_ver == rsync_bpc_ver
+
+@pytest.mark.ver_backuppc
+def test_backuppc_version(host, pytestconfig):
+    expected_backuppc_ver = test_utils.get_parameter_value(
+        host=host,
+        ansible_var_name="backuppc_server_version",
+        param_value=pytestconfig.getoption("backuppc_version"),
+        default_value="latest"
+    )
+    if expected_backuppc_ver == "latest":
+        expected_backuppc_ver = requests.get(
+            "https://api.github.com/repos/backuppc/backuppc/releases/latest"
+        ).json()["tag_name"]
+    backuppc_ver = "unknown"
+    for line in host.file("/usr/local/BackupPC/bin/BackupPC").content_string.splitlines():
+        if "# Version" in line:
+            backuppc_ver = line.split(",")[0].replace("# Version ", "")
+    assert expected_backuppc_ver == backuppc_ver

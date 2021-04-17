@@ -1,0 +1,39 @@
+---
+- name: Prepare
+  hosts: ubuntu-bionic, ubuntu-focal
+  become: true
+  vars:
+    backuppc_server_backuppc_xs_version: latest
+    backuppc_xc_installed_version: "0.0"
+    install_backuppc_xc: false
+    backuppc_service_is_present: false
+    backuppc_server_user_name: backuppc-server
+
+  tasks:
+    - name: Set local package cache
+      include_tasks: "../../../tests/helper_tasks/set_local_package_cache.yml"
+
+    - name: Add test user
+      include_tasks: "../../../tests/helper_tasks/add_test_user.yml"
+      # vars:
+      #   test_dir: "{{ playbook_dir }}/../../tests"
+
+    - name: Install packages
+      apt:
+        name: ["make", "gcc", "libarchive-zip-perl", "libfile-listing-perl",
+               "libxml-rss-perl", "libcgi-session-perl"]
+        update_cache: yes
+        # 1 hour
+        cache_valid_time: 3600
+
+    - name: Install BackupPC-XS
+      include_tasks: ../../tasks/install_backuppc_xs.yml
+
+    - name: Setup user
+      include_tasks: ../../tasks/setup_user.yml
+
+    - name: Create Apache config direcotry
+      file:
+        path: /etc/apache2/conf-available
+        state: directory
+        mode: '0755'

@@ -1,0 +1,134 @@
+---
+
+- name: Get latest BackupPC version
+  uri:
+    url: https://api.github.com/repos/backuppc/backuppc/releases/latest
+    return_content: yes
+  register: backuppc_latest_release
+  when: backuppc_server_version == 'latest'
+
+- name: Update BackupPC version variable
+  set_fact:
+    backuppc_server_version: "{{ (backuppc_latest_release.content | from_json).tag_name }}"
+  when: backuppc_server_version == 'latest'
+
+- name: Try to get installed BackupPC version
+  # We expect the file to contain a line like this
+  # # Version 4.3.1, released 14 Jul 2019.
+  shell: 'set -o pipefail; grep "# Version" /usr/local/BackupPC/bin/BackupPC | cut -d"," -f1 | cut -d " " -f3'
+  # shell: echo "4.3.1"
+  args:
+    executable: /bin/bash
+  failed_when: false
+  changed_when: false
+  register: backuppc_status
+
+- name: Set BackupPC version if installed
+  set_fact:
+    backuppc_installed_version: "{{ backuppc_status.stdout_lines[0] }}"
+  when: backuppc_status.rc == 0
+
+- name: BackupPC versions (installed, upgrade)
+  debug:
+    msg: >-
+      {{ backuppc_installed_version }} ==>
+      {{ backuppc_server_version }}
+
+- name: Check if installed BackupPC version needs an upgrade
+  set_fact:
+    install_backuppc: true
+  when: backuppc_installed_version is version(backuppc_server_version, '<')
+
+- name: Check if existing installation is being upgraded
+  set_fact:
+    backuppc_upgrade_mode: true
+  when: backuppc_installed_version != "0.0"
+
+- block:
+  - name: Init build directory
+    include_tasks: init_build_dir.yml
+
+  - name: Set BackupPC release archive URL
+    set_fact:
+      backuppc_server_backuppc_tar_url: "https://github.com/\
+        backuppc/backuppc/releases/download/\
+        {{ backuppc_server_version }}/\
+        BackupPC-{{ backuppc_server_version }}.tar.gz"
+
+  - name: BackupPCS release archive URL
+    debug:
+      msg: "{{ backuppc_server_backuppc_tar_url }}"
+
+  - name: Download BackupPC release archive
+    get_url:
+      url: "{{ backuppc_server_backuppc_tar_url }}"
+      dest: "{{ backuppc_build_dir.path }}"
+
+  - name: Extract BackupPC release archive
+    unarchive:
+      src: "{{ backuppc_build_dir.path }}/BackupPC-{{ backuppc_server_version }}.tar.gz"
+      dest: "{{ backuppc_build_dir.path }}"
+      remote_src: yes
+
+  - name: "Set configuration options for new installation"
+    set_fact:
+      backuppc_configure_command: >-
+        ./configure.pl --batch --cgi-dir /var/www/cgi-bin/BackupPC
+        --data-dir /var/lib/backuppc
+        --hostname {{ backuppc_server_host_name | default(ansible_fqdn) }}
+        --html-dir /var/www/html/BackupPC --html-dir-url /BackupPC
+        --install-dir /usr/local/BackupPC
+        --backuppc-user={{ backuppc_server_user_name }}
+    when: not backuppc_upgrade_mode
+
+  - name: "Update configuration options for upgrade"
+    set_fact:
+      backuppc_configure_command: >-
+        ./configure.pl --batch --config-path /etc/BackupPC/config.pl
+    when: backuppc_upgrade_mode
+
+  - name: Stop 'backuppc' service
+    systemd:
+      name: backuppc
+      state: stopped
+    become: yes
+    when: backuppc_service_is_present
+
+  - name: Configure command
+    debug:
+      var: backuppc_configure_command
+
+  - name: "Install and configure BackupPC"
+    command: "{{ backuppc_configure_command }}"
+    args:
+      chdir: "{{ backuppc_build_dir.path }}/BackupPC-{{ backuppc_server_version }}"
+    become: yes
+
+  - name: Create backuppc systemd service unit file
+    copy:
+      src: "{{ backuppc_build_dir.path }}/BackupPC-{{ backuppc_server_version }}/systemd/backuppc.service"
+      dest: /etc/systemd/system/backuppc.service
+      remote_src: yes
+      owner: root
+      group: root
+      mode: 0644
+    become: yes
+    when: not backuppc_service_is_present
+
+  - name: Check if apache config exists
+    stat:
+      path: /etc/apache2/conf-available/backuppc.conf
+    register: backuppc_apache_conf_info
+
+  - name: Copy apache config from source
+    copy:
+      src: "{{ backuppc_build_dir.path }}/BackupPC-{{ backuppc_server_version }}/httpd/BackupPC.conf"
+      dest: /etc/apache2/conf-available/backuppc.conf
+      remote_src: true
+      owner: root
+      group: root
+      # mode: 0644
+    become: true
+    when: not backuppc_apache_conf_info.stat.exists
+
+  when: install_backuppc

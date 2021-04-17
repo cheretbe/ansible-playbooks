@@ -8,5 +8,3 @@ install_rsync_bpc: false
 backuppc_installed_version: "0.0"
 install_backuppc: false
 backuppc_upgrade_mode: false
-
-backuppc_configure_command: ./configure.pl --batch --config-path /etc/BackupPC/config.pl

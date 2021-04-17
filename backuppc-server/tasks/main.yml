@@ -40,144 +40,23 @@
 - name: Install Rsync-bpc
   include_tasks: install_rsync_bpc.yml
 
+- name: Install BackupPC
+  include_tasks: install_backuppc.yml
+
+- name: "Remove temporary build directory"
+  file:
+    state: absent
+    path: "{{ backuppc_build_dir.path }}"
+  become: true
+  when: backuppc_build_dir.path is defined
+
 - block:
   - name: Debug
     debug:
       msg: End playbook
   - meta: end_play
 
-- name: Get latest BackupPC version
-  uri:
-    url: https://api.github.com/repos/backuppc/backuppc/releases/latest
-    return_content: yes
-  register: backuppc_latest_release
-  when: "backuppc_server_version == 'latest'"
-
-- name: Update BackupPC version variable
-  set_fact:
-    backuppc_server_version: "{{ (backuppc_latest_release.content | from_json).tag_name }}"
-  when: "backuppc_server_version == 'latest'"
-
-- name: Try to get installed BackupPC version
-  # We expect the file to contain a line like this
-  # # Version 4.3.1, released 14 Jul 2019.
-  shell: 'set -o pipefail; grep "# Version" /usr/local/BackupPC/bin/BackupPC | cut -d"," -f1 | cut -d " " -f3'
-  # shell: echo "4.3.1"
-  args:
-    executable: /bin/bash
-  failed_when: false
-  changed_when: false
-  register: backuppc_status
-
-- name: Set BackupPC version if installed
-  set_fact:
-    backuppc_installed_version: "{{ backuppc_status.stdout_lines[0] }}"
-  when: backuppc_status.rc == 0
-
-- name: >-
-    Check if installed BackupPC version {{ backuppc_installed_version }}
-    needs upgrade to {{ backuppc_server_version }}"
-  set_fact:
-    install_backuppc: true
-  when: "backuppc_installed_version is version(backuppc_server_version, '<')"
-
-- name: Check if existing installation is being upgraded
-  set_fact:
-    backuppc_upgrade_mode: true
-  when: backuppc_installed_version != "0.0"
-
-- block:
-  - name: Get temporary directory for building
-    tempfile:
-      state: directory
-      prefix: 'backuppc-'
-    register: backuppc_server_temp
-
-  - debug:
-      msg: "Temporary directory: {{ backuppc_server_temp.path }}"
-
-  # - name: Populate service facts
-  #   service_facts:
-  #   become: True
-
-  # - name: Check if 'backuppc' service is present
-  #   set_fact:
-  #     backuppc_service_is_present: "{{ True if ('backuppc.service' in ansible_facts.services) else False }}"
-
-  - name: Stop 'backuppc' service
-    systemd:
-      name: backuppc
-      state: stopped
-    become: true
-    when: backuppc_service_is_present
-
-  - name: "Download BackupPC {{ backuppc_server_version }}"
-    get_url:
-      url: "https://github.com/backuppc/backuppc/releases/download/{{ backuppc_server_version }}/BackupPC-{{ backuppc_server_version }}.tar.gz"
-      dest: "{{ backuppc_server_temp.path }}"
-    when: install_backuppc
-
-  - name: "Extract BackupPC-{{ backuppc_server_version }}.tar.gz"
-    unarchive:
-      src: "{{ backuppc_server_temp.path }}/BackupPC-{{ backuppc_server_version }}.tar.gz"
-      dest: "{{ backuppc_server_temp.path }}"
-      remote_src: yes
-    when: install_backuppc
-
-  - name: "Update configuration options for new installation"
-    set_fact:
-      backuppc_configure_command: >-
-        ./configure.pl --batch --cgi-dir /var/www/cgi-bin/BackupPC
-        --data-dir /var/lib/backuppc
-        --hostname {{ backuppc_server_host_name | default(ansible_fqdn) }}
-        --html-dir /var/www/html/BackupPC --html-dir-url /BackupPC
-        --install-dir /usr/local/BackupPC
-        --backuppc-user={{ backuppc_server_user_name }}
-    when: install_backuppc and (not backuppc_upgrade_mode)
-
-  - name: "Install and configure BackupPC"
-    command: "{{ backuppc_configure_command }}"
-    args:
-      chdir: "{{ backuppc_server_temp.path }}/BackupPC-{{ backuppc_server_version }}"
-    become: true
-    when: install_backuppc
-
-  - name: Create backuppc systemd service unit file
-    copy:
-      src: "{{ backuppc_server_temp.path }}/BackupPC-{{ backuppc_server_version }}/systemd/backuppc.service"
-      dest: /etc/systemd/system/backuppc.service
-      remote_src: true
-      owner: root
-      group: root
-      mode: 0644
-    become: true
-    when: not backuppc_service_is_present
-
-  - name: "Check if apache config exists"
-    stat:
-      path: /etc/apache2/conf-available/backuppc.conf
-    register: backuppc_conf_info
-
-  - name: Copy apache config from source
-    copy:
-      src: "{{ backuppc_server_temp.path }}/BackupPC-{{ backuppc_server_version }}/httpd/BackupPC.conf"
-      dest: /etc/apache2/conf-available/backuppc.conf
-      remote_src: true
-      owner: root
-      group: root
-      # mode: 0644
-    become: true
-    when: not backuppc_conf_info.stat.exists
-
-  - name: "Remove temporary directory {{ backuppc_server_temp.path | default('') }}"
-    file:
-      state: absent
-      path: "{{ backuppc_server_temp.path }}"
-    become: true
-
-  when: install_backuppc or install_backuppc_xc or install_rsync_bpc
-
-
+# ------------------------------------------------------
 
 - name: Set group name in /etc/systemd/system/backuppc.service
   ini_file:
