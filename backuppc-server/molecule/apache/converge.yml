@@ -1,0 +1,11 @@
+---
+- name: Converge
+  hosts: ubuntu-bionic, ubuntu-focal
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+    backuppc_server_apache_allow: "allow from all"
+
+  tasks:
+    - name: Include tasks from configure_apache.yml
+      import_tasks: ../../tasks/configure_apache.yml

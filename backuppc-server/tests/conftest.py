@@ -4,6 +4,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "ver_backuppc_xs")
     config.addinivalue_line("markers", "ver_rsync_bpc")
     config.addinivalue_line("markers", "ver_backuppc")
+    config.addinivalue_line("markers", "apache")
 
 def pytest_addoption(parser):
     parser.addoption("--custom-data-dir", action="store", default=None)

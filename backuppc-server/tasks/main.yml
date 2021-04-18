@@ -50,14 +50,6 @@
   become: true
   when: backuppc_build_dir.path is defined
 
-- block:
-  - name: Debug
-    debug:
-      msg: End playbook
-  - meta: end_play
-
-# ------------------------------------------------------
-
 - name: Set group name in /etc/systemd/system/backuppc.service
   ini_file:
     path: /etc/systemd/system/backuppc.service
@@ -67,73 +59,73 @@
     no_extra_spaces: true
   become: true
 
-- name: Add apache allow directive
-  lineinfile:
-    dest: /etc/apache2/conf-available/backuppc.conf
-    regex: "[Aa]llow from 127\\.0\\.0\\.1"
-    line: "{{ backuppc_server_apache_allow }}"
-    insertafter: "[Dd]eny from all"
-  become: true
-  notify: Restart Apache
+# - name: Add apache allow directive
+#   lineinfile:
+#     dest: /etc/apache2/conf-available/backuppc.conf
+#     regex: "[Aa]llow from 127\\.0\\.0\\.1"
+#     line: "{{ backuppc_server_apache_allow }}"
+#     insertafter: "[Dd]eny from all"
+#   become: true
+#   notify: Restart Apache
 
-- name: "Replace default apache user with {{ backuppc_server_user_name }}"
-  lineinfile:
-    path: /etc/apache2/envvars
-    regexp: "export APACHE_RUN_USER=www-data"
-    line: "export APACHE_RUN_USER={{ backuppc_server_user_name }}"
-    backup: true
-  become: true
-  notify: Restart Apache
+# - name: "Replace default apache user with {{ backuppc_server_user_name }}"
+#   lineinfile:
+#     path: /etc/apache2/envvars
+#     regexp: "export APACHE_RUN_USER=www-data"
+#     line: "export APACHE_RUN_USER={{ backuppc_server_user_name }}"
+#     backup: true
+#   become: true
+#   notify: Restart Apache
 
-- name: "Replace default apache group with {{ backuppc_server_user_name }}"
-  lineinfile:
-    path: /etc/apache2/envvars
-    regexp: "export APACHE_RUN_GROUP=www-data"
-    line: "export APACHE_RUN_GROUP={{ backuppc_server_user_name }}"
-  become: true
-  notify: Restart Apache
+# - name: "Replace default apache group with {{ backuppc_server_user_name }}"
+#   lineinfile:
+#     path: /etc/apache2/envvars
+#     regexp: "export APACHE_RUN_GROUP=www-data"
+#     line: "export APACHE_RUN_GROUP={{ backuppc_server_user_name }}"
+#   become: true
+#   notify: Restart Apache
 
-- name: Set custom /var/www/html/index.html
-  template:
-    src: var_www_html_index.html.j2
-    dest: /var/www/html/index.html
-    owner: root
-    group: root
-    mode: 0644
-    backup: true
-  become: true
+# - name: Set custom /var/www/html/index.html
+#   template:
+#     src: var_www_html_index.html.j2
+#     dest: /var/www/html/index.html
+#     owner: root
+#     group: root
+#     mode: 0644
+#     backup: true
+#   become: true
 
-- name: Enable apache module cgid
-  apache2_module:
-    name: cgid
-    state: present
-  become: true
-  notify: Restart Apache
+# - name: Enable apache module cgid
+#   apache2_module:
+#     name: cgid
+#     state: present
+#   become: true
+#   notify: Restart Apache
 
-- name: Enable backuppc apache config
-  command: a2enconf backuppc
-  args:
-    creates: /etc/apache2/conf-enabled/backuppc.conf
-  become: true
-  notify: Restart Apache
+# - name: Enable backuppc apache config
+#   command: a2enconf backuppc
+#   args:
+#     creates: /etc/apache2/conf-enabled/backuppc.conf
+#   become: true
+#   notify: Restart Apache
 
-- name: Update permissions on /var/www/cgi-bin/BackupPC/BackupPC_Admin
-  file:
-    path: /var/www/cgi-bin/BackupPC/BackupPC_Admin
-    mode: "u-s"
-  become: true
+# - name: Update permissions on /var/www/cgi-bin/BackupPC/BackupPC_Admin
+#   file:
+#     path: /var/www/cgi-bin/BackupPC/BackupPC_Admin
+#     mode: "u-s"
+#   become: true
 
-- name: Add passwords to /etc/BackupPC/BackupPC.users
-  htpasswd:
-    path: /etc/BackupPC/BackupPC.users
-    name: "{{ item.user_name }}"
-    password: "{{ item.password }}"
-    owner: "{{ backuppc_server_user_name }}"
-    group: "{{ backuppc_server_user_name }}"
-    mode: 0640
-  with_items: "{{ backuppc_server_www_users }}"
-  become: true
-  no_log: true
+# - name: Add passwords to /etc/BackupPC/BackupPC.users
+#   htpasswd:
+#     path: /etc/BackupPC/BackupPC.users
+#     name: "{{ item.user_name }}"
+#     password: "{{ item.password }}"
+#     owner: "{{ backuppc_server_user_name }}"
+#     group: "{{ backuppc_server_user_name }}"
+#     mode: 0640
+#   with_items: "{{ backuppc_server_www_users }}"
+#   become: true
+#   no_log: true
 
 - name: Update ownership on /etc/BackupPC
   file:
@@ -158,3 +150,6 @@
     enabled: true
     daemon_reload: true
   become: true
+
+- name: Configure Apache
+  include_tasks: configure_apache.yml
