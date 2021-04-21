@@ -1,11 +1,12 @@
 ---
-- name: Add apache allow directive
+- name: Add apache require directive
   lineinfile:
     dest: /etc/apache2/conf-available/backuppc.conf
-    regex: "[Aa]llow from 127\\.0\\.0\\.1"
-    line: "{{ backuppc_server_apache_allow }}"
-    insertafter: "[Dd]eny from all"
-  become: true
+    # regex: "[Aa]llow from 127\\.0\\.0\\.1"
+    line: "    {{ backuppc_server_apache_require }}"
+    insertafter: "^    [Rr]equire local"
+    state: present
+  become: yes
   notify: Restart Apache
 
 - name: "Replace default apache user with {{ backuppc_server_user_name }}"
@@ -13,8 +14,8 @@
     path: /etc/apache2/envvars
     regexp: "export APACHE_RUN_USER=www-data"
     line: "export APACHE_RUN_USER={{ backuppc_server_user_name }}"
-    backup: true
-  become: true
+    backup: yes
+  become: yes
   notify: Restart Apache
 
 - name: "Replace default apache group with {{ backuppc_server_user_name }}"
@@ -22,7 +23,7 @@
     path: /etc/apache2/envvars
     regexp: "export APACHE_RUN_GROUP=www-data"
     line: "export APACHE_RUN_GROUP={{ backuppc_server_user_name }}"
-  become: true
+  become: yes
   notify: Restart Apache
 
 - name: Set custom /var/www/html/index.html
@@ -32,28 +33,28 @@
     owner: root
     group: root
     mode: 0644
-    backup: true
-  become: true
+    backup: yes
+  become: yes
 
 - name: Enable apache module cgid
   apache2_module:
     name: cgid
     state: present
-  become: true
+  become: yes
   notify: Restart Apache
 
 - name: Enable backuppc apache config
   command: a2enconf backuppc
   args:
     creates: /etc/apache2/conf-enabled/backuppc.conf
-  become: true
+  become: yes
   notify: Restart Apache
 
 - name: Update permissions on /var/www/cgi-bin/BackupPC/BackupPC_Admin
   file:
     path: /var/www/cgi-bin/BackupPC/BackupPC_Admin
     mode: "u-s"
-  become: true
+  become: yes
 
 - name: Add passwords to /etc/BackupPC/BackupPC.users
   htpasswd:
@@ -64,5 +65,5 @@
     group: "{{ backuppc_server_user_name }}"
     mode: 0640
   with_items: "{{ backuppc_server_www_users }}"
-  become: true
-  no_log: true
+  become: yes
+  no_log: yes

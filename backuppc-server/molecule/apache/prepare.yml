@@ -19,3 +19,23 @@
         update_cache: yes
         # 1 hour
         cache_valid_time: 3600
+
+    - name: Create test file '/etc/apache2/conf-available/backuppc.conf'
+      copy:
+        dest: /etc/apache2/conf-available/backuppc.conf
+        content: |
+          # Apache 2.2
+          <IfModule !authz_core_module>
+            Order deny,allow
+            Deny from all
+            Allow from 127.0.0.1
+            Require valid-user
+          </IfModule>
+          # Apache 2.4+
+          <IfModule authz_core_module>
+            <RequireAll>
+              Require local
+              Require valid-user
+            </RequireAll>
+          </IfModule>
+      become: yes
