@@ -6,6 +6,8 @@
     ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
     backuppc_server_apache_require: "Require all granted"
     backuppc_server_user_name: backuppc-server
+    backuppc_server_www_users:
+      - { user_name: "backuppc", password: "backuppc" }
 
   tasks:
     - name: Include tasks from configure_apache.yml

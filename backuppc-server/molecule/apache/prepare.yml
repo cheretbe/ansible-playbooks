@@ -3,6 +3,8 @@
   hosts: ubuntu-bionic, ubuntu-focal
   become: true
   # gather_facts: false
+  vars:
+    backuppc_server_user_name: backuppc-server
 
   tasks:
     - name: Set local package cache
@@ -15,7 +17,7 @@
 
     - name: Install packages
       apt:
-        name: ["apache2", "apache2-utils"]
+        name: ["apache2", "apache2-utils", "python3-passlib"]
         update_cache: yes
         # 1 hour
         cache_valid_time: 3600
@@ -24,6 +26,7 @@
       copy:
         dest: /etc/apache2/conf-available/backuppc.conf
         content: |
+          <Directory      __CGIDIR__ >
           # Apache 2.2
           <IfModule !authz_core_module>
             Order deny,allow
@@ -38,4 +41,32 @@
               Require valid-user
             </RequireAll>
           </IfModule>
+          </Directory>
       become: yes
+
+    - name: Make copy of Apache config template
+      copy:
+        src: "{{ lookup('env','MOLECULE_PROJECT_DIRECTORY') }}/templates/var_www_html_index.html.j2"
+        dest: "{{ lookup('env','MOLECULE_PROJECT_DIRECTORY') }}/molecule/apache/templates/var_www_html_index.html.j2"
+      delegate_to: localhost
+
+    - name: Create '/var/www/cgi-bin/BackupPC' directory
+      file:
+        path: /var/www/cgi-bin/BackupPC
+        state: directory
+        mode: '0755'
+
+    - name: Create test file '/var/www/cgi-bin/BackupPC/BackupPC_Admin'
+      copy:
+        dest: /var/www/cgi-bin/BackupPC/BackupPC_Admin
+        content: ""
+      become: yes
+
+    - name: Create '/etc/BackupPC' directory
+      file:
+        path: /etc/BackupPC
+        state: directory
+        mode: '0755'
+
+    - name: Setup user
+      include_tasks: ../../tasks/setup_user.yml
