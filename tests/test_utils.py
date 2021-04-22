@@ -61,7 +61,7 @@ def get_molecule_scenarios(context):
         if child_obj.is_dir():
             if (child_obj / "molecule.yml").exists():
                 scenarios.append(child_obj.name)
-    return scenarios
+    return sorted(scenarios)
 
 
 def run_molecule(context, command, scenario, driver):
