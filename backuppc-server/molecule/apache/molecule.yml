@@ -24,5 +24,5 @@ verifier:
     # s: true
     hosts: ubuntu-bionic,ubuntu-focal
     m: apache
-    # apache-require: test me
+    cgi-bin-dir: __CGIDIR__
 
