@@ -23,32 +23,17 @@
         cache_valid_time: 3600
 
     - name: Create test file '/etc/apache2/conf-available/backuppc.conf'
-      copy:
+      get_url:
+        url: https://github.com/backuppc/backuppc/raw/master/httpd/src/BackupPC.conf
         dest: /etc/apache2/conf-available/backuppc.conf
-        content: |
-          <Directory      __CGIDIR__ >
-          # Apache 2.2
-          <IfModule !authz_core_module>
-            Order deny,allow
-            Deny from all
-            Allow from 127.0.0.1
-            Require valid-user
-          </IfModule>
-          # Apache 2.4+
-          <IfModule authz_core_module>
-            <RequireAll>
-              Require local
-              Require valid-user
-            </RequireAll>
-          </IfModule>
-          </Directory>
       become: yes
 
-    - name: Make copy of Apache config template
+    - name: Make a copy of Apache config template
       copy:
         src: "{{ lookup('env','MOLECULE_PROJECT_DIRECTORY') }}/templates/var_www_html_index.html.j2"
         dest: "{{ lookup('env','MOLECULE_PROJECT_DIRECTORY') }}/molecule/apache/templates/var_www_html_index.html.j2"
       delegate_to: localhost
+      become: no
 
     - name: Create '/var/www/cgi-bin/BackupPC' directory
       file:

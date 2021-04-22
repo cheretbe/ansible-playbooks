@@ -12,3 +12,4 @@ def pytest_addoption(parser):
     parser.addoption("--backuppc-version", action="store", default=None)
     parser.addoption("--backuppc-xs-version", action="store", default=None)
     parser.addoption("--rsync-bpc-version", action="store", default=None)
+    parser.addoption("--apache-require", action="store", default=None)

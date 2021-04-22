@@ -2,7 +2,6 @@
 - name: Add apache require directive
   lineinfile:
     dest: /etc/apache2/conf-available/backuppc.conf
-    # regex: "[Aa]llow from 127\\.0\\.0\\.1"
     line: "    {{ backuppc_server_apache_require }}"
     insertafter: "^    [Rr]equire local"
     state: present
