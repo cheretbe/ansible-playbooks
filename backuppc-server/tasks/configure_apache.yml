@@ -1,10 +1,15 @@
 ---
+
 - name: Add apache require directive
-  lineinfile:
-    dest: /etc/apache2/conf-available/backuppc.conf
-    line: "    {{ backuppc_server_apache_require }}"
-    insertafter: "^    [Rr]equire local"
-    state: present
+  blockinfile:
+    path: /etc/apache2/conf-available/backuppc.conf
+    insertafter: '^<IfModule authz_core_module>'
+    block: |
+      # ---------------------------
+        <RequireAll>
+          {{ backuppc_server_apache_require }}
+          Require valid-user
+        </RequireAll>
   become: yes
   notify: Restart Apache
 
