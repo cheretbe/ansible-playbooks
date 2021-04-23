@@ -1,4 +1,19 @@
 ```shell
+# --natpf<1-N> [<rulename>],tcp|udp,[<hostip>],<hostport>,[<guestip>],<guestport>]
+# [!] Note that for running VM the syntax is controlvm natpf<1-N> and for
+# powered off one it's modifyvm --natpf<1-N>
+vboxmanage controlvm $(cat .vagrant/machines/ubuntu-bionic/virtualbox/id) \
+  natpf1 "forward_port_80,tcp,,7000,,80"
+vboxmanage controlvm $(cat .vagrant/machines/ubuntu-focal/virtualbox/id) \
+  natpf1 "forward_port_80,tcp,,7001,,80"
+
+curl -u backuppc:backuppc -s http://localhost:7000/BackupPC_Admin
+curl -u backuppc:backuppc -s http://localhost:7001/BackupPC_Admin
+
+curl -u backuppc:backuppc -s http://localhost/BackupPC_Admin
+```
+
+```shell
 ansible-playbook ansible-playbooks/run_role.yml --extra-vars "role_name=backuppc-server" -l ubuntu-bionic:ubuntu-focal
 . ~/.cache/venv/py3/bin/activate
 pytest ansible-playbooks/backuppc-server/tests/ -v --connection=ansible --hosts=ubuntu-bionic,ubuntu-focal
