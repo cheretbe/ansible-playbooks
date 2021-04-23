@@ -10,5 +10,10 @@
 
     - name: "Add test user"
       include_tasks: "../../../tests/helper_tasks/add_test_user.yml"
-      # vars:
-      #   test_dir: "{{ playbook_dir }}/../../tests"
+
+    - name: Install curl
+      apt:
+        name: "curl"
+        update_cache: yes
+        # 1 hour
+        cache_valid_time: 3600

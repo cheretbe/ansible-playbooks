@@ -25,7 +25,7 @@ def test_backuppc_conf_file(host, pytestconfig):
     # BackupPC source code has this trailing space
     cgi_bin_dir = pytestconfig.getoption("cgi_bin_dir") + " "
     module_2_4_plus = next(item for item in config["Directory"][cgi_bin_dir]["IfModule"] if "authz_core_module" in item)
-    assert apache_require in module_2_4_plus["authz_core_module"]["RequireAll"]["Require"]
+    assert {"Require": [apache_require, "valid-user"]} in module_2_4_plus["authz_core_module"]["RequireAll"]
 
 # TODO: Consider testing backuppc_server_www_users propagation to
 # /etc/BackupPC/BackupPC.users

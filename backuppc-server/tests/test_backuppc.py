@@ -4,18 +4,18 @@ def test_backuppc_running_and_enabled(host):
     assert backuppc_service.is_enabled
 
 
-# def test_apache_http_port_is_open(host):
-#     assert host.socket("tcp://0.0.0.0:80").is_listening
+def test_apache_http_port_is_open(host):
+    assert host.socket("tcp://0.0.0.0:80").is_listening
 
 
-# def test_backuppc_status_page(host):
-#     # Temporarily use curl until HTTP module is implemented
-#     # https://github.com/philpep/testinfra/issues/407
-#     assert host.run_test(
-#             "curl -u backuppc:backuppc "
-#             "-s http://localhost/BackupPC_Admin | grep -q "
-#             "'BackupPC Server Status'"
-#         ).rc == 0
+def test_backuppc_status_page(host):
+    # Temporarily use curl until HTTP module is implemented
+    # https://github.com/philpep/testinfra/issues/407
+    status_text = host.check_output(
+        "curl -u backuppc:backuppc -s http://localhost/BackupPC_Admin"
+    )
+
+    assert "BackupPC Server Status" in status_text
 
 #     if os.environ["EXPECTED_BACKUPPC_VERSION"] == "latest":
 #         cmd = host.run(
