@@ -1,0 +1,21 @@
+---
+- name: Converge and verify
+  hosts: ubuntu-xenial, centos-7, centos-8
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+
+  tasks:
+    - name: Expected failure
+      block:
+        - name: "Include backuppc-server"
+          include_role:
+            name: "backuppc-server"
+      rescue:
+        - name: Check failure details
+          assert:
+            that: 
+              - ansible_failed_task.name == "Check distribution"
+              - >
+                ansible_failed_result.msg ==
+                "Only Ubuntu 18.04 and 20.04 are supported"

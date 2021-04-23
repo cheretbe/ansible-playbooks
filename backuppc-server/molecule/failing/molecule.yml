@@ -1,16 +1,5 @@
 ---
-dependency:
-  name: galaxy
-driver:
-  name: docker
-platforms:
-  - name: instance
-    image: docker.io/pycontribs/centos:7
-    pre_build_image: true
-provisioner:
-  name: ansible
-verifier:
-  name: ansible
+
 scenario:
   test_sequence:
     # - dependency
@@ -19,10 +8,10 @@ scenario:
     - destroy
     # - syntax
     - create
-    # - prepare
-    - converge
-    - idempotence
+    - prepare
+    # - converge
+    # - idempotence
     # - side_effect
-    # - verify
+    - verify
     # - cleanup
     - destroy

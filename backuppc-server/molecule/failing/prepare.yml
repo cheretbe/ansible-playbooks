@@ -1,0 +1,9 @@
+---
+- name: Prepare
+  hosts: ubuntu-xenial, centos-7, centos-8
+  become: true
+  # gather_facts: false
+
+  tasks:
+    - name: "Add test user"
+      include_tasks: "../../../tests/helper_tasks/add_test_user.yml"
