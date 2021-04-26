@@ -11,7 +11,7 @@ backuppc_server_rsync_bpc_version: "latest"
 backuppc_server_user_name: "backuppc-server"
 
 # Default: host FQDN
-#backuppc_server_host_name: "host.domain.tld"
+# backuppc_server_host_name: "host.domain.tld"
 
 # If this parameter is defined, /var/lib/backuppc created as a link
 # to specified directory
@@ -23,4 +23,4 @@ backuppc_server_user_name: "backuppc-server"
 backuppc_server_apache_require: "Require all granted"
 
 backuppc_server_www_users:
-  - { user_name: "backuppc", password: "backuppc" }
+  - {user_name: "backuppc", password: "backuppc"}

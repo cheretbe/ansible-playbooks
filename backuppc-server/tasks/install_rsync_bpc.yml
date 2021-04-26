@@ -38,41 +38,41 @@
   when: "rsync_bpc_installed_version is version(backuppc_server_rsync_bpc_version, '<')"
 
 - block:
-  - name: Init build directory
-    include_tasks: init_build_dir.yml
+    - name: Init build directory
+      include_tasks: init_build_dir.yml
 
-  - name: Set Rsync-bpc release archive URL
-    set_fact:
-      backuppc_server_rsync_bpc_tar_url: "https://github.com/\
-        backuppc/rsync-bpc/releases/download/\
-        {{ backuppc_server_rsync_bpc_version }}/\
-        rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
+    - name: Set Rsync-bpc release archive URL
+      set_fact:
+        backuppc_server_rsync_bpc_tar_url: "https://github.com/\
+          backuppc/rsync-bpc/releases/download/\
+          {{ backuppc_server_rsync_bpc_version }}/\
+          rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
 
-  - name: Rsync-bpc release archive URL
-    debug:
-      msg: "{{ backuppc_server_rsync_bpc_tar_url }}"
+    - name: Rsync-bpc release archive URL
+      debug:
+        msg: "{{ backuppc_server_rsync_bpc_tar_url }}"
 
-  - name: Download Rsync-bpc release archive
-    get_url:
-      url: "{{ backuppc_server_rsync_bpc_tar_url }}"
-      dest: "{{ backuppc_build_dir.path }}"
+    - name: Download Rsync-bpc release archive
+      get_url:
+        url: "{{ backuppc_server_rsync_bpc_tar_url }}"
+        dest: "{{ backuppc_build_dir.path }}"
 
-  - name: Extract Rsync-bpc release archive
-    unarchive:
-      src: "{{ backuppc_build_dir.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
-      dest: "{{ backuppc_build_dir.path }}"
-      remote_src: yes
+    - name: Extract Rsync-bpc release archive
+      unarchive:
+        src: "{{ backuppc_build_dir.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}.tar.gz"
+        dest: "{{ backuppc_build_dir.path }}"
+        remote_src: yes
 
-  - name: Stop 'backuppc' service
-    systemd:
-      name: backuppc
-      state: stopped
-    become: true
-    when: backuppc_service_is_present
+    - name: Stop 'backuppc' service
+      systemd:
+        name: backuppc
+        state: stopped
+      become: true
+      when: backuppc_service_is_present
 
-  - name: "Build and install Rsync-bpc"
-    shell: "./configure && make && make install"
-    args:
-      chdir: "{{ backuppc_build_dir.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}"
-    become: true
+    - name: "Build and install Rsync-bpc"
+      shell: "./configure && make && make install"
+      args:
+        chdir: "{{ backuppc_build_dir.path }}/rsync-bpc-{{ backuppc_server_rsync_bpc_version }}"
+      become: true
   when: install_rsync_bpc

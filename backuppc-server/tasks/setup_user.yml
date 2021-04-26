@@ -22,7 +22,7 @@
           Please fix the symlink before continuing.
       when: home_dir_info.stat.exists
 
-    - name: "Create symbolic link '/var/lib/backuppc' to '{{ backuppc_server_custom_data_dir }}'"
+    - name: "Create symbolic link '/var/lib/backuppc' to custom data directory"
       file:
         src: "{{ backuppc_server_custom_data_dir }}"
         dest: /var/lib/backuppc
@@ -38,7 +38,7 @@
   become: yes
   when: backuppc_server_custom_data_dir | default("") | length == 0
 
-- name: "Add user '{{ backuppc_server_user_name }}'"
+- name: "Add user BackupPC service user"
   user:
     name: "{{ backuppc_server_user_name }}"
     home: /var/lib/backuppc

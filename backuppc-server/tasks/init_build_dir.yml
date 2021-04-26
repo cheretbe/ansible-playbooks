@@ -5,23 +5,23 @@
 # https://github.com/ansible/ansible/issues/4297
 # Ansible modifies existing variables even if a task has been skipped
 
-  - name: Save existing build directory
-    set_fact:
-      backuppc_current_build_dir: "{{ backuppc_build_dir }}"
-    when: backuppc_build_dir | default(None) != None
+- name: Save existing build directory
+  set_fact:
+    backuppc_current_build_dir: "{{ backuppc_build_dir }}"
+  when: backuppc_build_dir | default(None) != None
 
-  - name: Get temporary directory for building
-    tempfile:
-      state: directory
-      prefix: 'backuppc-'
-    register: backuppc_build_dir
-    when: backuppc_build_dir | default(None) == None
+- name: Get temporary directory for building
+  tempfile:
+    state: directory
+    prefix: 'backuppc-'
+  register: backuppc_build_dir
+  when: backuppc_build_dir | default(None) == None
 
-  - name: Restore existing build directory
-    set_fact:
-      backuppc_build_dir: "{{ backuppc_current_build_dir }}"
-    when: backuppc_build_dir.skipped | default(False)
+- name: Restore existing build directory
+  set_fact:
+    backuppc_build_dir: "{{ backuppc_current_build_dir }}"
+  when: backuppc_build_dir.skipped | default(False)
 
-  - name: Build directory
-    debug:
-      var: backuppc_build_dir.path
+- name: Build directory
+  debug:
+    var: backuppc_build_dir.path
