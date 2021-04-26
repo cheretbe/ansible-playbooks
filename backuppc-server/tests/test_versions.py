@@ -1,6 +1,5 @@
 import sys
 import os
-import requests
 import pytest
 
 sys.path.append(os.path.dirname(__file__) + "/../../tests")
@@ -15,9 +14,9 @@ def test_backuppc_xs_version(host, pytestconfig):
         default_value="latest"
     )
     if expected_backuppc_xs_ver == "latest":
-        expected_backuppc_xs_ver = requests.get(
-            "https://api.github.com/repos/backuppc/backuppc-xs/releases/latest"
-        ).json()["tag_name"]
+        expected_backuppc_xs_ver = test_utils.get_github_release_info(
+            "backuppc/backuppc-xs/releases/latest"
+        )["tag_name"]
     backuppc_xs_ver = host.check_output(
         "perl -e '"
         "use lib \"/usr/local/BackupPC/lib\";"
@@ -34,9 +33,9 @@ def test_rsync_bpc_version(host, pytestconfig):
         default_value="latest"
     )
     if expected_rsync_bpc_ver == "latest":
-        expected_rsync_bpc_ver = requests.get(
-            "https://api.github.com/repos/backuppc/rsync-bpc/releases/latest"
-        ).json()["tag_name"]
+        expected_rsync_bpc_ver = test_utils.get_github_release_info(
+            "backuppc/rsync-bpc/releases/latest"
+        )["tag_name"]
     rsync_bpc_ver = host.run_test(
         "/usr/local/bin/rsync_bpc --version"
     ).stderr.splitlines()[0].split()[2]
@@ -51,9 +50,9 @@ def test_backuppc_version(host, pytestconfig):
         default_value="latest"
     )
     if expected_backuppc_ver == "latest":
-        expected_backuppc_ver = requests.get(
-            "https://api.github.com/repos/backuppc/backuppc/releases/latest"
-        ).json()["tag_name"]
+        expected_backuppc_ver = test_utils.get_github_release_info(
+            "backuppc/backuppc/releases/latest"
+        )["tag_name"]
     backuppc_ver = "unknown"
     for line in host.file("/usr/local/BackupPC/bin/BackupPC").content_string.splitlines():
         if "# Version" in line:

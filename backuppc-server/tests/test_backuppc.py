@@ -1,6 +1,5 @@
 import sys
 import os
-import requests
 
 sys.path.append(os.path.dirname(__file__) + "/../../tests")
 import test_utils  # pylint: disable=wrong-import-position,import-error
@@ -32,9 +31,9 @@ def test_backuppc_status_page(host, pytestconfig):
     )
 
     if expected_backuppc_ver == "latest":
-        expected_backuppc_ver = requests.get(
-            "https://api.github.com/repos/backuppc/backuppc/releases/latest"
-        ).json()["tag_name"]
+        expected_backuppc_ver = test_utils.get_github_release_info(
+            "backuppc/backuppc/releases/latest"
+        )["tag_name"]
 
     backuppc_ver = "unknown"
     for line in status_text.splitlines():

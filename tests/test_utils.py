@@ -1,7 +1,9 @@
+import os
 import pathlib
 import enum
 import warnings
 import colorama
+import requests
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     import invoke
@@ -85,3 +87,12 @@ def get_parameter_value(host, ansible_var_name, param_value, default_value):
     if return_value is None:
         return_value = default_value
     return return_value
+
+def get_github_release_info(release_url):
+    if "AO_GITHUB_OAUTH_TOKEN" in os.environ:
+        headers = {"Authorization": "token " + os.environ["AO_GITHUB_OAUTH_TOKEN"]}
+    else:
+        headers = None
+    return requests.get(
+        "https://api.github.com/repos/" + release_url, headers=headers
+    ).json()
