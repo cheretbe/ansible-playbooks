@@ -8,14 +8,14 @@
   - name: Save existing build directory
     set_fact:
       backuppc_current_build_dir: "{{ backuppc_build_dir }}"
-    when: backuppc_build_dir is defined
+    when: backuppc_build_dir | default(None) != None
 
   - name: Get temporary directory for building
     tempfile:
       state: directory
       prefix: 'backuppc-'
     register: backuppc_build_dir
-    when: backuppc_build_dir is not defined
+    when: backuppc_build_dir | default(None) == None
 
   - name: Restore existing build directory
     set_fact:

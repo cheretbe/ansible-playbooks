@@ -10,10 +10,13 @@
     - name: "Install backuppc-server version 4.3.2"
       include_role:
         name: "backuppc-server"
-      # vars:
-      #   backuppc_server_version: "4.3.2"
-      #   backuppc_server_rsync_bpc_version: "3.0.9.15"
-      #   backuppc_server_backuppc_xs_version: "0.59"
+      vars:
+        backuppc_server_version: "4.3.2"
+        backuppc_server_rsync_bpc_version: "3.0.9.15"
+        backuppc_server_backuppc_xs_version: "0.59"
+
+    - name: Force apache service restart handler to run
+      meta: flush_handlers
 
     - name: "Verify version 4.3.2 installation"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
@@ -22,11 +25,18 @@
         test_extra_params: "--backuppc-version=4.3.2 --backuppc-xs-version=0.59 --rsync-bpc-version=3.0.9.15"
 
     # ==========================================================================
-    # - name: "Install backuppc-server (latest)"
-    #   include_role:
-    #     name: "backuppc-server"
+    - name: Clear build directory path
+      set_fact:
+        backuppc_build_dir:
 
-    # - name: "Verify data directory settings"
-    #   include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
-    #   vars:
-    #     test_dir: "{{ playbook_dir }}/../../tests"
+    - name: "Install backuppc-server (latest)"
+      include_role:
+        name: "backuppc-server"
+
+    - name: Force apache service restart handler to run
+      meta: flush_handlers
+
+    - name: "Verify data directory settings"
+      include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
+      vars:
+        test_dir: "{{ playbook_dir }}/../../tests"
