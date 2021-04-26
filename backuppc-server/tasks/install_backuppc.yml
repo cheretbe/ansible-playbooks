@@ -127,7 +127,7 @@
       remote_src: true
       owner: root
       group: root
-      # mode: 0644
+      mode: 0644
     become: true
     when: not backuppc_apache_conf_info.stat.exists
 

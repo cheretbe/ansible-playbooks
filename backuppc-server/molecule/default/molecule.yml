@@ -2,7 +2,7 @@
 
 lint: |
     set -e
-    ansible-lint
+    ansible-lint --exclude molecule/
 
 verifier:
   name: testinfra
@@ -11,3 +11,19 @@ verifier:
     v: true
     # s: true
     hosts: ubuntu-bionic,ubuntu-focal
+
+scenario:
+  test_sequence:
+    # - dependency
+    - lint
+    # - cleanup
+    - destroy
+    # - syntax
+    - create
+    - prepare
+    - converge
+    - idempotence
+    # - side_effect
+    - verify
+    # - cleanup
+    - destroy
