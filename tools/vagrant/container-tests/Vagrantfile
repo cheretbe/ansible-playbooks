@@ -61,7 +61,8 @@ Vagrant.configure("2") do |config|
     ansible.extra_vars = {
       "ansible_python_interpreter": "/usr/bin/python3",
       "docker_ce_registry_mirrors": docker_mirrors,
-      "package_cache_host": package_cache_host
+      "PACKAGE_CACHE_HOST": package_cache_host,
+      "AO_GITHUB_OAUTH_TOKEN": ENV['AO_GITHUB_OAUTH_TOKEN'] || ""
     }
   end
 
@@ -75,5 +76,4 @@ Vagrant.configure("2") do |config|
         lxd init --auto --storage-backend=btrfs --storage-pool=/mnt/lxd
       fi
     SHELL
-
 end

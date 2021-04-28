@@ -40,7 +40,15 @@
         state: mounted
 
     - name: Export PACKAGE_CACHE_HOST env variable
-      copy:
-        content: "export PACKAGE_CACHE_HOST={{ package_cache_host }}"
-        dest: /etc/profile.d/test_settings.sh
-      when: package_cache_host != ''
+      lineinfile:
+        path: /etc/profile.d/test_settings.sh
+        line: "export PACKAGE_CACHE_HOST={{ PACKAGE_CACHE_HOST }}"
+        create: yes
+      when: PACKAGE_CACHE_HOST != ''
+
+    - name: Export AO_GITHUB_OAUTH_TOKEN env variable
+      lineinfile:
+        path: /etc/profile.d/test_settings.sh
+        line: "export AO_GITHUB_OAUTH_TOKEN={{ AO_GITHUB_OAUTH_TOKEN }}"
+        create: yes
+      when: AO_GITHUB_OAUTH_TOKEN != ''
