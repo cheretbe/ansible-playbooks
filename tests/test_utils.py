@@ -13,6 +13,11 @@ class MoleculeDriver(enum.Enum):
     lxd = 2
     vagrant = 3
 
+class TestPlatform(enum.Enum):
+    linux = 1
+    ubuntu = 2
+    centos = 3
+
 def print_header(header_text):
     print(
         colorama.Fore.CYAN + colorama.Style.BRIGHT +
@@ -48,13 +53,10 @@ def run_command(context, *args, **kwargs):
         )
         raise
 
-def get_base_config_path(driver_code):
-    if driver_code == MoleculeDriver.lxd:
-        base_config = "molecule/molecule_base_lxd_linux.yml"
-    elif driver_code == MoleculeDriver.docker:
-        base_config = "molecule/molecule_base_docker_linux.yml"
-    else:
-        base_config = "molecule/molecule_base_vagrant_linux.yml"
+def get_base_config_path(driver_code, platform_code):
+    base_config = "molecule/molecule_base_{driver}_{platform}.yml".format(
+        driver=driver_code.name, platform=platform_code.name
+    )
     return str(pathlib.Path(__file__).resolve().parent / base_config)
 
 def get_molecule_scenarios(context):
@@ -66,14 +68,17 @@ def get_molecule_scenarios(context):
     return sorted(scenarios)
 
 
-def run_molecule(context, command, scenario, driver):
+def run_molecule(context, command, scenario, driver, platform="linux"):
     driver_code = MoleculeDriver[driver.lower()]
+    platform_code = TestPlatform[platform.lower()]
     molecule_env = None
     if driver_code == MoleculeDriver.lxd:
         molecule_env = {"MOLECULE_USER_NAME": "root"}
     elif driver_code == MoleculeDriver.vagrant:
         molecule_env = {"MOLECULE_USER_NAME": "vagrant"}
-    molecule_command = f"molecule --base-config {get_base_config_path(driver_code)} {command}"
+    molecule_command = (
+        f"molecule --base-config {get_base_config_path(driver_code, platform_code)} {command}"
+    )
     if scenario is not None:
         molecule_command += f" -s {scenario}"
     run_command(context, molecule_command, env=molecule_env, echo=True)
