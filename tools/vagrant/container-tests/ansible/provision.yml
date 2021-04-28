@@ -3,9 +3,14 @@
   hosts: all
   become: yes
 
-  # Docker should be installed at this point, we run it just so that
-  # local "docker_ce_registry_mirrors" setting is propagated
   tasks:
+    - name: Install PIP packags
+      pip:
+        executable: pip3
+        requirements: /ansible-playbooks/dev_requirements.txt
+
+    # Docker should be installed at this point, we run it just so that
+    # local "docker_ce_registry_mirrors" setting is propagated
     - include_role: name="/ansible-playbooks/apt-wait-for-unlock"
     - include_role: name="/ansible-playbooks/docker-ce"
 
@@ -33,16 +38,6 @@
         src: /dev/sdc1
         fstype: btrfs
         state: mounted
-
-    - name: Install PIP package - Molecule LXD driver
-      pip:
-        name: [molecule_lxd]
-
-    - name: Add 'vagrant' user to 'lxd' group
-      user:
-        name: vagrant
-        groups: lxd
-        append: yes
 
     - name: Export PACKAGE_CACHE_HOST env variable
       copy:
