@@ -36,7 +36,7 @@ def test(context):
 
 @invoke.task(optional=['scenario, driver'])
 def molecule(
-        context, command, scenario=None, driver='docker'
+        context, command, scenario=None, driver="docker"
 ):
     """Run custom Molecule command"""
-    test_utils.run_molecule(context, command, scenario, driver)
+    test_utils.run_molecule(context, command, scenario, driver, platform="ubuntu")
