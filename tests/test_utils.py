@@ -68,14 +68,14 @@ def get_molecule_scenarios(context):
     return sorted(scenarios)
 
 
-def run_molecule(context, command, scenario, driver, platform="linux"):
+def run_molecule(context, command, scenario, driver, platform="linux", env={}):
     driver_code = MoleculeDriver[driver.lower()]
     platform_code = TestPlatform[platform.lower()]
-    molecule_env = None
+    molecule_env = env.copy()
     if driver_code == MoleculeDriver.lxd:
-        molecule_env = {"MOLECULE_USER_NAME": "root"}
+        molecule_env.update({"MOLECULE_USER_NAME": "root"})
     elif driver_code == MoleculeDriver.vagrant:
-        molecule_env = {"MOLECULE_USER_NAME": "vagrant"}
+        molecule_env.update({"MOLECULE_USER_NAME": "vagrant"})
     molecule_command = (
         f"molecule --base-config {get_base_config_path(driver_code, platform_code)} {command}"
     )

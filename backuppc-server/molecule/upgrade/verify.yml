@@ -7,36 +7,67 @@
 
   tasks:
     # ==========================================================================
-    - name: "Install backuppc-server version 4.3.2"
+    - name: Set initial versions facts
+      set_fact:
+        backuppc_from: >-
+          {{ lookup('env','TEST_BACKUPPC_FROM') | default('4.3.2', true) }}
+        backuppc_xs_from: >-
+          {{ lookup('env','TEST_BACKUPPC_XS_FROM') | default('0.59', true) }}
+        rsync_bpc_from: >-
+          {{ lookup('env','TEST_RSYNC_BPC_FROM') | default('3.0.9.15', true) }}
+
+    - name: "Install backuppc-server version {{ backuppc_from }}"
       include_role:
         name: "backuppc-server"
       vars:
-        backuppc_server_version: "4.3.2"
-        backuppc_server_rsync_bpc_version: "3.0.9.15"
-        backuppc_server_backuppc_xs_version: "0.59"
+        backuppc_server_version: "{{ backuppc_from }}"
+        backuppc_server_backuppc_xs_version: "{{ backuppc_xs_from }}"
+        backuppc_server_rsync_bpc_version: "{{ rsync_bpc_from }}"
 
     - name: Force apache service restart handler to run
       meta: flush_handlers
 
-    - name: "Verify version 4.3.2 installation"
+    - name: "Verify version {{ backuppc_from }} installation"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../../tests"
-        test_extra_params: "--backuppc-version=4.3.2 --backuppc-xs-version=0.59 --rsync-bpc-version=3.0.9.15"
+        test_extra_params: >-
+          --backuppc-version={{ backuppc_from }}
+          --backuppc-xs-version={{ backuppc_xs_from }}
+          --rsync-bpc-version={{ rsync_bpc_from }}
 
     # ==========================================================================
     - name: Clear build directory path
       set_fact:
         backuppc_build_dir:
 
-    - name: "Install backuppc-server (latest)"
-      include_role:
+    - name: Set upgrade versions facts
+      set_fact:
+        backuppc_to: >-
+          {{ lookup('env','TEST_BACKUPPC_TO') | default('latest', true) }}
+        backuppc_xs_to: >-
+          {{ lookup('env','TEST_BACKUPPC_XS_TO') | default('latest', true) }}
+        rsync_bpc_to: >-
+          {{ lookup('env','TEST_RSYNC_BPC_TO') | default('latest', true) }}
+
+    - name: "Install backuppc-server ({{ backuppc_to }})"
+      # We might need to update variables from 'latest' to specific versions,
+      # and include_role prevents this
+      import_role:
         name: "backuppc-server"
+      vars:
+        backuppc_server_version: "{{ backuppc_to }}"
+        backuppc_server_backuppc_xs_version: "{{ backuppc_xs_to }}"
+        backuppc_server_rsync_bpc_version: "{{ rsync_bpc_to }}"
 
     - name: Force apache service restart handler to run
       meta: flush_handlers
 
-    - name: "Verify data directory settings"
+    - name: "Verify backuppc-server ({{ backuppc_to }}) installation"
       include_tasks: "../../../tests/helper_tasks/run_test_infra.yml"
       vars:
         test_dir: "{{ playbook_dir }}/../../tests"
+        test_extra_params: >-
+          --backuppc-version={{ backuppc_to }}
+          --backuppc-xs-version={{ backuppc_xs_to }}
+          --rsync-bpc-version={{ rsync_bpc_to }}
