@@ -12,6 +12,6 @@ cat <<-EOF >/etc/pip.conf
 EOF
 
 if [[ $(lsb_release -rs) == "20.04" ]]; then
-  mdkir -p /etc/xdg/pip/
+  mkdir -p /etc/xdg/pip/
   ln -sf /etc/pip.conf /etc/xdg/pip/pip.conf
 fi
