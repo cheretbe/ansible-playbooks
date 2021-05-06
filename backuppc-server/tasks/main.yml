@@ -69,11 +69,19 @@
     recurse: true
   become: true
 
+- name: Set user list CgiAdminUsers parameter
+  set_fact:
+    backuppc_cgi_admin_users: "{{ backuppc_cgi_admin_users }} + [ '{{ item.user_name }}' ]"
+  with_items: "{{ backuppc_server_www_users }}"
+  vars:
+    backuppc_cgi_admin_users: []
+  no_log: yes
+
 - name: Update CgiAdminUsers parameter in /etc/BackupPC/config.pl
   lineinfile:
     path: /etc/BackupPC/config.pl
-    regexp: "\\$Conf\\{CgiAdminUsers\\}[ ]*=[ ]*'';"
-    line: "$Conf{CgiAdminUsers} = '{{ backuppc_server_user_name }}';"
+    regexp: "^\\$Conf\\{CgiAdminUsers\\}[ ]*=[ ]*'.*';"
+    line: "$Conf{CgiAdminUsers} = '{{ backuppc_cgi_admin_users | join(' ')}}';"
     backup: true
   become: true
 

@@ -15,10 +15,13 @@ def test_apache_http_port_is_open(host):
 
 
 def test_backuppc_status_page(host, pytestconfig):
+    www_user = pytestconfig.getoption("www_user")
+    www_password = pytestconfig.getoption("www_password")
+
     # Temporarily use curl until HTTP module is implemented
     # https://github.com/philpep/testinfra/issues/407
     status_text = host.check_output(
-        "curl -u backuppc:backuppc -s http://localhost/BackupPC_Admin"
+        f"curl -u {www_user}:{www_password} -s http://localhost/BackupPC_Admin"
     )
 
     assert "BackupPC Server Status" in status_text

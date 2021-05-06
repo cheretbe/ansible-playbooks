@@ -14,3 +14,5 @@ def pytest_addoption(parser):
     parser.addoption("--rsync-bpc-version", action="store", default=None)
     parser.addoption("--apache-require", action="store", default=None)
     parser.addoption("--cgi-bin-dir", action="store", default="/var/www/cgi-bin/BackupPC")
+    parser.addoption("--www-user", action="store", default="backuppc")
+    parser.addoption("--www-password", action="store", default="backuppc")
