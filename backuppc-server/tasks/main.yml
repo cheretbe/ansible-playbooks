@@ -81,7 +81,7 @@
   lineinfile:
     path: /etc/BackupPC/config.pl
     regexp: "^\\$Conf\\{CgiAdminUsers\\}[ ]*=[ ]*'.*';"
-    line: "$Conf{CgiAdminUsers} = '{{ backuppc_cgi_admin_users | join(' ')}}';"
+    line: "$Conf{CgiAdminUsers} = '{{ backuppc_cgi_admin_users | join(' ') }}';"
     backup: true
   become: true
 
