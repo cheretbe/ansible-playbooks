@@ -14,31 +14,6 @@
     - include_role: name="/ansible-playbooks/apt-wait-for-unlock"
     - include_role: name="/ansible-playbooks/docker-ce"
 
-    - name: Create a BTRFS partition for LXD storage
-      parted:
-        device: /dev/sdc
-        number: 1
-        state: present
-        fs_type: btrfs
-
-    - name: Create a BTRFS filesystem for LXD storage
-      community.general.filesystem:
-        fstype: btrfs
-        dev: /dev/sdc1
-
-    - name: Create mount point
-      file:
-        path: /mnt/lxd
-        state: directory
-        mode: '0755'
-
-    - name: Mount LXD storage file system
-      mount:
-        path: /mnt/lxd
-        src: /dev/sdc1
-        fstype: btrfs
-        state: mounted
-
     - name: Export PACKAGE_CACHE_HOST env variable
       lineinfile:
         path: /etc/profile.d/test_settings.sh
