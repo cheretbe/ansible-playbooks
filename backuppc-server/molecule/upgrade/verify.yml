@@ -4,8 +4,14 @@
   vars:
     # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
     ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+    backuppc_github_oauth_token: "{{ lookup('env','AO_GITHUB_OAUTH_TOKEN') }}"
 
   tasks:
+    - name: Set GitHub OAuth header
+      set_fact:
+        backuppc_github_oauth_header: {Authorization: "token {{ backuppc_github_oauth_token }}"}
+      when: backuppc_github_oauth_token != ""
+
     # ==========================================================================
     - name: Set initial versions facts
       set_fact:

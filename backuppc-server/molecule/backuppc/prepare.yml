@@ -8,8 +8,14 @@
     install_backuppc_xc: false
     backuppc_service_is_present: false
     backuppc_server_user_name: backuppc-server
+    backuppc_github_oauth_token: "{{ lookup('env','AO_GITHUB_OAUTH_TOKEN') }}"
 
   tasks:
+    - name: Set GitHub OAuth header
+      set_fact:
+        backuppc_github_oauth_header: {Authorization: "token {{ backuppc_github_oauth_token }}"}
+      when: backuppc_github_oauth_token != ""
+
     - name: Set local package cache
       include_tasks: "../../../tests/helper_tasks/set_local_package_cache.yml"
 

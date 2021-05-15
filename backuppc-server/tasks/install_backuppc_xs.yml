@@ -3,6 +3,7 @@
   uri:
     url: https://api.github.com/repos/backuppc/backuppc-xs/releases/latest
     return_content: yes
+    headers: "{{ backuppc_github_oauth_header | default({}) }}"
   register: backuppc_xc_latest_release
   when: backuppc_server_backuppc_xs_version == "latest"
 

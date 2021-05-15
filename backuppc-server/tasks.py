@@ -20,7 +20,7 @@ def show_help(context):
     print("\nExamples:")
     print("inv test")
     print("inv molecule list --driver lxd")
-    print("inv molecule converge --scenario backuppc-xs")
+    print("inv molecule converge --scenario=backuppc-xs")
     print(
         "inv upgrade --backuppc-from=4.3.2 --backuppc-xs-from=0.59 --rsync-bpc-from=3.0.9.15"
     )

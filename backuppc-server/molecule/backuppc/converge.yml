@@ -4,6 +4,7 @@
   vars:
     # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
     ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+    backuppc_github_oauth_token: "{{ lookup('env','AO_GITHUB_OAUTH_TOKEN') }}"
     backuppc_server_version: latest
     backuppc_installed_version: "0.0"
     backuppc_server_user_name: backuppc-server
@@ -12,5 +13,10 @@
     backuppc_service_is_present: false
 
   tasks:
+    - name: Set GitHub OAuth header
+      set_fact:
+        backuppc_github_oauth_header: {Authorization: "token {{ backuppc_github_oauth_token }}"}
+      when: backuppc_github_oauth_token != ""
+
     - name: Include tasks from install_backuppc.yml
       import_tasks: ../../tasks/install_backuppc.yml
