@@ -1,0 +1,15 @@
+---
+all:
+  vars:
+    ansible_user: vagrant
+  hosts:
+    ubuntu-focal:
+      ansible_host: 172.24.0.11
+    ubuntu-bionic:
+      ansible_host: 172.24.0.12
+    ubuntu-xenial:
+      ansible_host: 172.24.0.13
+    centos-7:
+      ansible_host: 172.24.0.14
+    centos-8:
+      ansible_host: 172.24.0.15
