@@ -81,6 +81,7 @@ Vagrant.configure("2") do |config|
         cp /vagrant/provision/ansible.cfg /home/vagrant/.ansible.cfg
         cp /vagrant/provision/local_inventory.yml /home/vagrant/local_inventory.yml
         cp /vagrant/provision/awx_inventory.tower.yml /home/vagrant/awx_inventory.tower.yml
+        cp /vagrant/provision/backuppc_inventory.yml /home/vagrant/backuppc_inventory.yml
 
         echo "Configuring SSH"
         chmod 700 /home/vagrant/.ssh
