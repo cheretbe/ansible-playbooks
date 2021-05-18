@@ -71,9 +71,7 @@ def get_target(inventory):
     )
 
 
-def get_role():
-    # ../../..
-    roles_dir = pathlib.Path(__file__).resolve().parents[3]
+def get_role(roles_dir):
     roles = []
     for child_obj in roles_dir.iterdir():
         if child_obj.is_dir():
@@ -127,7 +125,9 @@ def main():
         if target_needs_vault_password:
             vault_pwd_to_return = check_vault_env_variable()
 
-        role = get_role()
+        # ../../..
+        roles_dir = pathlib.Path(__file__).resolve().parents[3]
+        role = get_role(roles_dir)
 
         if target_needs_vault_password:
             temp_vault_pwd_file = tempfile.NamedTemporaryFile(delete=False, mode="w+t")
@@ -151,7 +151,7 @@ def main():
             subprocess.check_call(
                 [
                     "ansible-playbook",
-                    pathlib.Path(__file__).resolve().parent / "run_role.yml",
+                    roles_dir / "run_role.yml",
                     "--limit", target.name,
                     "--extra-vars", f'role_name={role}'
                 ] + additional_params

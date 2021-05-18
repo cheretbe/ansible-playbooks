@@ -4,7 +4,7 @@ set -euo pipefail
 
 script_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-declare -a APT_PACKAGES=("build-essential" "python3-venv" "python3-dev")
+declare -a APT_PACKAGES=("python3-venv")
 
 virualenv_dir="${HOME}/.cache/venv/ansible-tools-py3"
 
@@ -31,6 +31,7 @@ if [ ! -e "${virualenv_dir}/bin/activate" ]; then
 
   python3 -m venv "${virualenv_dir}"
   . "${virualenv_dir}/bin/activate"
+  pip3 install --upgrade pip
   pip3 install wheel
   pip3 install -r "${script_dir}/requirements.txt"
   # deactivate fails with -eu options set
