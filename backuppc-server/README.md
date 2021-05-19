@@ -57,13 +57,12 @@ perl -e 'use lib "/usr/local/BackupPC/lib"; use BackupPC::XS; print $BackupPC::X
 /usr/local/bin/rsync_bpc --version 2>&1 | head -n 1
 
 # Install
-ansible-playbook /ansible-playbooks/run_role.yml --extra-vars "role_name=backuppc-server" \
+ansible-playbook /ansible-playbooks/backuppc_server_setup.yml \
   --ask-vault-password \
   --extra-vars "backuppc_server_version=4.3.2 backuppc_server_backuppc_xs_version=0.59 \
   backuppc_server_rsync_bpc_version=3.0.9.15"
 # Upgrade
-ansible-playbook /ansible-playbooks/run_role.yml --extra-vars "role_name=backuppc-server" \
-  --ask-vault-password
+ansible-playbook /ansible-playbooks/backuppc_server_setup.yml --ask-vault-password
 
 # Run upgrade test
 cd /ansible-playbooks/backuppc-server
