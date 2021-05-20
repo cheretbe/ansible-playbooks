@@ -7,6 +7,7 @@ all:
       ansible_host: 172.24.0.11
     ubuntu-bionic:
       ansible_host: 172.24.0.12
+
 backuppc:
   vars:
     # backuppc_server_version: "4.3.2"
@@ -24,6 +25,16 @@ backuppc:
           33303361356634313461316631323161363433653138386433366139353434386137653466383532
           6333643161303763630a656435326435663632623738376232306131633566346137356630653361
           3165
+  hosts:
+    ubuntu-focal:
+    ubuntu-bionic:
+
+backuppc_clients:
+  vars:
+    backuppc_client_ssh_auth_key: "{{ lookup('file', '/ansible-playbooks/backuppc-client/molecule/common/test.key.pub') }}"
+    backuppc_client_custom_sudo_commands:
+      - { comment: "Test command 1", command: "/etc/custom/command_1" }
+      - { comment: "Test command 2", command: "/etc/custom/command_2" }
   hosts:
     ubuntu-focal:
     ubuntu-bionic:

@@ -22,7 +22,7 @@
 
 - name: Add SSH authorized key
   authorized_key:
-    user: backuppc
+    user: "{{ backuppc_client_user_name }}"
     state: present
     key: "{{ backuppc_client_ssh_auth_key }}"
   become: yes
