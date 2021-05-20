@@ -9,6 +9,7 @@
 - name: "Add user '{{ backuppc_client_user_name }}'"
   user:
     name: "{{ backuppc_client_user_name }}"
+  become: yes
 
 - name: "Enable passwordless sudo commands for user '{{ backuppc_client_user_name }}'"
   template:
@@ -16,10 +17,12 @@
     dest: /etc/sudoers.d/backuppc
     owner: root
     group: root
-    mode: 044
+    mode: "044"
+  become: yes
 
 - name: Add SSH authorized key
   authorized_key:
     user: backuppc
     state: present
     key: "{{ backuppc_client_ssh_auth_key }}"
+  become: yes
