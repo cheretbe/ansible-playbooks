@@ -3,6 +3,13 @@ lint: |
   set -e
   ansible-lint
 
+verifier:
+  name: testinfra
+  directory: ../../tests/
+  options:
+    v: true
+    # s: true
+
 scenario:
   test_sequence:
     # - dependency

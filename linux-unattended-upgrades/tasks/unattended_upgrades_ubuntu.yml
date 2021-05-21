@@ -1,5 +1,6 @@
 ---
-- include_role: name="../apt-wait-for-unlock"
+- name: Wait for dpkg frontend to unlock
+  include_role: name="../apt-wait-for-unlock"
 
 - name: Install apt 'unattended-upgrades' package
   apt:

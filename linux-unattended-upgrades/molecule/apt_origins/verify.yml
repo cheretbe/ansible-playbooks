@@ -54,13 +54,9 @@
       vars:
         test_dir: "{{ playbook_dir }}/../../tests"
         test_extra_params: >-
-          --origins='"${distro_id}:${distro_codename}";'
-          --origins='"${distro_id}:${distro_codename}-security";'
-          --origins='"${distro_id}ESM:${distro_codename}";'
-          --origins='"${distro_id}:${distro_codename}-updates";'
-          --origins='add_test1:stable;'
-          --origins='add_test2:stable;'
-          --origins='add_test3:stable;'
+          --additional-origins='add_test1:stable;'
+          --additional-origins='add_test2:stable;'
+          --additional-origins='add_test3:stable;'
 
     # ==========================================================================
     - name: "Include linux-unattended-upgrades (custom standard origins, custom additional ones)"
@@ -85,9 +81,9 @@
           --origins=test1:stable;
           --origins=test2:stable;
           --origins=test3:stable;
-          --origins='add_test1:stable;'
-          --origins='add_test2:stable;'
-          --origins='add_test3:stable;'
+          --additional-origins='add_test1:stable;'
+          --additional-origins='add_test2:stable;'
+          --additional-origins='add_test3:stable;'
 
     # ==========================================================================
     - name: "Include linux-unattended-upgrades (default settings)"

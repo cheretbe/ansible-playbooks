@@ -28,6 +28,13 @@ def test_settings(host, pytestconfig):
         ]
     )
 
+    origins += get_parameter_value(
+        host=host,
+        ansible_var_name="unattended_additional_allowed_origins",
+        param_value=pytestconfig.getoption("additional_origins"),
+        default_value=[]
+    )
+
     reboot_script = host.file(
         "/opt/ansible-scripts/unattended_upgrades/check_if_reboot_is_needed.py"
     )
