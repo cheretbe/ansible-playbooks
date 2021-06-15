@@ -8,7 +8,7 @@
         (ansible_distribution_version not in ["18.04", "20.04"])
 
 - name: Wait for dpkg frontend to unlock
-  include_role: name="../apt-wait-for-unlock"
+  include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
 - name: Install dependencies
   apt:
