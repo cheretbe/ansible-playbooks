@@ -1,0 +1,35 @@
+---
+# tasks file for win-backuppc-client
+
+- name: Get localized Administrators group name
+  win_command: "powershell.exe \
+    \"((New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')).\
+    Translate([System.Security.Principal.NTAccount]).Value -split '\\\\')[1]\""
+  register: admin_group_name
+  changed_when: false
+
+- name: Add BackupPC user
+  ansible.windows.win_user:
+    name: "{{ backuppc_client_user_name }}"
+    password: "{{ backuppc_client_password }}"
+    password_never_expires: yes
+    description: "{{ backuppc_client_description }}"
+    state: present
+    groups_action: add
+    groups:
+      - "{{ admin_group_name.stdout_lines[0] }}"
+
+- name: Deny interactive logon for BackupPC user
+  ansible.windows.win_user_right:
+    name: SeDenyInteractiveLogonRight
+    users:
+      - "{{ backuppc_client_user_name }}"
+    action: add
+
+- name: Deny log on through Remote Desktop Services for BackupPC user
+  ansible.windows.win_user_right:
+    name: SeDenyRemoteInteractiveLogonRight
+    users:
+      - "{{ backuppc_client_user_name }}"
+    action: add
+

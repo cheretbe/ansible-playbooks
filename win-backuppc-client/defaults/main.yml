@@ -1,0 +1,4 @@
+---
+backuppc_client_user_name: "backuppc"
+backuppc_client_password: "backuppc"
+backuppc_client_description: "Account for local BackupPC server"
