@@ -15,6 +15,12 @@ curl -u backuppc:backuppc -s http://localhost/BackupPC_Admin
 
 ```shell
 ansible-playbook ansible-playbooks/run_role.yml --extra-vars "role_name=backuppc-server" -l ubuntu-bionic:ubuntu-focal
+
+ansible-playbook -i 172.24.0.14, -u vagrant \
+  --extra-vars "ansible_connection=winrm ansible_port=5985" \
+  --extra-vars "ansible_winrm_transport=ntlm ansible_password=$AO_DEFAULT_VAGRANT_PASSWORD" \
+  --extra-vars "role_name=win-backuppc-client" /ansible-playbooks/run_role.yml
+
 . ~/.cache/venv/py3/bin/activate
 pytest ansible-playbooks/backuppc-server/tests/ -v --connection=ansible --hosts=ubuntu-bionic,ubuntu-focal
 ```
