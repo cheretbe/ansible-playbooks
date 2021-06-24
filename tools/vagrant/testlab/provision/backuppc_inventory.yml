@@ -7,6 +7,12 @@ all:
       ansible_host: 172.24.0.11
     ubuntu-bionic:
       ansible_host: 172.24.0.12
+    win10:
+      ansible_host: 172.24.0.14
+      ansible_connection: winrm
+      ansible_port: "5985"
+      ansible_winrm_transport: ntlm
+      ansible_password: "{{ lookup('env', 'AO_DEFAULT_VAGRANT_PASSWORD') }}"
 
 backuppc:
   vars:
@@ -29,7 +35,7 @@ backuppc:
     ubuntu-focal:
     ubuntu-bionic:
 
-backuppc_clients:
+backuppc_clients_linux:
   vars:
     backuppc_client_ssh_auth_key: "{{ lookup('file', '/ansible-playbooks/backuppc-client/molecule/common/test.key.pub') }}"
     backuppc_client_custom_sudo_commands:
@@ -38,3 +44,17 @@ backuppc_clients:
   hosts:
     ubuntu-focal:
     ubuntu-bionic:
+
+backuppc_clients_windows:
+  # vars:
+  #   backuppc_client_ssh_auth_key: "{{ lookup('file', '/ansible-playbooks/backuppc-client/molecule/common/test.key.pub') }}"
+  #   backuppc_client_custom_sudo_commands:
+  #     - { comment: "Test command 1", command: "/etc/custom/command_1" }
+  #     - { comment: "Test command 2", command: "/etc/custom/command_2" }
+  hosts:
+    win10:
+
+backuppc_clients:
+  children:
+    backuppc_clients_linux:
+    backuppc_clients_windows:
