@@ -1,4 +1,5 @@
 ansible
+pywinrm
 ansible-lint
 molecule[ansible]
 molecule-docker
