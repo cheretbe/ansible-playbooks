@@ -14,12 +14,8 @@ def parse_arguments():
         description="Setup BackupPC clients"
     )
     parser.add_argument(
-        "-l", "--linux-hosts", default="backuppc_clients_linux",
-        help="Linux hosts: limit execution to a pattern (default: backuppc_clients_linux)"
-    )
-    parser.add_argument(
-        "-w", "--windows-hosts", default="backuppc_clients_windows",
-        help="Windows hosts: limit execution to a pattern (default: backuppc_clients_windows)"
+        "limit", nargs="?", default="backuppc_clients",
+        help="Limit execution to a pattern"
     )
     return parser.parse_args()
 
@@ -27,14 +23,7 @@ def main():
     options = parse_arguments()
 
     ansible_common.run_ansible_with_vault(
-        [str(script_dir.parent / "run_role.yml"),
-        "--extra-vars", "role_name=backuppc-client",
-        "--limit", options.linux_hosts]
-    )
-    ansible_common.run_ansible_with_vault(
-        [str(script_dir.parent / "run_role.yml"),
-        "--extra-vars", "role_name=win-backuppc-client",
-        "--limit", options.windows_hosts]
+        [str(script_dir.parent / "backuppc_client_setup.yml"), "--limit", options.limit]
     )
 
 if __name__ == "__main__":

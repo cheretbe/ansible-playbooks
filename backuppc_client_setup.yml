@@ -1,5 +1,11 @@
 ---
 
 - hosts: all
-  roles:
-    - backuppc-client
+  tasks:
+    - include_role:
+        name: backuppc-client
+      when: ansible_system == "Linux"
+
+    - include_role:
+        name: win-backuppc-client
+      when: ansible_system == "Win32NT"
