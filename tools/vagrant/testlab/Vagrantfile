@@ -63,21 +63,10 @@ Vagrant.configure("2") do |config|
       keep_color: true, privileged: false,
       inline: <<-SHELL
         set -e
-        echo "Updating package cache"
-        sudo apt-get update -y -qq
-        echo "Installing python3-venv package"
-        DEBIAN_FRONTEND=noninteractive sudo apt-get install -y -qq python3-venv
 
-        if [ ! -f ~/.cache/venv/ansible-venv/bin/activate ]; then
-          echo "Creating virtual environment 'ansible-venv'"
-          python3 -m venv ~/.cache/venv/ansible-venv
-        fi
-        echo "Activating virtual environment 'ansible-venv'"
-        . ~/.cache/venv/ansible-venv/bin/activate
-        echo "Installing necessary Python packages"
-        pip install --upgrade pip
-        pip install wheel
-        pip install -r /ansible-playbooks/dev_requirements.txt
+        /usr/bin/curl -s https://raw.githubusercontent.com/cheretbe/bootstrap/master/setup_venv.py?flush_cache=True \
+          | /usr/bin/python3 - ansible-venv --requirement /ansible-playbooks/dev_requirements.txt \
+          --batch-mode --python 3.8
 
         echo "Updating .bashrc file"
         grep -qxF '. ~/.cache/venv/ansible-venv/bin/activate' /home/vagrant/.bashrc || echo -e '\\n. ~/.cache/venv/ansible-venv/bin/activate\\n' >>/home/vagrant/.bashrc
