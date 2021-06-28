@@ -1,0 +1,6 @@
+ansible
+pywinrm
+pytest
+pytest-testinfra
+colorama
+apacheconfig
