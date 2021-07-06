@@ -1,0 +1,3 @@
+---
+backuppc_client_rsync_centos_packages: ["net-tools", "rsync"]
+backuppc_client_rsync_daemon_name: "rsync"

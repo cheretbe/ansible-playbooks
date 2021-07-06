@@ -1,0 +1,18 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+  tasks:
+    - name: "Include backuppc-client-rsync"
+      include_role:
+        name: "backuppc-client-rsync"
+      vars:
+        backuppc_client_rsync_user_name: test-user
+        backuppc_client_rsync_password: test-password
+        backuppc_client_rsync_custom_modules:
+          - { name: "custom1", path: "/var", uid: "root" }
+          - { name: "custom2", path: "/var" }
+        backuppc_client_rsync_address: "127.0.0.1"
+        backuppc_client_rsync_hosts_allow: "127.0.0.1,192.168.0.1/24"
