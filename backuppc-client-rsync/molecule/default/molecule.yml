@@ -10,9 +10,7 @@ verifier:
   options:
     v: true
     # s: true
-    user-name: test-user
-    ssh-public-key-file=${MOLECULE_PROJECT_DIRECTORY}/molecule/common/test.key.pub: true
-    use-test-sudo-entries: true
+    rsync-address: 127.0.0.1
 
 scenario:
   test_sequence:
