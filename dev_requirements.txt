@@ -10,3 +10,4 @@ pytest-testinfra
 invoke
 colorama
 apacheconfig
+jinja2
