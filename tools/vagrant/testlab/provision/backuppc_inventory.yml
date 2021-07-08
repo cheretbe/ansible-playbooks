@@ -45,12 +45,15 @@ backuppc_clients_linux:
     ubuntu-focal:
     ubuntu-bionic:
 
+backuppc_clients_rsync_linux:
+  vars:
+    backuppc_client_rsync_user_name: backuppc
+    backuppc_client_rsync_password: backuppc
+  hosts:
+    ubuntu-focal:
+    ubuntu-bionic:
+
 backuppc_clients_windows:
-  # vars:
-  #   backuppc_client_ssh_auth_key: "{{ lookup('file', '/ansible-playbooks/backuppc-client/molecule/common/test.key.pub') }}"
-  #   backuppc_client_custom_sudo_commands:
-  #     - { comment: "Test command 1", command: "/etc/custom/command_1" }
-  #     - { comment: "Test command 2", command: "/etc/custom/command_2" }
   hosts:
     win10:
 
@@ -58,3 +61,4 @@ backuppc_clients:
   children:
     backuppc_clients_linux:
     backuppc_clients_windows:
+    backuppc_clients_rsync_linux:

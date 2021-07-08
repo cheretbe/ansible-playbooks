@@ -4,7 +4,11 @@
   tasks:
     - include_role:
         name: backuppc-client
-      when: ansible_system == "Linux"
+      when: ansible_system == "Linux" and backuppc_client_ssh_auth_key is defined
+
+    - include_role:
+        name: backuppc-client-rsync
+      when: ansible_system == "Linux" and backuppc_client_rsync_password is defined
 
     - include_role:
         name: win-backuppc-client
