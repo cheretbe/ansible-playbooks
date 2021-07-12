@@ -33,9 +33,8 @@ uid = root
 {% for custom_module in backuppc_client_rsync_custom_modules %}
 
 [{{ custom_module.name }}]
-path = {{ custom_module.path }}
-{% if custom_module.uid is defined %}
-uid = {{ custom_module.uid }}
-{% endif %}
+{% for key, value in custom_module.settings.items() | list %}
+{{ key }} = {{ value }}
+{% endfor %}
 {% endfor %}
 {% endif %}

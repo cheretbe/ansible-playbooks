@@ -12,7 +12,13 @@
         backuppc_client_rsync_user_name: test-user
         backuppc_client_rsync_password: test-password
         backuppc_client_rsync_custom_modules:
-          - { name: "custom1", path: "/var", uid: "root" }
-          - { name: "custom2", path: "/var" }
+          - name: "custom1"
+            settings:
+              path: "/var"
+              uid: "root"
+              read only: "no"
+          - name: "custom2"
+            settings:
+              path: "/var"
         backuppc_client_rsync_address: "127.0.0.1"
         backuppc_client_rsync_hosts_allow: "127.0.0.1,192.168.0.1/24"
