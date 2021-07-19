@@ -39,7 +39,7 @@ end
 
 Vagrant.configure("2") do |config|
   config.vm.define :ansible do |ansible|
-    ansible.vm.box = "ubuntu/bionic64"
+    ansible.vm.box = "cheretbe/ansible-controller"
     ansible.vm.provider "virtualbox" do |vb|
       vb.memory = ansible_vm_memory
       vb.cpus = ansible_vm_cpus
@@ -55,21 +55,20 @@ Vagrant.configure("2") do |config|
     ansible.vm.network "private_network", ip: "172.24.0.10", virtualbox__intnet: "vagrant-intnet"
 
     ansible.vm.synced_folder "../../../", "/ansible-playbooks"
+    ansible.vm.synced_folder Dir.home, "/host_home"
 
     set_local_package_cache_host(ansible, package_cache_host)
 
     ansible.vm.provision "shell",
-      name: "Ansible installation in a virtual environment",
+      name: "PIP packages installation",
+      keep_color: true, privileged: true,
+      inline: "pip3 install -r /ansible-playbooks/dev_requirements.txt"
+
+    ansible.vm.provision "shell",
+      name: "Ansible configuration",
       keep_color: true, privileged: false,
       inline: <<-SHELL
         set -e
-
-        /usr/bin/curl -s https://raw.githubusercontent.com/cheretbe/bootstrap/master/setup_venv.py?flush_cache=True \
-          | /usr/bin/python3 - ansible-venv --requirement /ansible-playbooks/dev_requirements.txt \
-          --batch-mode --python 3.8
-
-        echo "Updating .bashrc file"
-        grep -qxF '. ~/.cache/venv/ansible-venv/bin/activate' /home/vagrant/.bashrc || echo -e '\\n. ~/.cache/venv/ansible-venv/bin/activate\\n' >>/home/vagrant/.bashrc
 
         echo "Copying config files"
         cp /vagrant/provision/ansible.cfg /home/vagrant/.ansible.cfg
