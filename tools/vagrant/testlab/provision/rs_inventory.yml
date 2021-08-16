@@ -23,5 +23,6 @@ windows:
     ansible_winrm_transport: ntlm
     ansible_password: "{{ lookup('env', 'AO_DEFAULT_VAGRANT_PASSWORD') }}"
     scan_user_password: dummy
+    rs_gur_domain_user_password: dummy
   hosts:
     win10:
