@@ -24,5 +24,6 @@ windows:
     ansible_password: "{{ lookup('env', 'AO_DEFAULT_VAGRANT_PASSWORD') }}"
     scan_user_password: dummy
     rs_gur_domain_user_password: dummy
+    rs_main_server_name: central-main.rs-kgr.local
   hosts:
     win10:
