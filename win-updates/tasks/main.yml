@@ -1,0 +1,40 @@
+---
+- name: Get info on Windows Update service
+  ansible.windows.win_service_info:
+    name: wuauserv
+  register: wu_service_info
+
+- name: Check that Windows Update service is not disabled
+  assert:
+    that:
+      - wu_service_info.services[0].start_mode != "disabled"
+
+- name: Turn Windows Update for Microsoft products on
+  ansible.windows.win_shell: |
+    $output = [PSCustomObject]@{ changed = $FALSE }
+    $serviceManager = New-Object -ComObject "Microsoft.Update.ServiceManager"
+    if (-not ($serviceManager.Services | Where-Object {$_.ServiceID -eq "7971f918-a847-4430-9279-4a52d1efe18d"})) {
+      $serviceManager.AddService2("7971f918-a847-4430-9279-4a52d1efe18d", 7 , "") | Out-Null
+      $output.changed = $TRUE
+    }
+    $output | ConvertTo-Json
+  register: test_result
+  changed_when: (test_result.stdout|from_json).changed
+
+- name: Install updates with automatic reboots
+  ansible.windows.win_updates:
+    category_names:
+      - "Critical Updates"
+      - "Security Updates"
+      - "Update Rollups"
+      - "Updates"
+      - "Definition Updates"
+    reboot: yes
+  register: win_update_status
+
+- name: Update stats
+  debug:
+    msg: >-
+      Found: {{ win_update_status.installed_update_count }}; installed:
+      {{ win_update_status.installed_update_count }}; reboot required:
+      {{ win_update_status.reboot_required }}
