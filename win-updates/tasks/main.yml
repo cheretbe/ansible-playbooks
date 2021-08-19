@@ -29,20 +29,16 @@
       - "Update Rollups"
       - "Updates"
       - "Definition Updates"
-      # - "Silverlight"
     reboot: yes
   register: win_update_status
 
-# - debug:
-#     var: win_update_status
-
 - name: Update stats
   debug: 
-    msg: >-
-      Found: {{ win_update_status.installed_update_count }}; installed:
-      {{ win_update_status.installed_update_count }}; reboot required:
-      {{ win_update_status.reboot_required }}
-
-      {% for item in win_update_status.updates %}
-        - {{ item.title }}
-      {% endfor %}  
+    msg: |
+      {{
+        ['Found: ' + win_update_status.found_update_count|string,
+         'Installed: ' + win_update_status.installed_update_count|string,
+         '',
+         'Installed updates:',
+        ] + (win_update_status.updates | map(attribute='title') | list)
+      }}
