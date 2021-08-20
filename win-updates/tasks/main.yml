@@ -21,7 +21,7 @@
   register: test_result
   changed_when: (test_result.stdout|from_json).changed
 
-- name: Install updates with automatic reboots
+- name: Install updates
   ansible.windows.win_updates:
     category_names:
       - "Critical Updates"
@@ -29,7 +29,7 @@
       - "Update Rollups"
       - "Updates"
       - "Definition Updates"
-    reboot: yes
+    reboot: "{{ win_updates_allow_reboot }}"
   register: win_update_status
 
 - name: Update stats
@@ -38,6 +38,7 @@
       {{
         ['Found: ' + win_update_status.found_update_count|string,
          'Installed: ' + win_update_status.installed_update_count|string,
+         'Reboot required: ' + win_update_status.reboot_required|string,
          '',
          'Installed updates:',
         ] + (win_update_status.updates | map(attribute='title') | list)
