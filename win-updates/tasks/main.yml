@@ -29,6 +29,7 @@
       - "Update Rollups"
       - "Updates"
       - "Definition Updates"
+      - "Drivers"
     reboot: "{{ win_updates_allow_reboot }}"
   register: win_update_status
 
