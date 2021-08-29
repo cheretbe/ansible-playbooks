@@ -23,10 +23,19 @@ def parse_arguments():
             "updates after the reboot"
         )
     )
+    parser.add_argument(
+        "-f", "--force", action="store_true", default=False,
+        help=(
+            "Continue execution even if local repository is not up to date "
+            "with the upstream"
+        )
+    )
     return parser.parse_args()
 
 def main():
     options = parse_arguments()
+
+    ansible_common.check_repo_is_up_to_date(force=options.force)
 
     extra_vars = []
     if options.reboot:
