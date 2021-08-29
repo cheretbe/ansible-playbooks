@@ -1,4 +1,8 @@
 ---
+- debug:
+    var: win_updates_allow_reboot
+- meta: end_play
+
 - name: Get info on Windows Update service
   ansible.windows.win_service_info:
     name: wuauserv

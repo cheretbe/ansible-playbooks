@@ -37,14 +37,14 @@ def main():
 
     ansible_common.check_repo_is_up_to_date(force=options.force)
 
-    extra_vars = []
+    extra_vars = ["--extra-vars", "role_name=win-updates"]
     if options.reboot:
-        extra_vars = ["--extra-vars", "win_updates_allow_reboot=yes"]
+        extra_vars += ["--extra-vars", "win_updates_allow_reboot=yes"]
 
     ansible_common.run(
         [
             "ansible-playbook",
-            str(script_dir.parent / "win_updates.yml"),
+            str(script_dir.parent / "run_role.yml"),
             "--limit", options.limit
         ] + extra_vars
     )
