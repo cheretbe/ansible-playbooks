@@ -62,7 +62,12 @@ Vagrant.configure("2") do |config|
     ansible.vm.provision "shell",
       name: "PIP packages installation",
       keep_color: true, privileged: true,
-      inline: "pip3 install -r /ansible-playbooks/dev_requirements.txt"
+      inline: <<-SHELL
+        (
+          . /home/vagrant/.cache/venv/ansible/bin/activate
+          pip3 install -r /ansible-playbooks/dev_requirements.txt
+        )
+      SHELL
 
     ansible.vm.provision "shell",
       name: "Ansible configuration",
