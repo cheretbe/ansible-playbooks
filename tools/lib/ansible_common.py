@@ -38,7 +38,7 @@ def check_repo_is_up_to_date(repo_path=None, force=False):
     if not repo_path:
         repo_path = script_dir.parents[1]
 
-    print(f"Checking if '{repo_path}' is up to date")
+    print(f"Checking if '{repo_path}' repo is up to date")
     subprocess.check_call(["git", "fetch", "--quiet"], cwd=repo_path)
     # @{u} is short for @{upstream} (documented in git rev-parse --help)
     latest_upstream_hash = subprocess.check_output(
