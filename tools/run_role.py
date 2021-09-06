@@ -26,6 +26,9 @@ def parse_arguments():
         "-e", "--extra-vars", help="Set additional variables"
     )
     parser.add_argument(
+        "-r", "--roles-dir", help="Roles directory", default=str(script_dir.parent)
+    )
+    parser.add_argument(
         "-f", "--force", action="store_true", default=False,
         help=(
             "Continue execution even if local repository is not up to date "
@@ -34,9 +37,9 @@ def parse_arguments():
     )
     return parser.parse_args()
 
-def select_role(last_used_role):
+def select_role(roles_dir, last_used_role):
     roles = []
-    for subdir in script_dir.parent.iterdir():
+    for subdir in pathlib.Path(roles_dir).iterdir():
         if subdir.is_dir() and (subdir / "tasks/main.yml").exists():
             roles += [subdir.name]
 
@@ -63,7 +66,10 @@ def main():
         config = {}
 
     if options.role_name is None:
-        options.role_name = select_role(config.get("last_used_role", None))
+        options.role_name = select_role(
+            roles_dir=options.roles_dir,
+            last_used_role=config.get("last_used_role", None)
+        )
     config["last_used_role"] = options.role_name
 
     os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
@@ -81,7 +87,7 @@ def main():
     ansible_common.run(
         [
             "ansible-playbook",
-            str(script_dir.parent / "run_role.yml"),
+            os.path.join(options.roles_dir, "run_role.yml"),
         ] + additional_params
     )
 
