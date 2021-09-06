@@ -25,5 +25,10 @@ windows:
     scan_user_password: dummy
     rs_gur_domain_user_password: dummy
     rs_main_server_name: central-main.rs-kgr.local
+    rs_burp_server: burp.domain.tld
+    rs_burp_cname: burp_cname
+    rs_burp_password: burp_pwd
+    rs_burp_home_subnet: "192.168.0.0"
+    rs_burp_home_subnet_mask: "255.255.255.0"
   hosts:
     win10:
