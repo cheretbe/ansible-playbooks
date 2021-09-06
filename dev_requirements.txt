@@ -11,3 +11,4 @@ invoke
 colorama
 apacheconfig
 jinja2
+humanfriendly

@@ -5,3 +5,4 @@ pytest-testinfra
 colorama
 apacheconfig
 jinja2
+humanfriendly
