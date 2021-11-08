@@ -1,31 +1,21 @@
 ---
-# https://bidouillesecurity.com/disable-windows-defender-in-powershell/
-# https://github.com/r-pufky/docs/blob/master/source/operating-systems/windows/10/20H2/standalone/microsoft-defender.rst
-# https://www.tenforums.com/tutorials/5918-how-turn-off-microsoft-defender-antivirus-windows-10-a.html
-# https://www.tenforums.com/tutorials/123792-turn-off-tamper-protection-microsoft-defender-antivirus.html
+- name: Set user name
+  set_fact:
+    win_settings_user_name: "{{ win_settings_user_name | default(ansible_user) }}"
 
-- name: Windows Defender Test
-  ansible.windows.win_shell: |
-    Set-StrictMode -Version Latest
-    $ErrorActionPreference = [System.Management.Automation.ActionPreference]::Stop
-
-    Write-Output "There you go"
-    Write-Output $env:USERNAME
-    [PSCustomObject]@{
-    'env:USERNAME' = $env:USERNAME
-    'whoami'       = whoami.exe
-    'GetCurrent'   = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-    } | Format-List
-    # Set-ItemProperty -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender" -Name "DisableAntiSpyware" -Value 1 -Type DWord -Force
-    # Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Name "TamperProtection" -Value 5 -Type DWord -Force
-    Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Name "TamperProtection"
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Name "TamperProtection" -Value 4 -Type DWord -Force
-    Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows Defender\Features" -Name "TamperProtection"
-  vars:
-    ansible_become_user: SYSTEM
-    ansible_become_method: runas
-    ansible_become: yes
-  register: dummy
+  # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList
+  # (or see what Ansible offers in user info)
+- name: Set user profile path
+  set_fact:
+    # Windows doesn't have an env variable for profiles directory, so here we
+    # are getting "all users" profile path and replacing hard-coded "Public"
+    # part with our user name
+    win_settings_user_profile: "{{ ansible_env.PUBLIC | replace ('Public', win_settings_user_name) }}"
 
 - debug:
-    var: dummy.stdout_lines
+    var: win_settings_user_profile
+
+# - name: Create a file from a Jinja2 template
+#   ansible.windows.win_template:
+#     src: /mytemplates/file.conf.j2
+#     dest: C:\Temp\file.conf
