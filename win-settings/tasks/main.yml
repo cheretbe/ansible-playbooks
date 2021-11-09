@@ -3,19 +3,25 @@
   set_fact:
     win_settings_user_name: "{{ win_settings_user_name | default(ansible_user) }}"
 
-  # HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList
-  # (or see what Ansible offers in user info)
-- name: Set user profile path
-  set_fact:
-    # Windows doesn't have an env variable for profiles directory, so here we
-    # are getting "all users" profile path and replacing hard-coded "Public"
-    # part with our user name
-    win_settings_user_profile: "{{ ansible_env.PUBLIC | replace ('Public', win_settings_user_name) }}"
+- name: Get (or create) user profile
+  community.windows.win_user_profile:
+    username: "{{ win_settings_user_name }}"
+    state: present
+  register: win_settings_user_profile
 
-- debug:
-    var: win_settings_user_profile
+- name: Make sure Total Commander settings directory exists
+  ansible.windows.win_file:
+    path: "{{ win_settings_user_profile.path }}\\AppData\\Roaming\\GHISLER"
+    state: directory
 
-# - name: Create a file from a Jinja2 template
-#   ansible.windows.win_template:
-#     src: /mytemplates/file.conf.j2
-#     dest: C:\Temp\file.conf
+- name: Get Total Commander settings info
+  ansible.windows.win_stat:
+    path: "{{ win_settings_user_profile.path }}\\AppData\\Roaming\\GHISLER\\wincmd.ini"
+  register: win_settings_wincmd_ini
+
+# Do not overwrite existing file
+- name: Copy Total Commander settings
+  ansible.windows.win_template:
+    src: wincmd.ini
+    dest: "{{ win_settings_user_profile.path }}\\AppData\\Roaming\\GHISLER\\wincmd.ini"
+  when: not win_settings_wincmd_ini.stat.exists
