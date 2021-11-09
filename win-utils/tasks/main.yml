@@ -8,8 +8,8 @@
     - {"name": "7zip"}
     - {"name": "winrar"}
     - {"name": "xnview"}
-    - {"name": "git", params: "/GitOnlyOnPath /NoShellIntegration"}
-    - {"name": "totalcommander", params: "/DesktopIcon"}
+    - {"name": "git", params: "/GitAndUnixToolsOnPath /NoShellIntegration"}
+    - {"name": "totalcommander"}
     - {"name": "googlechrome"}
     - {"name": "firefox"}
 
@@ -18,3 +18,14 @@
     path: HKLM:\SOFTWARE\WOW6432Node\Google\Chrome\Extensions\cjpalhdlnbpafiamejdnhcphjbkeiagm
     name: update_url
     data: https://clients2.google.com/service/update2/crx
+
+- name: Get 'All Users' profile path
+  ansible.windows.win_reg_stat:
+    path: HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList
+    name: Public
+  register: win_utils_all_users_profile
+
+- name: Create Total Commander shortcut on the desktop for all users
+  community.windows.win_shortcut:
+    src: "C:\\Program Files (x86)\\totalcmd\\TOTALCMD64.EXE"
+    dest: "{{ win_utils_all_users_profile.value }}\\Desktop\\Total Commander.lnk"
