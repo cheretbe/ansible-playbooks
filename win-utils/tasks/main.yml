@@ -1,4 +1,9 @@
 ---
+- name: Get Total Commander settings info
+  ansible.windows.win_stat:
+    path: "{{ ansible_env.APPDATA }}\\GHISLER\\wincmd.ini"
+  register: win_settings_wincmd_ini
+
 - name: Install Chocolatey packages
   win_chocolatey:
     name: "{{ item.name }}"
@@ -12,6 +17,12 @@
     - {"name": "totalcommander"}
     - {"name": "googlechrome"}
     - {"name": "firefox"}
+
+- name: Remove default Total Commander settings file
+  ansible.windows.win_file:
+    path: "{{ ansible_env.APPDATA }}\\GHISLER\\wincmd.ini"
+    state: absent
+  when: not win_settings_wincmd_ini.stat.exists
 
 - name: Add 'uBlock Origin' extension to Google Chrome
   win_regedit:
