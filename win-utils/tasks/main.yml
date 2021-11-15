@@ -9,13 +9,14 @@
     name: "{{ item.name }}"
     state: present
     package_params: "{{ item.params | default('') }}"
+    ignore_checksums: "{{ item.ignore_checksums | default(false) }}"
   loop:
     - {"name": "7zip"}
     - {"name": "winrar"}
     - {"name": "xnview"}
     - {"name": "git", params: "/GitAndUnixToolsOnPath /NoShellIntegration"}
     - {"name": "totalcommander"}
-    - {"name": "googlechrome"}
+    - {"name": "googlechrome", ignore_checksums: yes}
     - {"name": "firefox"}
 
 - name: Remove default Total Commander settings file
@@ -29,6 +30,17 @@
     path: HKLM:\SOFTWARE\WOW6432Node\Google\Chrome\Extensions\cjpalhdlnbpafiamejdnhcphjbkeiagm
     name: update_url
     data: https://clients2.google.com/service/update2/crx
+
+- name: Make sure Mozilla Firefox's distribution directory exists
+  ansible.windows.win_file:
+    path: "{{ ansible_env.ProgramFiles }}\\Mozilla Firefox\\distribution"
+    state: directory
+
+- name: Add 'uBlock Origin' extension to Mozila Firefox
+  ansible.windows.win_copy:
+    src: firefox_policies.json
+    dest: "{{ ansible_env.ProgramFiles }}\\Mozilla Firefox\\distribution\\policies.json"
+    backup: yes
 
 - name: Get 'All Users' profile path
   ansible.windows.win_reg_stat:
