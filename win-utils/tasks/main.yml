@@ -11,13 +11,13 @@
     package_params: "{{ item.params | default('') }}"
     ignore_checksums: "{{ item.ignore_checksums | default(false) }}"
   loop:
-    - {"name": "7zip"}
-    - {"name": "winrar"}
-    - {"name": "xnview"}
-    - {"name": "git", params: "/GitAndUnixToolsOnPath /NoShellIntegration"}
-    - {"name": "totalcommander"}
+    - {"name": "7zip", ignore_checksums: yes}
+    - {"name": "winrar", ignore_checksums: yes}
+    - {"name": "xnview", ignore_checksums: yes}
+    - {"name": "git", params: "/GitAndUnixToolsOnPath /NoShellIntegration", ignore_checksums: yes}
+    - {"name": "totalcommander", ignore_checksums: yes}
     - {"name": "googlechrome", ignore_checksums: yes}
-    - {"name": "firefox"}
+    - {"name": "firefox", ignore_checksums: yes}
 
 - name: Remove default Total Commander settings file
   ansible.windows.win_file:
