@@ -20,11 +20,9 @@ auth-nocache
 ; 2 -- Allow calling of built-in executables and user-defined scripts.
 script-security 2
 up /etc/openvpn/client/update_resolve_conf.py
-;up /host_home/projects/ansible-playbooks/purevpn-ovpn-client/files/update_resolve_conf.py
 ; Enable the --up and --down scripts to be called for restarts as well as initial program start.
 up-restart
 down /etc/openvpn/client/update_resolve_conf.py
-;down /host_home/projects/ansible-playbooks/purevpn-ovpn-client/files/update_resolve_conf.py
 ; Call --down cmd/script before, rather than after, TUN/TAP close.
 down-pre
 verb 3
