@@ -121,6 +121,9 @@ Vagrant.configure("2") do |config|
     ubuntu_focal.vm.hostname = "ubuntu-focal"
     ubuntu_focal.vm.network "private_network", ip: "172.24.0.11", virtualbox__intnet: "vagrant-intnet"
 
+    config.vm.synced_folder "/", "/host"
+    config.vm.synced_folder Dir.home, "/host_home"
+
     ubuntu_focal.vm.provision "shell", name: "SSH configuration",
       keep_color: true, privileged: false,
       inline: <<-SHELL
