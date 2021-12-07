@@ -42,17 +42,3 @@ if script_type == "up":
         # No need to restart dnsmasq service: it registers subscriber script
         # /etc/resolvconf/update.d/dnsmasq and updates nameservers when
         # /etc/resolv.conf is modified
-
-elif script_type == "down":
-    print("Restoring /etc/resolv.conf as a link to /run/systemd/resolve/resolv.conf", flush=True)
-    os.unlink("/etc/resolv.conf")
-    os.symlink("/run/systemd/resolve/resolv.conf", "/etc/resolv.conf")
-    # When /etc/resolv.conf is not symlinked to /run/systemd/resolve/resolv.conf,
-    # systemd-resolved parses /etc/resolv.conf contents and uses nameserver entries.
-    # We restart it to make sure it doesn't pick up our nameservers, that are
-    # going to become unreachable
-    print("Restarting systemd-resolved service", flush=True)
-    subprocess.check_call(
-        ["/usr/bin/systemctl", "restart", "systemd-resolved.service"]
-    )
-    sys.stdout.flush()

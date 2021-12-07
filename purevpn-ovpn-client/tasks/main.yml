@@ -107,8 +107,8 @@
 
 - name: Copy systemd-resolved restore script
   ansible.builtin.copy:
-    src: force_systemd_resolved_dns.py
-    dest: /etc/openvpn/client/force_systemd_resolved_dns.py
+    src: restore_systemd_resolved_dns.py
+    dest: /etc/openvpn/client/restore_systemd_resolved_dns.py
     owner: root
     group: root
     mode: '0755'
