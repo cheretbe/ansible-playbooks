@@ -1,0 +1,149 @@
+- name: Check if mandatory variables are defined
+  assert:
+    that:
+      - router_lan_mac_addr is defined
+      - router_wan_if_name is defined
+
+- name: Get LAN interface
+  set_fact:
+    router_lan_if: "{{ lookup('vars', 'ansible_' + item) }}"
+  loop: "{{ ansible_interfaces  }}"
+  # Gotchas:
+  # - Ansible replaces dash with underscore in interace variable (variable
+  #   corresponding to interface 'ovpn-purevpn' becomes 'ansible_ovpn_purevpn'
+  #   instead of 'ansible_ovpn-purevpn')
+  # - OpenVPN interfaces don't have MAC addresses
+  when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).macaddress | default('') )== router_lan_mac_addr"
+
+- name: Get LAN interface network
+  set_fact:
+    router_lan_if_network: "{{ router_lan_if.ipv4.network }}/{{ router_lan_if.ipv4.netmask }}"
+
+- name: Install apt packages
+  apt:
+    name: [
+      "iptables-persistent", "netfilter-persistent", "dnsmasq"
+    ]
+    update_cache: yes
+    # # 1 hour
+    cache_valid_time: 3600
+  become: yes
+
+- name: Enable IPv4 forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_set: yes
+    state: present
+    reload: yes
+  become: yes
+
+- name: iptables - NAT LAN client's connections
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    source: "{{ router_lan_if_network }}"
+    out_interface: "{{ router_wan_if_name }}"
+    jump: MASQUERADE
+    comment: NAT LAN client's connections
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Drop non-VPN LAN client's connections
+  ansible.builtin.iptables:
+    table: filter
+    chain: FORWARD
+    source: "{{ router_lan_if_network }}"
+    # Note the '!'
+    out_interface: "!{{ router_wan_if_name }}"
+    jump: DROP
+    comment: Drop non-VPN LAN client's connections
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Allow SSH from non-WAN interfaces
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    # Note the '!'
+    in_interface: "!{{ router_wan_if_name }}"
+    jump: ACCEPT
+    comment: Allow SSH from non-WAN interfaces
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Allow loopback connections
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    in_interface: lo
+    jump: ACCEPT
+    comment: Allow loopback connections
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Allow ICMP (INPUT)
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    protocol: icmp
+    jump: ACCEPT
+    comment: Allow ICMP
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Allow LAN connections (INPUT)
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    in_interface: "{{ router_lan_if.device }}"
+    jump: ACCEPT
+    comment: Allow LAN connections
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Allow LAN connections (FORWARD)
+  ansible.builtin.iptables:
+    table: filter
+    chain: FORWARD
+    in_interface: "{{ router_lan_if.device }}"
+    jump: ACCEPT
+    comment: Allow LAN connections
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Allow established and related connections (INPUT)
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+    comment: Allow established and related connections
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Allow established and related connections (FORWARD)
+  ansible.builtin.iptables:
+    table: filter
+    chain: FORWARD
+    ctstate: ESTABLISHED,RELATED
+    jump: ACCEPT
+    comment: Allow established and related connections
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Set the policy for the INPUT chain to DROP
+  ansible.builtin.iptables:
+    chain: INPUT
+    policy: DROP
+  become: yes
+  notify: Save iptables state
+
+- name: iptables - Set the policy for the FORWARD chain to DROP
+  ansible.builtin.iptables:
+    chain: FORWARD
+    policy: DROP
+  become: yes
+  notify: Save iptables state
