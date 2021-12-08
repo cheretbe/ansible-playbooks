@@ -1,3 +1,14 @@
+### Notes
+
+```yaml
+# Mandatory parameters
+purevpn_ovpn_client_server: "server"
+purevpn_ovpn_client_user: "user"
+purevpn_ovpn_client_password: "password"
+# Optional parameters
+purevpn_ovpn_client_protocol: "udp" # default is "tcp"
+```
+
 ### Debugging
 
 ```shell
