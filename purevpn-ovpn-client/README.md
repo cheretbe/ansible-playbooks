@@ -7,6 +7,8 @@ purevpn_ovpn_client_user: "user"
 purevpn_ovpn_client_password: "password"
 # Optional parameters
 purevpn_ovpn_client_protocol: "udp" # default is "tcp"
+# purevpn_ovpn_client_operator_key
+# purevpn_ovpn_client_keys_dir
 ```
 
 ### Debugging
