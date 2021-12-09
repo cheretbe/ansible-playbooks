@@ -13,3 +13,14 @@ all:
       ansible_host: 172.24.0.14
     centos-8:
       ansible_host: 172.24.0.15
+    win10:
+      ansible_host: 172.24.0.16
+
+windows:
+  vars:
+    ansible_connection: winrm
+    ansible_port: "5985"
+    ansible_winrm_transport: ntlm
+    ansible_password: "{{ lookup('env', 'AO_DEFAULT_VAGRANT_PASSWORD') }}"
+  hosts:
+    win10:
