@@ -1,56 +1,4 @@
 ---
-- name: Read saved VPN operator's SSH key fingerpint
-  ansible.builtin.shell: |
-    import os
-
-    if os.path.isfile("{{ purevpn_ovpn_client_keys_dir }}/operator_key_fingerprint.txt"):
-      with open("{{ purevpn_ovpn_client_keys_dir }}/operator_key_fingerprint.txt", "r") as f:
-        fingerprint = f.read()
-    else:
-      fingerprint = ""
-
-    print(fingerprint)
-  args:
-    executable: /usr/bin/python3
-  register: purevpn_ovpn_client_saved_operator_key_fingerprint
-  changed_when: false
-
-- debug:
-    msg: "{{ purevpn_ovpn_client_saved_operator_key_fingerprint.stdout }}"
-
-- name: Python3 test
-  ansible.builtin.shell: |
-    import os
-    import subprocess
-
-    if os.path.isfile("{{ purevpn_ovpn_client_operator_key }}"):
-      fingerprint = subprocess.check_output(
-        ["/usr/bin/ssh-keygen", "-lf", "{{ purevpn_ovpn_client_operator_key }}"]
-      ).decode().split()[1]
-    else:
-      fingerprint = ""
-
-    print(fingerprint)
-  args:
-    executable: /usr/bin/python3
-  register: purevpn_ovpn_client_operator_key_fingerprint
-  changed_when: false
-
-- debug:
-    msg: "{{ purevpn_ovpn_client_operator_key_fingerprint.stdout }}"
-
-- name: Save VPN operator's SSH key fingerprint
-  copy:
-    content: "{{ purevpn_ovpn_client_operator_key_fingerprint.stdout }}"
-    dest: "{{ purevpn_ovpn_client_keys_dir }}/operator_key_fingerprint.txt"
-    mode: 0644
-  # become: true
-  # register: systemd_resolved_stub_info
-
-# purevpn_ovpn_client_keys_dir
-
-- name: Debug
-  meta: end_play
 
 - name: Check if mandatory variables are defined
   assert:
@@ -58,6 +6,13 @@
       - purevpn_ovpn_client_server is defined
       - purevpn_ovpn_client_user is defined
       - purevpn_ovpn_client_password is defined
+
+- name: Check if optional variables are defined
+  assert:
+    that:
+      - purevpn_ovpn_client_operator_key is defined
+      - purevpn_ovpn_client_keys_dir is defined
+  when: purevpn_ovpn_client_operator is defined
 
 - name: Make sure '/etc/systemd/resolved.conf.d' directory exists
   file:
@@ -193,3 +148,6 @@
     state: started
     enabled: yes
   become: yes
+
+- import_tasks: vpn_operator_config.yml
+  when: purevpn_ovpn_client_operator is defined

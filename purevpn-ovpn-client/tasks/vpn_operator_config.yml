@@ -1,0 +1,48 @@
+- name: Read saved VPN operator's SSH key fingerpint
+  ansible.builtin.shell: |
+    import os
+
+    if os.path.isfile("{{ purevpn_ovpn_client_keys_dir }}/operator_key_fingerprint.txt"):
+      with open("{{ purevpn_ovpn_client_keys_dir }}/operator_key_fingerprint.txt", "r") as f:
+        fingerprint = f.read()
+    else:
+      fingerprint = ""
+
+    print(fingerprint)
+  args:
+    executable: /usr/bin/python3
+  register: purevpn_ovpn_client_saved_operator_key_fingerprint
+  changed_when: false
+
+- name: Read actual VPN operator's SSH key fingerpint
+  ansible.builtin.shell: |
+    import subprocess
+
+    fingerprint = subprocess.check_output(
+      ["/usr/bin/ssh-keygen", "-lf", "{{ purevpn_ovpn_client_operator_key }}"]
+    ).decode().split()[1]
+  
+    print(fingerprint)
+  args:
+    executable: /usr/bin/python3
+  register: purevpn_ovpn_client_operator_key_fingerprint
+  changed_when: false
+
+- name: Convert VPN operator's SSH key file to PPK format
+  ansible.builtin.command:
+    cmd: >-
+      puttygen
+      "{{ purevpn_ovpn_client_operator_key }}"
+      -o "{{ purevpn_ovpn_client_keys_dir }}/operator_key.ppk"
+  when: |
+    purevpn_ovpn_client_operator_key_fingerprint.stdout != 
+      purevpn_ovpn_client_saved_operator_key_fingerprint.stdout
+
+- name: Save VPN operator's SSH key fingerprint
+  copy:
+    content: "{{ purevpn_ovpn_client_operator_key_fingerprint.stdout }}"
+    dest: "{{ purevpn_ovpn_client_keys_dir }}/operator_key_fingerprint.txt"
+    mode: 0644
+  when: |
+    purevpn_ovpn_client_operator_key_fingerprint.stdout != 
+      purevpn_ovpn_client_saved_operator_key_fingerprint.stdout
