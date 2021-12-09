@@ -1,0 +1,156 @@
+- name: Check if mandatory variables are defined
+  assert:
+    that:
+      - win_vpn_client_user_name is defined
+      - win_vpn_client_ssh_key is defined
+      - win_vpn_client_router_user_host is defined
+
+- name: Get (or create) user profile
+  community.windows.win_user_profile:
+    username: "{{ win_vpn_client_user_name }}"
+    state: present
+  register: win_vpn_client_user_profile
+
+- name: Set target directory for desktop shortcuts
+  ansible.builtin.set_fact:
+    win_vpn_client_shortcut_dir: "{{ win_vpn_client_user_profile.path }}\\Desktop"
+
+- name: Set target directory for local applications
+  ansible.builtin.set_fact:
+    win_vpn_client_program_dir: "{{ win_vpn_client_user_profile.path }}\
+      \\AppData\\Local\\Programs\\vpn-tools"
+
+- name: Make sure applications directory exists
+  ansible.windows.win_file:
+    path: "{{ win_vpn_client_program_dir }}\\temp"
+    state: directory
+
+# -------------------------
+
+- name: Copy a single file
+  ansible.windows.win_copy:
+    src: create_scheduled_task.ps1
+    dest: "{{ win_vpn_client_program_dir }}\\create_scheduled_task.ps1"
+
+- name: Test
+  ansible.windows.win_shell: |
+    $output = [PSCustomObject]@{message = ""; changed = $FALSE}
+    $output.message = . {
+      . "{{ win_vpn_client_program_dir }}\\create_scheduled_task.ps1" `
+        -vpnGateway "1.1.1.1" -taskUserPassword "{{ ansible_password }}"
+    } *>&1
+    $output | ConvertTo-Json
+  register: test_result
+  changed_when: (test_result.stdout|from_json).changed
+
+- name: Show message
+  debug:
+    msg: "Message: {{ (test_result.stdout|from_json).message }}"
+
+- name: Debug
+  meta: end_play
+
+# -------------------------
+
+- name: Download DNS leak test script
+  ansible.windows.win_get_url:
+    url: "https://raw.githubusercontent.com/macvk/dnsleaktest/master/dnsleaktest.bat"
+    dest: "{{ win_vpn_client_program_dir }}\\dnsleaktest.bat"
+
+- name: Create IP info script
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      ECHO Querying https://freegeoip.app...
+      powershell "Invoke-RestMethod https://freegeoip.app/json"
+      ECHO Performing DNS leak test...
+      CALL "{{ win_vpn_client_program_dir }}\\dnsleaktest.bat"
+      ECHO Press any key to continue...
+      PAUSE >NUL
+    dest: "{{ win_vpn_client_shortcut_dir}}\\Get IP Info.bat"
+
+- name: Get Speedtest exe information
+  ansible.windows.win_stat:
+    path: "{{ win_vpn_client_program_dir }}\\speedtest.exe"
+  register: speedtest_exe_info
+
+- name: Speedtest CLI installation
+  block:
+    - name: Download Ookla Speedtest CLI archive
+      ansible.windows.win_get_url:
+        url: https://install.speedtest.net/app/cli/ookla-speedtest-1.1.1-win64.zip
+        dest: "{{ win_vpn_client_program_dir }}\\temp\\ookla-speedtest-1.1.1-win64.zip"
+
+    - name: Extract Ookla Speedtest CLI archive
+      community.windows.win_unzip:
+        src: "{{ win_vpn_client_program_dir }}\\temp\\ookla-speedtest-1.1.1-win64.zip"
+        dest: "{{ win_vpn_client_program_dir }}"
+
+    - name: Delete Ookla Speedtest CLI archive
+      ansible.windows.win_file:
+        path: "{{ win_vpn_client_program_dir }}\\temp\\ookla-speedtest-1.1.1-win64.zip"
+        state: absent
+
+  when: not speedtest_exe_info.stat.exists
+
+- name: Create Speedtest wrapper script
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      "{{ win_vpn_client_program_dir }}\\speedtest.exe"
+      ECHO Press any key to continue...
+      PAUSE >NUL
+    dest: "{{ win_vpn_client_shortcut_dir}}\\Speedtest.bat"
+
+- name: Create a script to ping 1.1.1.1
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      ping -t 1.1.1.1
+    dest: "{{ win_vpn_client_shortcut_dir}}\\ping 1.1.1.1.bat"
+
+- name: Download plink.exe
+  ansible.windows.win_get_url:
+    url: https://the.earth.li/~sgtatham/putty/latest/w64/plink.exe
+    dest: "{{ win_vpn_client_program_dir }}\\plink.exe"
+
+# TODO: replace this with something automated (at least for Vagrant environments)
+# Software\SimonTatham\PuTTY\SshHostkeys
+# https://stackoverflow.com/questions/13598996/putty-wont-cache-the-keys-to-access-a-server-when-run-script-in-hudson/34050466#34050466
+# https://git.tartarus.org/?p=simon/putty.git;a=blob;f=contrib/kh2reg.py;hb=HEAD
+- name: Create a script to init plink PPK key
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      "{{ win_vpn_client_program_dir }}\\plink.exe" {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "uname -a"
+      ECHO Press any key to continue...
+      PAUSE >NUL
+    dest: "{{ win_vpn_client_shortcut_dir}}\\Init SSH key.bat"
+
+- name: Create a script to ping 1.1.1.1 from the router
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "ping 1.1.1.1"
+    dest: "{{ win_vpn_client_shortcut_dir}}\\ping from the router.bat"
+
+- name: Create a script to view OpenVPN client log
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "sudo journalctl -u openvpn-client@purevpn.service -f"
+    dest: "{{ win_vpn_client_shortcut_dir}}\\OpenVPN client log.bat"
+
+- name: Create a script to restart OpenVPN client
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "sudo service openvpn-client@purevpn restart"
+    dest: "{{ win_vpn_client_shortcut_dir}}\\Restart OpenVPN client.bat"
+
+# - name: Create startup script to show IP Info
+#   ansible.windows.win_copy:
+#     content: |
+#       @ECHO OFF
+#       CALL "{{ win_vpn_client_shortcut_dir}}\\Get IP Info.bat"
+#     dest: "{{ win_vpn_client_user_profile.path }}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Get IP Info.bat"
