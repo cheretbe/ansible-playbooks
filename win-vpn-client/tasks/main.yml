@@ -3,7 +3,8 @@
     that:
       - win_vpn_client_user_name is defined
       - win_vpn_client_ssh_key is defined
-      - win_vpn_client_router_user_host is defined
+      - win_vpn_client_router is defined
+      - win_vpn_client_router_user is defined
 
 - name: Get (or create) user profile
   community.windows.win_user_profile:
@@ -24,33 +25,6 @@
   ansible.windows.win_file:
     path: "{{ win_vpn_client_program_dir }}\\temp"
     state: directory
-
-# -------------------------
-
-- name: Copy a single file
-  ansible.windows.win_copy:
-    src: create_scheduled_task.ps1
-    dest: "{{ win_vpn_client_program_dir }}\\create_scheduled_task.ps1"
-
-- name: Test
-  ansible.windows.win_shell: |
-    $output = [PSCustomObject]@{message = ""; changed = $FALSE}
-    $output.message = . {
-      . "{{ win_vpn_client_program_dir }}\\create_scheduled_task.ps1" `
-        -vpnGateway "1.1.1.1" -taskUserPassword "{{ ansible_password }}"
-    } *>&1
-    $output | ConvertTo-Json
-  register: test_result
-  changed_when: (test_result.stdout|from_json).changed
-
-- name: Show message
-  debug:
-    msg: "Message: {{ (test_result.stdout|from_json).message }}"
-
-- name: Debug
-  meta: end_play
-
-# -------------------------
 
 - name: Download DNS leak test script
   ansible.windows.win_get_url:
@@ -122,7 +96,7 @@
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "uname -a"
+      "{{ win_vpn_client_program_dir }}\\plink.exe" {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "uname -a"
       ECHO Press any key to continue...
       PAUSE >NUL
     dest: "{{ win_vpn_client_shortcut_dir}}\\Init SSH key.bat"
@@ -131,21 +105,21 @@
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "ping 1.1.1.1"
+      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "ping 1.1.1.1"
     dest: "{{ win_vpn_client_shortcut_dir}}\\ping from the router.bat"
 
 - name: Create a script to view OpenVPN client log
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "sudo journalctl -u openvpn-client@purevpn.service -f"
+      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "sudo journalctl -u openvpn-client@purevpn.service -f"
     dest: "{{ win_vpn_client_shortcut_dir}}\\OpenVPN client log.bat"
 
 - name: Create a script to restart OpenVPN client
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user_host }} -i "{{ win_vpn_client_ssh_key }}" "sudo service openvpn-client@purevpn restart"
+      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "sudo service openvpn-client@purevpn restart"
     dest: "{{ win_vpn_client_shortcut_dir}}\\Restart OpenVPN client.bat"
 
 # - name: Create startup script to show IP Info
@@ -154,3 +128,32 @@
 #       @ECHO OFF
 #       CALL "{{ win_vpn_client_shortcut_dir}}\\Get IP Info.bat"
 #     dest: "{{ win_vpn_client_user_profile.path }}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\Get IP Info.bat"
+
+- name: Copy scheduled task creation script
+  ansible.windows.win_template:
+    src: create_scheduled_task.ps1.j2
+    dest: "{{ win_vpn_client_program_dir }}\\create_scheduled_task.ps1"
+
+- name: Create scheduled task to fix default route
+  ansible.windows.win_shell: |
+    $output = [PSCustomObject]@{message = ""; changed = $FALSE}
+    $changed_ref = $FALSE
+    $output.message = . {
+      . "{{ win_vpn_client_program_dir }}\\create_scheduled_task.ps1" `
+        -vpnGateway "{{ win_vpn_client_router }}" `
+        -taskUserPassword "{{ ansible_password }}" `
+        -changed ([ref]$changed_ref)
+    } *>&1
+    $output.changed = $changed_ref
+    $output | ConvertTo-Json
+  register: test_result
+  changed_when: (test_result.stdout|from_json).changed
+
+# - name: View script output
+#   debug:
+#     var: (test_result.stdout|from_json).message
+
+- name: Copy VPN setup script
+  ansible.windows.win_template:
+    src: vpn_setup_vpn.ps1.j2
+    dest: "{{ win_vpn_client_program_dir }}\\vpn_setup_vpn.ps1"
