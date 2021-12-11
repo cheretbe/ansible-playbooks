@@ -155,5 +155,5 @@
 
 - name: Copy VPN setup script
   ansible.windows.win_template:
-    src: vpn_setup_vpn.ps1.j2
-    dest: "{{ win_vpn_client_program_dir }}\\vpn_setup_vpn.ps1"
+    src: fix_default_route.ps1.j2
+    dest: "{{ win_vpn_client_program_dir }}\\fix_default_route.ps1"

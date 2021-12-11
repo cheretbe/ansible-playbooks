@@ -36,7 +36,7 @@ if ($NULL -eq (Get-ScheduledTask -TaskName "Vagrant - Fix default route" -ErrorA
     -Execute 'C:\Windows\system32\WindowsPowerShell\v1.0\powershell.exe' `
     -Argument (-join @(
       "-NoProfile -NonInteractive -ExecutionPolicy Bypass "
-      ("-File {{ win_vpn_client_program_dir }}\win_setup_vpn.ps1 -vpnGateway {0}" -f $vpnGateway)
+      ("-File {{ win_vpn_client_program_dir }}\fix_default_route.ps1 -vpnGateway {0}" -f $vpnGateway)
     ))
 
   Write-Output "Adding scheduled task to fix default route"
