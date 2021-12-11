@@ -153,7 +153,12 @@
 #   debug:
 #     var: (test_result.stdout|from_json).message
 
-- name: Copy VPN setup script
+- name: Copy default route setup script
   ansible.windows.win_template:
     src: fix_default_route.ps1.j2
     dest: "{{ win_vpn_client_program_dir }}\\fix_default_route.ps1"
+
+- name: Set default route to VPN router
+  ansible.windows.win_shell: |
+    . {{ win_vpn_client_program_dir }}\fix_default_route.ps1 -vpnGateway {{ win_vpn_client_router }}
+  changed_when: false
