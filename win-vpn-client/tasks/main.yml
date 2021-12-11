@@ -31,14 +31,21 @@
     url: "https://raw.githubusercontent.com/macvk/dnsleaktest/master/dnsleaktest.bat"
     dest: "{{ win_vpn_client_program_dir }}\\dnsleaktest.bat"
 
+- name: Copy ping script
+  ansible.windows.win_copy:
+    src: wait_for_connection.ps1
+    dest: "{{ win_vpn_client_program_dir }}\\wait_for_connection.ps1"
+
 - name: Create IP info script
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
+      powershell -ExecutionPolicy Bypass -File "{{ win_vpn_client_program_dir }}\\wait_for_connection.ps1"
       ECHO Querying https://freegeoip.app...
       powershell "Invoke-RestMethod https://freegeoip.app/json"
+      ipconfig /flushdns
       ECHO Performing DNS leak test...
-      CALL "{{ win_vpn_client_program_dir }}\\dnsleaktest.bat"
+      CALL "{{ win_vpn_client_program_dir }}\dnsleaktest.bat"
       ECHO Press any key to continue...
       PAUSE >NUL
     dest: "{{ win_vpn_client_shortcut_dir}}\\Get IP Info.bat"
