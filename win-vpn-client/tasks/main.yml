@@ -26,6 +26,20 @@
     path: "{{ win_vpn_client_program_dir }}\\temp"
     state: directory
 
+- name: Set target directory for SSH keys
+  ansible.builtin.set_fact:
+    win_vpn_client_keys_dir: "{{ win_vpn_client_user_profile.path }}\\ssh_keys"
+
+- name: Make sure SSH keys directory exists
+  ansible.windows.win_file:
+    path: "{{ win_vpn_client_keys_dir }}"
+    state: directory
+
+- name: Copy VPN operator's SSH key
+  ansible.builtin.copy:
+    src: "{{ win_vpn_client_ssh_key }}"
+    dest: "{{ win_vpn_client_keys_dir }}\\vpn_operator_key"
+
 - name: Download DNS leak test script
   ansible.windows.win_get_url:
     url: "https://raw.githubusercontent.com/macvk/dnsleaktest/master/dnsleaktest.bat"
@@ -52,6 +66,15 @@
       ECHO Press any key to continue...
       PAUSE >NUL
     dest: "{{ win_vpn_client_shortcut_dir}}\\Get IP Info.bat"
+
+- name: Create a script to change VPN country
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo /etc/openvpn/client/purevpn_change_country.py"
+      ECHO Press any key to continue...
+      PAUSE >NUL
+    dest: "{{ win_vpn_client_shortcut_dir}}\\Change VPN country.bat"
 
 - name: Get Speedtest exe information
   ansible.windows.win_stat:
@@ -93,43 +116,25 @@
       ping -t 1.1.1.1
     dest: "{{ win_vpn_client_shortcut_dir}}\\ping 1.1.1.1.bat"
 
-- name: Download plink.exe
-  ansible.windows.win_get_url:
-    url: https://the.earth.li/~sgtatham/putty/latest/w64/plink.exe
-    dest: "{{ win_vpn_client_program_dir }}\\plink.exe"
-
-# TODO: replace this with something automated (at least for Vagrant environments)
-# Software\SimonTatham\PuTTY\SshHostkeys
-# https://stackoverflow.com/questions/13598996/putty-wont-cache-the-keys-to-access-a-server-when-run-script-in-hudson/34050466#34050466
-# https://git.tartarus.org/?p=simon/putty.git;a=blob;f=contrib/kh2reg.py;hb=HEAD
-- name: Create a script to init plink PPK key
-  ansible.windows.win_copy:
-    content: |
-      @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "uname -a"
-      ECHO Press any key to continue...
-      PAUSE >NUL
-    dest: "{{ win_vpn_client_shortcut_dir}}\\Init SSH key.bat"
-
 - name: Create a script to ping 1.1.1.1 from the router
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "ping 1.1.1.1"
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "ping 1.1.1.1"
     dest: "{{ win_vpn_client_shortcut_dir}}\\ping from the router.bat"
 
 - name: Create a script to view OpenVPN client log
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "sudo journalctl -u openvpn-client@purevpn.service -f"
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo journalctl -u openvpn-client@purevpn.service -f"
     dest: "{{ win_vpn_client_shortcut_dir}}\\OpenVPN client log.bat"
 
 - name: Create a script to restart OpenVPN client
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "sudo service openvpn-client@purevpn restart"
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo service openvpn-client@purevpn restart"
     dest: "{{ win_vpn_client_shortcut_dir}}\\Restart OpenVPN client.bat"
 
 - name: Copy PSExec
