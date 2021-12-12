@@ -74,7 +74,8 @@
 - name: Install apt packages
   apt:
     name: [
-      "netfilter-persistent", "dnsmasq", "openvpn", "putty-tools", "speedtest"
+      "netfilter-persistent", "dnsmasq", "openvpn", "putty-tools", "speedtest",
+      "python3-humanfriendly"
     ]
     update_cache: yes
     # # 1 hour
@@ -151,3 +152,10 @@
 
 - import_tasks: vpn_operator_config.yml
   when: purevpn_ovpn_client_operator is defined
+
+- name: Copy 'purevpn_change_country.py' script
+  copy:
+    src: purevpn_change_country.py
+    dest: /etc/openvpn/client/purevpn_change_country.py
+    mode: 0755
+  become: true
