@@ -45,6 +45,9 @@
       powershell "Invoke-RestMethod https://freegeoip.app/json"
       ipconfig /flushdns
       ECHO Performing DNS leak test...
+      :: Test script creates temporary files in current directory
+      :: Make sure we have write access
+      CD "%TEMP%"
       CALL "{{ win_vpn_client_program_dir }}\dnsleaktest.bat"
       ECHO Press any key to continue...
       PAUSE >NUL
@@ -128,6 +131,11 @@
       @ECHO OFF
       "{{ win_vpn_client_program_dir }}\\plink.exe" -batch {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_ssh_key }}" "sudo service openvpn-client@purevpn restart"
     dest: "{{ win_vpn_client_shortcut_dir}}\\Restart OpenVPN client.bat"
+
+- name: Copy PSExec
+  ansible.windows.win_copy:
+    src: "PsExec64.exe"
+    dest: "{{ win_vpn_client_program_dir }}\\PsExec64.exe"
 
 # - name: Create startup script to show IP Info
 #   ansible.windows.win_copy:
