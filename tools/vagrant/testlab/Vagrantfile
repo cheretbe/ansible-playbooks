@@ -216,8 +216,8 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define :win10, autostart: false do |win10|
-    # win10.vm.box = "cheretbe/win10ltsc2019_ru_64"
-    win10.vm.box = "cheretbe/win10_en_64"
+    win10.vm.box = "cheretbe/win10ltsc2019_ru_64"
+    # win10.vm.box = "cheretbe/win10_en_64"
     win10.winrm.username = "vagrant"
     win10.winrm.password = "#{ENV['AO_DEFAULT_VAGRANT_PASSWORD']}"
     win10.vm.boot_timeout = 600
