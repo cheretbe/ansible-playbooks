@@ -2,7 +2,8 @@
 # tasks file for linux-timezone
 
 - block:
-    - include_role: name="../apt-wait-for-unlock"
+    - name: Make sure dpkg frontend lock is released
+      include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
     - name: Make sure 'dbus' package is installed
       apt:
