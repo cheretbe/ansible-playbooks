@@ -154,6 +154,11 @@
     src: create_scheduled_task.ps1.j2
     dest: "{{ win_vpn_client_program_dir }}\\create_scheduled_task.ps1"
 
+- name: Copy default route setup script
+  ansible.windows.win_template:
+    src: fix_default_route.ps1.j2
+    dest: "{{ win_vpn_client_program_dir }}\\fix_default_route.ps1"
+
 - name: Create scheduled task to fix default route
   ansible.windows.win_shell: |
     $output = [PSCustomObject]@{message = ""; changed = $FALSE}
@@ -173,10 +178,15 @@
 #   debug:
 #     var: (test_result.stdout|from_json).message
 
-- name: Copy default route setup script
-  ansible.windows.win_template:
-    src: fix_default_route.ps1.j2
-    dest: "{{ win_vpn_client_program_dir }}\\fix_default_route.ps1"
+- name: Create a script to fix default route
+  ansible.windows.win_copy:
+    content: |
+      @ECHO OFF
+      start cmd /c powershell "Get-Content -Path '{{ win_vpn_client_shortcut_dir }}\scheduled_task.log' -Tail 10 -Wait"
+      schtasks /run /tn "Vagrant - Fix default route"
+      ::ECHO Press any key to continue...
+      ::PAUSE >NUL
+    dest: "{{ win_vpn_client_shortcut_dir}}\\Fix default route.bat"
 
 - name: Set default route to VPN router
   ansible.windows.win_shell: |
