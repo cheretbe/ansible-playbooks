@@ -1,0 +1,10 @@
+- name: Make sure dpkg frontend lock is released
+  include_role: name="{{ role_path }}/../apt-wait-for-unlock"
+
+- name: Install apt packages
+  apt:
+    name: ["openvpn"]
+    update_cache: yes
+    # # 1 hour
+    cache_valid_time: 3600
+  become: yes
