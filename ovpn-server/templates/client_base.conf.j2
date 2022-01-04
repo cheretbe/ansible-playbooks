@@ -1,0 +1,59 @@
+# https://openvpn.net/community-resources/reference-manual-for-openvpn-2-4/
+# https://github.com/OpenVPN/openvpn/blob/master/sample/sample-config-files/client.conf
+
+client
+
+dev tun
+
+proto {{ ovpn_server_protocol }}
+
+# The hostname/IP and port of the server.
+# You can have multiple remote entries to load balance between the servers.
+remote {{ ovpn_server_dns_name }} {{ ovpn_server_port }}
+
+# Keep trying indefinitely to resolve the host name of the OpenVPN server.
+# Very useful on machines which are not permanently connected to the internet
+# such as laptops.
+resolv-retry infinite
+
+# Most clients don't need to bind to a specific local port number.
+nobind
+
+# Downgrade privileges after initialization (non-Windows only)
+# TODO: Test if this breaks DNS update scripts like
+# https://github.com/cheretbe/ansible-playbooks/blob/master/purevpn-ovpn-client/files/update_resolve_conf.py
+# Turn on if it doesn't
+;user nobody
+;group nobody
+
+# Try to preserve some state across restarts.
+persist-key
+persist-tun
+
+# Verify server certificate by checking that the
+# certificate has the correct key usage set.
+# This is an important precaution to protect against
+# a potential attack discussed here:
+#  http://openvpn.net/howto.html#mitm
+#
+# To use this feature, you will need to generate
+# your server certificates with the keyUsage set to
+#   digitalSignature, keyEncipherment
+# and the extendedKeyUsage to
+#   serverAuth
+# EasyRSA can do this for you.
+remote-cert-tls server
+
+cipher AES-256-GCM
+
+auth SHA256
+
+key-direction 1
+
+# Enable compression on the VPN link.
+# Don't enable this unless it is also
+# enabled in the server config file.
+compress lz4-v2
+
+# Set log file verbosity.
+verb 3

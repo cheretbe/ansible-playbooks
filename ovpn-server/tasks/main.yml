@@ -1,3 +1,12 @@
+- name: Check if mandatory variables are defined
+  assert:
+    that:
+      - ovpn_server_ca_cert is defined
+      - ovpn_server_cert is defined
+      - ovpn_server_key is defined
+      - ovpn_server_ta_key is defined
+      - ovpn_server_dns_name is defined
+
 - name: Make sure dpkg frontend lock is released
   include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
@@ -7,4 +16,59 @@
     update_cache: yes
     # # 1 hour
     cache_valid_time: 3600
+  become: yes
+
+- name: Create server config directory structure
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  become: yes
+  loop:
+    - "/etc/openvpn/server"
+    - "/etc/openvpn/server/client-config"
+
+- name: Copy server cryptographic files
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "/etc/openvpn/server/{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  become: yes
+  loop:
+    - {"src": "{{ ovpn_server_ca_cert }}", "dest": "ca.crt", mode: "0644"}
+    - {"src": "{{ ovpn_server_cert }}", "dest": "server.crt", mode: "0644"}
+    - {"src": "{{ ovpn_server_key }}", "dest": "server.key", mode: "0600"}
+    - {"src": "{{ ovpn_server_ta_key }}", "dest": "ta.key", mode: "0644"}
+
+- name: Create OpenVPN server config
+  ansible.builtin.template:
+    src: server.conf.j2
+    dest: "/etc/openvpn/server/server.conf"
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: Restart 'openvpn-server@server' service
+
+- name: Enable and start 'openvpn-server@server' service
+  ansible.builtin.systemd:
+    name: openvpn-server@server.service
+    state: started
+    enabled: yes
+  become: yes
+
+- name: Create OpenVPN client config base file
+  ansible.builtin.template:
+    src: client_base.conf.j2
+    dest: /etc/openvpn/server/client-config/client_base.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+
+- name: Copy client config creation script
+  ansible.builtin.copy:
+    src: make_client_config.sh
+    dest: /etc/openvpn/server/client-config/make_client_config.sh
+    mode: '0755'
   become: yes

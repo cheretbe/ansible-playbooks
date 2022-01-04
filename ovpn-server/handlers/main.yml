@@ -1,0 +1,5 @@
+- name: Restart 'openvpn-server@server' service
+  ansible.builtin.systemd:
+    name: "openvpn-server@server.service"
+    state: restarted
+  become: yes

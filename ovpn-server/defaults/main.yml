@@ -1,0 +1,3 @@
+---
+ovpn_server_port: "1194"
+ovpn_server_protocol: udp
