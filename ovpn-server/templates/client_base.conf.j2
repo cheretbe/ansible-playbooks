@@ -50,10 +50,8 @@ auth SHA256
 
 key-direction 1
 
-# Enable compression on the VPN link.
-# Don't enable this unless it is also
-# enabled in the server config file.
-compress lz4-v2
-
 # Set log file verbosity.
 verb 3
+
+# We store auth data in a file anyway. This is just to silence a warning :)
+auth-nocache

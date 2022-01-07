@@ -110,8 +110,9 @@ auth SHA256
 # Enable compression on the VPN link and push the
 # option to the client (v2.4+ only, for earlier
 # versions see below)
-compress lz4-v2
-push "compress lz4-v2"
+# Disabled because of this: https://community.openvpn.net/openvpn/wiki/Compression
+;compress lz4-v2
+;push "compress lz4-v2"
 
 # The maximum number of concurrently connected
 # clients we want to allow.
