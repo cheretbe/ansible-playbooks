@@ -40,12 +40,6 @@
       when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).macaddress | default('') )== router_wan_if_mac_addr"
   when: router_wan_if_name is not defined
 
-# - block:
-#   - name: Debug
-#     debug:
-#       msg: "router_lan_network: {{ router_lan_network }}; router_wan_if_name: {{ router_wan_if_name }}"
-#   - meta: end_play
-
 - name: Make sure dpkg frontend lock is released
   include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
@@ -176,6 +170,17 @@
     comment: Allow established and related connections
   become: yes
   notify: Save iptables state
+
+- name: Allow connections on custom ports
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    protocol: "{{ item.protocol }}"
+    destination_port: "{{ item.port }}"
+    jump: ACCEPT
+    comment: "{{ item.comment }}"
+  become: yes
+  loop: "{{ router_custom_ports }}"
 
 - name: iptables - Set the policy for the INPUT chain to DROP
   ansible.builtin.iptables:

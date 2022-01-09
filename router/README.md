@@ -15,6 +15,9 @@ router_wan_if_mac_addr: "08:00:27:84:0f:13"
 # Optional parameters
 # Default is false
 router_allow_wan_ssh: true
+# Default is []
+router_custom_ports:
+  - {protocol: "tcp", port: 1194, comment: "Allow VPN"}
 ```
 
 ### Debugging

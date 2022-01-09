@@ -1,2 +1,5 @@
 ---
 router_allow_wan_ssh: false
+router_custom_ports: []
+# router_custom_ports:
+#   - {protocol: "tcp", port: 1194, comment: "Allow VPN"}
