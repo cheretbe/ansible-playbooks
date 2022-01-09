@@ -1,23 +1,53 @@
 - name: Check if mandatory variables are defined
   assert:
     that:
-      - router_lan_mac_addr is defined
-      - router_wan_if_name is defined
+      - (router_lan_if_mac_addr is defined) or (router_lan_if_name is defined)
+      - (router_wan_if_name is defined) or (router_wan_if_mac_addr is defined)
 
-- name: Get LAN interface
+- name: Get LAN interface by MAC address
+  block:
+    - name: Get LAN interface by MAC address
+      set_fact:
+        router_lan_if: "{{ lookup('vars', 'ansible_' + item) }}"
+      loop: "{{ ansible_interfaces  }}"
+      # Gotchas:
+      # - Ansible replaces dash with underscore in interace variable (variable
+      #   corresponding to interface 'ovpn-purevpn' becomes 'ansible_ovpn_purevpn'
+      #   instead of 'ansible_ovpn-purevpn')
+      # - OpenVPN interfaces don't have MAC addresses
+      when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).macaddress | default('') )== router_lan_if_mac_addr"
+  when: router_lan_if_mac_addr is defined
+
+- name: Get LAN interface by name
   set_fact:
-    router_lan_if: "{{ lookup('vars', 'ansible_' + item) }}"
-  loop: "{{ ansible_interfaces  }}"
-  # Gotchas:
-  # - Ansible replaces dash with underscore in interace variable (variable
-  #   corresponding to interface 'ovpn-purevpn' becomes 'ansible_ovpn_purevpn'
-  #   instead of 'ansible_ovpn-purevpn')
-  # - OpenVPN interfaces don't have MAC addresses
-  when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).macaddress | default('') )== router_lan_mac_addr"
+    router_lan_if: "{{ lookup('vars', 'ansible_' + router_lan_if_name) }}"
+  when: router_lan_if_name is defined
 
 - name: Get LAN interface network
   set_fact:
-    router_lan_if_network: "{{ router_lan_if.ipv4.network }}/{{ router_lan_if.ipv4.netmask }}"
+    router_lan_network: "{{ router_lan_if.ipv4.network }}/{{ router_lan_if.ipv4.netmask }}"
+
+- block:
+    - name: Get WAN interface name
+      set_fact:
+        router_wan_if_name: "{{ lookup('vars', 'ansible_' + item).device }}"
+      loop: "{{ ansible_interfaces  }}"
+      # Gotchas:
+      # - Ansible replaces dash with underscore in interace variable (variable
+      #   corresponding to interface 'ovpn-purevpn' becomes 'ansible_ovpn_purevpn'
+      #   instead of 'ansible_ovpn-purevpn')
+      # - OpenVPN interfaces don't have MAC addresses
+      when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).macaddress | default('') )== router_wan_if_mac_addr"
+  when: router_wan_if_name is not defined
+
+# - block:
+#   - name: Debug
+#     debug:
+#       msg: "router_lan_network: {{ router_lan_network }}; router_wan_if_name: {{ router_wan_if_name }}"
+#   - meta: end_play
+
+- name: Make sure dpkg frontend lock is released
+  include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
 - name: Install apt packages
   apt:
@@ -42,7 +72,7 @@
   ansible.builtin.iptables:
     table: nat
     chain: POSTROUTING
-    source: "{{ router_lan_if_network }}"
+    source: "{{ router_lan_network }}"
     out_interface: "{{ router_wan_if_name }}"
     jump: MASQUERADE
     comment: NAT LAN client's connections
@@ -53,7 +83,7 @@
   ansible.builtin.iptables:
     table: filter
     chain: FORWARD
-    source: "{{ router_lan_if_network }}"
+    source: "{{ router_lan_network }}"
     # Note the '!'
     out_interface: "!{{ router_wan_if_name }}"
     jump: DROP
@@ -72,6 +102,19 @@
     jump: ACCEPT
     comment: Allow SSH from non-WAN interfaces
   become: yes
+  when: not router_allow_wan_ssh
+  notify: Save iptables state
+
+- name: iptables - Allow SSH
+  ansible.builtin.iptables:
+    table: filter
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    jump: ACCEPT
+    comment: Allow SSH
+  become: yes
+  when: router_allow_wan_ssh
   notify: Save iptables state
 
 - name: iptables - Allow loopback connections

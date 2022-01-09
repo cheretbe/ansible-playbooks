@@ -2,8 +2,19 @@
 
 ```yaml
 # Mandatory parameters
-router_lan_mac_addr: "08:00:27:e4:7e:86"
+# ----------
+router_lan_if_mac_addr: "08:00:27:e4:7e:86"
+# or
+router_lan_if_name: "tun0"
+# ----------
 router_wan_if_name: "ovpn-purevpn"
+# or
+router_wan_if_mac_addr: "08:00:27:84:0f:13"
+# ----------
+
+# Optional parameters
+# Default is false
+router_allow_wan_ssh: true
 ```
 
 ### Debugging
