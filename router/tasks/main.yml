@@ -2,7 +2,7 @@
   assert:
     that:
       - (router_lan_if_mac_addr is defined) or (router_lan_if_name is defined)
-      - (router_wan_if_name is defined) or (router_wan_if_mac_addr is defined)
+      - (router_wan_if_name is defined) or (router_wan_if_mac_addr is defined) or (router_wan_if_ip_addr is defined)
 
 - name: Get LAN interface by MAC address
   block:
@@ -28,7 +28,7 @@
     router_lan_network: "{{ router_lan_if.ipv4.network }}/{{ router_lan_if.ipv4.netmask }}"
 
 - block:
-    - name: Get WAN interface name
+    - name: Get WAN interface name by MAC address
       set_fact:
         router_wan_if_name: "{{ lookup('vars', 'ansible_' + item).device }}"
       loop: "{{ ansible_interfaces  }}"
@@ -38,7 +38,24 @@
       #   instead of 'ansible_ovpn-purevpn')
       # - OpenVPN interfaces don't have MAC addresses
       when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).macaddress | default('') )== router_wan_if_mac_addr"
-  when: router_wan_if_name is not defined
+  when: router_wan_if_mac_addr is defined
+
+- block:
+    - name: Get WAN interface name by IP address
+      set_fact:
+        router_wan_if_name: "{{ lookup('vars', 'ansible_' + item).device }}"
+      loop: "{{ ansible_interfaces  }}"
+      # Gotchas:
+      # - Ansible replaces dash with underscore in interace variable (variable
+      #   corresponding to interface 'ovpn-purevpn' becomes 'ansible_ovpn_purevpn'
+      #   instead of 'ansible_ovpn-purevpn')
+      # - OpenVPN interfaces don't have MAC addresses
+      when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).ipv4.address) == router_wan_if_ip_addr"
+  when: router_wan_if_ip_addr is defined
+
+# This ends playbook without any message at all
+- name: Debug
+  meta: end_play
 
 - name: Make sure dpkg frontend lock is released
   include_role: name="{{ role_path }}/../apt-wait-for-unlock"
