@@ -53,10 +53,6 @@
       when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).ipv4.address) == router_wan_if_ip_addr"
   when: router_wan_if_ip_addr is defined
 
-# This ends playbook without any message at all
-- name: Debug
-  meta: end_play
-
 - name: Make sure dpkg frontend lock is released
   include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
