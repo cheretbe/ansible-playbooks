@@ -11,11 +11,13 @@
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
+  become: yes
 
 - name: Add docker repository
   apt_repository:
     repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
+  become: yes
 
 - name: Update and upgrade apt packages
   become: yes
@@ -33,6 +35,7 @@
     # Fix for warning message "Could not find aptitude. Using apt-get instead"
     force_apt_get: yes
     update_cache: no
+  become: yes
 
 - block:
 
@@ -72,6 +75,7 @@
         content: "{{docker_daemon_config | to_nice_json }}"
         dest: /etc/docker/daemon.json
       notify: Restart Docker service
+      become: yes
 
     when: "registry_mirrors_needs_update | bool"
 
