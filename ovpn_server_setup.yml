@@ -3,9 +3,9 @@
 - hosts: all
   become: yes
   tasks:
-    - include_role: name="/opt/ansible-playbooks/ovpn-server"
+    - include_role: name="{{ playbook_dir }}/ovpn-server"
 
     - name: Update facts to make ansible_tun0 variable available
       setup:
 
-    - include_role: name="/opt/ansible-playbooks/router"
+    - include_role: name="{{ playbook_dir }}/router"
