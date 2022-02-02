@@ -194,6 +194,7 @@
     comment: "{{ item.comment }}"
   become: yes
   loop: "{{ router_custom_ports }}"
+  notify: Save iptables state
 
 - name: iptables - Set the policy for the INPUT chain to DROP
   ansible.builtin.iptables:
