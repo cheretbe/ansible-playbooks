@@ -73,8 +73,9 @@
         state: link
       become: true
       when:
-        - linux_dns_resolv_conf_info.stat.islnk is defined
-        - linux_dns_resolv_conf_info.stat.islnk | bool
-        - linux_dns_resolv_conf_info.stat.lnk_source != "/run/systemd/resolve/resolv.conf"
+        when: >-
+          linux_dns_resolv_conf_info.stat.islnk
+          and
+          linux_dns_resolv_conf_info.stat.lnk_source == "/run/systemd/resolve/stub-resolv.conf"
 
   when: linux_dns_has_resolved | bool
