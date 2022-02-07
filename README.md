@@ -8,10 +8,8 @@ ansible-playbook -i localhost, --connection=local --become \
 
 ansible-playbooks/tools/update_known_hosts.sh
 ```
-`ansible_virtualization_role`, `ansible_virtualization_type`
- * https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/facts/virtual/linux.py
- 
- ```yaml
+
+```yaml
 - name: Gather package facts
   package_facts:
     manager: apt
@@ -20,7 +18,7 @@ ansible-playbooks/tools/update_known_hosts.sh
   set_fact:
     linux_mta_postfix_is_installed: "{{ ('postfix' in ansible_facts.packages)|bool }}"
 ```
- 
+
 Pywinrm
 
 * https://docs.ansible.com/ansible-tower/latest/html/administration/kerberos_auth.html

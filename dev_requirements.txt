@@ -6,7 +6,9 @@ molecule-docker
 molecule-lxd
 molecule-vagrant
 pytest
-pytest-testinfra
+# In version 6.5.0 host.socket.get_listening_sockets() fails on Ubuntu Bionic
+# with some weird internal error
+pytest-testinfra == 6.4.0
 invoke
 colorama
 apacheconfig
