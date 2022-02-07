@@ -1,4 +1,27 @@
 ---
-- import_playbook: ../../../tests/molecule/common/set_local_package_cache.yml
-- import_playbook: ../../../tests/molecule/common/add_test_user.yml
-- import_playbook: ../common/install_packages.yml
+- name: Prepare
+  hosts: all
+  become: true
+
+  tasks:
+    - name: "Set local package cache"
+      include_tasks: "../../../tests/helper_tasks/set_local_package_cache.yml"
+
+    - name: "Add test user"
+      include_tasks: "../../../tests/helper_tasks/add_test_user.yml"
+
+    - name: Make sure 'net-tools' package is installed
+      apt:
+        name: net-tools
+        update_cache: yes
+        # 1 hour
+        cache_valid_time: 3600
+      become: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Make sure 'net-tools' package is installed
+      package:
+        name: net-tools
+        state: present
+      become: yes
+      when: ansible_os_family == "RedHat"

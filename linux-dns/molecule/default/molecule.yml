@@ -1,7 +1,7 @@
 ---
 lint: |
   set -e
-  ansible-lint
+  ansible-lint --exclude molecule/
   pylint tests/
 verifier:
   name: testinfra
