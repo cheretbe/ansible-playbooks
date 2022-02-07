@@ -10,8 +10,8 @@ platforms:
     alias: ubuntu/bionic
   - name: ubuntu-xenial
     alias: ubuntu/xenial
-  - name: centos-8
-    alias: centos/8
+  # - name: centos-8
+  #   alias: centos/8
   - name: centos-7
     alias: centos/7
 provisioner:

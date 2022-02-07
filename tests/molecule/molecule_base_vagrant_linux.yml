@@ -7,8 +7,8 @@ driver:
 platforms:
   - name: centos-7
     box: centos/7
-  - name: centos-8
-    box: centos/8
+  # - name: centos-8
+  #   box: centos/8
   - name: ubuntu-xenial
     box: ubuntu/xenial64
   - name: ubuntu-bionic

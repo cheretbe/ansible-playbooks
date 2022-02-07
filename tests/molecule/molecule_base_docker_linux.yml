@@ -42,15 +42,15 @@ platforms:
     command: "/lib/systemd/systemd"
     privileged: true # Tired of applying ugly systemd hacks :(
 
-  - name: centos-8
-    image: pycontribs/centos:8
-    pre_build_image: true
-    tmpfs:
-     - /run
-     - /tmp:exec
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-    command: "/usr/sbin/init"
+  # - name: centos-8
+  #   image: pycontribs/centos:8
+  #   pre_build_image: true
+  #   tmpfs:
+  #    - /run
+  #    - /tmp:exec
+  #   volumes:
+  #     - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  #   command: "/usr/sbin/init"
 
   - name: centos-7
     image: pycontribs/centos:7
