@@ -1,6 +1,6 @@
 - name: Read saved VPN operator's SSH key fingerpint
   ansible.builtin.script:
-    cmd: get_ssh_key_fingerprint.sh "{{ purevpn_ovpn_client_keys_dir }}/operator_key_openssh"
+    cmd: get_ssh_key_fingerprint.sh "{{ ovpn_client_keys_dir }}/operator_key_openssh"
   args:
     executable: /bin/bash
   register: purevpn_ovpn_client_saved_operator_key_fingerprint
@@ -8,16 +8,16 @@
 
 - name: Read actual VPN operator's SSH key fingerpint
   ansible.builtin.script:
-    cmd: get_ssh_key_fingerprint.sh "{{ purevpn_ovpn_client_operator_key }}"
+    cmd: get_ssh_key_fingerprint.sh "{{ ovpn_client_operator_key }}"
   args:
     executable: /bin/bash
-  register: purevpn_ovpn_client_operator_key_fingerprint
+  register: ovpn_client_operator_key_fingerprint
   changed_when: false
 
 - name: Copy VPN operator's SSH key
   ansible.builtin.copy:
-    src: "{{ purevpn_ovpn_client_operator_key }}"
-    dest: "{{ purevpn_ovpn_client_keys_dir }}/operator_key_openssh"
+    src: "{{ ovpn_client_operator_key }}"
+    dest: "{{ ovpn_client_keys_dir }}/operator_key_openssh"
   when: |
-    purevpn_ovpn_client_operator_key_fingerprint.stdout != 
+    ovpn_client_operator_key_fingerprint.stdout != 
       purevpn_ovpn_client_saved_operator_key_fingerprint.stdout

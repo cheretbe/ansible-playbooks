@@ -1,0 +1,41 @@
+---
+
+- name: Read tls-crypt key from variable
+  set_fact:
+    ovpn_client_chere_ta_key_content: "{{ ovpn_client_chere_ta_key }}"
+  when: ovpn_client_chere_ta_key is defined
+
+- name: Read tls-crypt key from file
+  set_fact:
+    ovpn_client_chere_ta_key_content: "{{ lookup('file', ovpn_client_chere_ta_key_file) }}"
+  when: ovpn_client_chere_ta_key_file is defined
+
+- name: Read client certificate from variable
+  set_fact:
+    ovpn_client_chere_client_cert_content: "{{ ovpn_client_chere_client_cert }}"
+  when: ovpn_client_chere_client_cert is defined
+
+- name: Read client certificate from file
+  set_fact:
+    ovpn_client_chere_client_cert_content: "{{ lookup('file', ovpn_client_chere_client_cert_file) }}"
+  when: ovpn_client_chere_client_cert_file is defined
+
+- name: Read client certificate key from variable
+  set_fact:
+    ovpn_client_chere_client_key_content: "{{ ovpn_client_chere_client_key }}"
+  when: ovpn_client_chere_client_key is defined
+
+- name: Read client certificate from file
+  set_fact:
+    ovpn_client_chere_client_key_content: "{{ lookup('file', ovpn_client_chere_client_key_file) }}"
+  when: ovpn_client_chere_client_key_file is defined
+
+- name: Write chere client config file
+  ansible.builtin.template:
+    src: chere.conf.j2
+    dest: "/etc/openvpn/client/chere.conf"
+    owner: root
+    group: root
+    mode: '0600'
+  become: yes
+  notify: Restart OpenVPN client service

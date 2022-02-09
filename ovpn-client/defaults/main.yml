@@ -1,2 +1,4 @@
 ---
-purevpn_ovpn_client_protocol: tcp
+ovpn_client_server_type: chere
+ovpn_client_port: "1194"
+ovpn_client_purevpn_protocol: tcp

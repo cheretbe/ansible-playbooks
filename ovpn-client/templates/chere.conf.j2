@@ -1,0 +1,81 @@
+# https://openvpn.net/community-resources/reference-manual-for-openvpn-2-4/
+# https://github.com/OpenVPN/openvpn/blob/master/sample/sample-config-files/client.conf
+
+client
+
+dev tun
+
+proto udp
+
+# The hostname/IP and port of the server.
+# You can have multiple remote entries to load balance between the servers.
+remote {{ ovpn_client_server }} {{ ovpn_client_port }}
+
+# Keep trying indefinitely to resolve the host name of the OpenVPN server.
+# Very useful on machines which are not permanently connected to the internet
+# such as laptops.
+resolv-retry infinite
+
+# Most clients don't need to bind to a specific local port number.
+nobind
+
+# Downgrade privileges after initialization (non-Windows only)
+# TODO: Test if this breaks DNS update scripts like
+# https://github.com/cheretbe/ansible-playbooks/blob/master/purevpn-ovpn-client/files/update_resolve_conf.py
+# Turn on if it doesn't
+;user nobody
+;group nobody
+
+# Try to preserve some state across restarts.
+persist-key
+persist-tun
+
+# Verify server certificate by checking that the
+# certificate has the correct key usage set.
+# This is an important precaution to protect against
+# a potential attack discussed here:
+#  http://openvpn.net/howto.html#mitm
+#
+# To use this feature, you will need to generate
+# your server certificates with the keyUsage set to
+#   digitalSignature, keyEncipherment
+# and the extendedKeyUsage to
+#   serverAuth
+# EasyRSA can do this for you.
+remote-cert-tls server
+
+cipher AES-256-GCM
+
+auth SHA256
+
+key-direction 1
+
+# Set log file verbosity.
+verb 3
+
+# We store auth data in a file anyway. This is just to silence a warning :)
+auth-nocache
+<ca>
+-----BEGIN CERTIFICATE-----
+MIIB+TCCAX+gAwIBAgIUTPwIB6lR+Hh4VzeueYDZie2k3dAwCgYIKoZIzj0EAwQw
+FTETMBEGA1UEAwwKbnBhIFZQTiBDQTAeFw0yMjAyMDEyMDE2MTVaFw0zMjAxMzAy
+MDE2MTVaMBUxEzARBgNVBAMMCm5wYSBWUE4gQ0EwdjAQBgcqhkjOPQIBBgUrgQQA
+IgNiAASTSzVgYgv7qA+ctxbS8xh7ptOcnX6EkeyhiK7LDccsjT2KLYlvmfbbxSS6
+HQipidpcG7T9XboUOs5DkFR2OFLrql1r2qMhkYn+uCMBtpWgZdVbG70hSH96OFK8
+yQ6QnbijgY8wgYwwHQYDVR0OBBYEFPjkTC7YvngvoUj5VBX/2ASGBKHKMFAGA1Ud
+IwRJMEeAFPjkTC7YvngvoUj5VBX/2ASGBKHKoRmkFzAVMRMwEQYDVQQDDApucGEg
+VlBOIENBghRM/AgHqVH4eHhXN655gNmJ7aTd0DAMBgNVHRMEBTADAQH/MAsGA1Ud
+DwQEAwIBBjAKBggqhkjOPQQDBANoADBlAjBC2g/xjESBrx0YBMXlwSY+VQN1mgJz
+k7sTo0JMgUz4fGyeq6HMRcAZzQmFxUxXtFcCMQD17iCQGMt2DzZKuTyJljEFEKeO
+OfywP/gX+gwIfzs3xZrV1zXHQ4oXqfS7RjRfPS0=
+-----END CERTIFICATE-----
+</ca>
+<cert>
+{{ ovpn_client_chere_client_cert_content }}
+</cert>
+<key>
+{{ ovpn_client_chere_client_key_content }}
+</key>
+<tls-crypt>
+{{ ovpn_client_chere_ta_key_content }}
+</tls-crypt>

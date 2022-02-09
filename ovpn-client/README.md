@@ -7,10 +7,10 @@ purevpn_ovpn_client_user: "user"
 purevpn_ovpn_client_password: "password"
 # Optional parameters
 purevpn_ovpn_client_protocol: "udp" # default is "tcp"
-purevpn_ovpn_client_operator: "username" # default is not defined
-purevpn_ovpn_client_operator_key: "path/to/key/file": # Required when purevpn_ovpn_client_operator
+ovpn_client_operator: "username" # default is not defined
+ovpn_client_operator_key: "path/to/key/file": # Required when ovpn_client_operator
                                                       # is parameter is defined
-purevpn_ovpn_client_keys_dir: "/path/to/ppk/keys"     # Required when purevpn_ovpn_client_operator
+ovpn_client_keys_dir: "/path/to/ppk/keys"     # Required when ovpn_client_operator
                                                       # is parameter is defined
 ```
 
@@ -22,9 +22,9 @@ ansible-playbook -l ubuntu-focal /ansible-playbooks/run_role.yml \
   --extra-vars "purevpn_ovpn_client_server=cz2-auto-udp.ptoserver.com" \
   --extra-vars "purevpn_ovpn_client_user=user" \
   --extra-vars "purevpn_ovpn_client_password=password" \
-  --extra-vars "purevpn_ovpn_client_operator_key=/vagrant/.vagrant/machines/ubuntu-focal/virtualbox/private_key" \
-  --extra-vars "purevpn_ovpn_client_keys_dir=/vagrant/temp" \
-  --extra-vars "purevpn_ovpn_client_operator=vagrant"
+  --extra-vars "ovpn_client_operator_key=/vagrant/.vagrant/machines/ubuntu-focal/virtualbox/private_key" \
+  --extra-vars "ovpn_client_keys_dir=/vagrant/temp" \
+  --extra-vars "ovpn_client_operator=vagrant"
 
 resolvectl status
 networkctl status --all

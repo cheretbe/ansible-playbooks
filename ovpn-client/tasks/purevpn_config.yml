@@ -1,0 +1,23 @@
+---
+
+- name: Write Purevpn client config file
+  ansible.builtin.template:
+    src: purevpn.conf.j2
+    dest: "/etc/openvpn/client/purevpn.conf"
+    owner: root
+    group: root
+    mode: '0600'
+  become: yes
+  notify: Restart OpenVPN client service
+
+- name: Create Purevpn user credentials file
+  ansible.builtin.copy:
+    content: |-
+      {{ ovpn_client_purevpn_user }}
+      {{ ovpn_client_purevpn_password }}
+    dest: /etc/openvpn/client/purevpn_credentials
+    owner: root
+    group: root
+    mode: '0600'
+  become: yes
+  notify: Restart OpenVPN client service

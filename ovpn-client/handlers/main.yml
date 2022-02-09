@@ -1,8 +1,8 @@
 ---
 
-- name: Restart 'openvpn-client@purevpn' service
+- name: Restart OpenVPN client service
   ansible.builtin.systemd:
-    name: openvpn-client@purevpn.service
+    name: "openvpn-client@{{ ovpn_client_server_type }}.service"
     state: restarted
   become: yes
 
