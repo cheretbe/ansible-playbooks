@@ -17,7 +17,7 @@
 - name: Check if mandatory variables are defined (purevpn)
   assert:
     that:
-      - ovpn_client_purevpn_server is defined
+      - ovpn_client_server is defined
       - ovpn_client_purevpn_user is defined
       - ovpn_client_purevpn_password is defined
   when: ovpn_client_server_type == "purevpn"

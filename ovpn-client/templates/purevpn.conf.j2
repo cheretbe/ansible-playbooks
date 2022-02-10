@@ -3,10 +3,10 @@ client
 {% if ovpn_client_purevpn_protocol == 'udp' %}
 explicit-exit-notify
 proto udp
-remote {{ ovpn_client_purevpn_server }} 53
+remote {{ ovpn_client_server }} 53
 {% else %}
 proto tcp
-remote {{ ovpn_client_purevpn_server }} 80
+remote {{ ovpn_client_server }} 80
 {% endif %}
 
 dev ovpn-purevpn
