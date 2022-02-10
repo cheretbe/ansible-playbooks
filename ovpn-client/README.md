@@ -23,6 +23,13 @@ ovpn_client_keys_dir: "/path/to/ppk/keys"     # Required when ovpn_client_operat
   --extra-vars "ovpn_client_server_type=purevpn" \
   --extra-vars "ovpn_client_purevpn_user=user" \
   --extra-vars "ovpn_client_purevpn_password=password"
+
+/host_home/projects/ansible-playbooks/tools/run_role.py \
+  -l ubuntu-focal ovpn-client \
+  --extra-vars "ovpn_client_server=vpn.chere.one" \
+  --extra-vars "ovpn_client_chere_ta_key_file=/host_home/temp/vpn/ta.key" \
+  --extra-vars "ovpn_client_chere_client_cert_file=/host_home/temp/vpn/client1.crt" \
+  --extra-vars "ovpn_client_chere_client_key_file=/host_home/temp/vpn/client1.key"
 ```
 
 ```shell
