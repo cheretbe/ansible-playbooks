@@ -23,7 +23,7 @@ def parse_arguments():
         "-l", "--limit", help="Limit execution to a pattern"
     )
     parser.add_argument(
-        "-e", "--extra-vars", help="Set additional variables"
+        "-e", "--extra-vars", action="append", help="Set additional variables"
     )
     parser.add_argument(
         "-r", "--roles-dir", help="Roles directory", default=str(script_dir.parent)
@@ -80,7 +80,8 @@ def main():
     # print(f"options.role_name: {options.role_name}")
     additional_params = ["--extra-vars", f"role_name={options.role_name}"]
     if options.extra_vars:
-        additional_params += ["--extra-vars", options.extra_vars]
+        for extra_var in options.extra_vars:
+            additional_params += ["--extra-vars", extra_var]
     if options.limit:
         additional_params += ["--limit", options.limit]
 
