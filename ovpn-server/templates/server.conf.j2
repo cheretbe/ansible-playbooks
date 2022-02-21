@@ -50,12 +50,16 @@ push "redirect-gateway def1 bypass-dhcp"
 
 # Certain Windows-specific network settings
 # can be pushed to clients, such as DNS
-# or WINS server addresses.  CAVEAT:
-# http://openvpn.net/faq.html#dhcpcaveats
+# or WINS server addresses.
+{% if (ovpn_server_dns_resolver|bool) %}
+push "dhcp-option DNS 10.8.0.1"
+{% else %}
+# CAVEAT: http://openvpn.net/faq.html#dhcpcaveats
 # The addresses below refer to the public
 # DNS servers provided by opendns.com.
 push "dhcp-option DNS 208.67.222.222"
 push "dhcp-option DNS 208.67.220.220"
+{% endif %}
 
 # Uncomment this directive if multiple clients
 # might connect with the same certificate/key

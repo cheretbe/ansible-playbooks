@@ -1,3 +1,4 @@
 ---
 ovpn_server_port: "1194"
 ovpn_server_protocol: udp
+ovpn_server_dns_resolver: true

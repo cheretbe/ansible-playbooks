@@ -12,9 +12,10 @@
 
 - name: Install apt packages
   apt:
-    name: ["openvpn"]
+    name: |
+      {{ ['openvpn'] }} + {% if (ovpn_server_dns_resolver|bool) %}['bind9', 'bind9utils']{% else %}[]{% endif %}
     update_cache: yes
-    # # 1 hour
+    # 1 hour
     cache_valid_time: 3600
   become: yes
 
@@ -72,3 +73,34 @@
     dest: /etc/openvpn/server/client-config/make_client_config.sh
     mode: '0755'
   become: yes
+
+- name: Configure bind9
+  block:
+    - name: Make sure systemd-resolved DNS stub is disabled
+      include_role: name="{{ role_path }}/../linux-dns"
+
+    - name: Create bind9 config file
+      ansible.builtin.template:
+        src: etc_bind_named.conf.j2
+        dest: /etc/bind/named.conf
+        owner: root
+        group: root
+        mode: '0644'
+      become: yes
+      # TODO: notify
+
+    - name: Create bind9 log directory
+      ansible.builtin.file:
+        path: /var/log/named
+        state: directory
+        owner: bind
+        group: bind
+
+    # - name: Enable and start 'bind9' service
+    #   ansible.builtin.systemd:
+    #     name: bind9
+    #     state: started
+    #     enabled: yes
+    #   become: yes
+
+  when: ovpn_server_dns_resolver|bool
