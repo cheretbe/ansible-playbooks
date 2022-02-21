@@ -3,14 +3,18 @@
 ```yaml
 # Mandatory parameters
 # ----------
+# either (1)
 router_lan_if_mac_addr: "08:00:27:e4:7e:86"
-# or
+# or (2)
 router_lan_if_name: "tun0"
 # ----------
+
+# ----------
+# either (1)
 router_wan_if_name: "ovpn-purevpn"
-# or
+# or (2)
 router_wan_if_mac_addr: "08:00:27:84:0f:13"
-# or
+# or (3)
 router_wan_if_ip_addr: "192.168.0.10"
 # ----------
 
