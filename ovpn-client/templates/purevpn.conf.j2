@@ -1,6 +1,6 @@
 client
 
-{% if ovpn_client_purevpn_protocol == 'udp' %}
+{% if ovpn_client_protocol == 'udp' %}
 explicit-exit-notify
 proto udp
 remote {{ ovpn_client_server }} 53
