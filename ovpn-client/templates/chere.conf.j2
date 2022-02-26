@@ -53,6 +53,15 @@ key-direction 1
 # Set log file verbosity.
 verb 3
 
+; 2 -- Allow calling of built-in executables and user-defined scripts.
+script-security 2
+up /etc/openvpn/client/update_resolve_conf.py
+; Enable the --up and --down scripts to be called for restarts as well as initial program start.
+up-restart
+down /etc/openvpn/client/restore_systemd_resolved_dns.py
+; Call --down cmd/script before, rather than after, TUN/TAP close.
+down-pre
+
 # We store auth data in a file anyway. This is just to silence a warning :)
 auth-nocache
 <ca>
