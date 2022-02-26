@@ -53,17 +53,19 @@
       when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).ipv4.address) == router_wan_if_ip_addr"
   when: router_wan_if_ip_addr is defined
 
+- name: Make sure systemd-resolved DNS stub is disabled
+  include_role: name="{{ role_path }}/../linux-dns"
+  when: router_dns_forwarder|bool
+
 - name: Make sure dpkg frontend lock is released
   include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
 - name: Install apt packages
   apt:
-    name: [
-      # "iptables-persistent", "netfilter-persistent", "dnsmasq"
-      "iptables-persistent", "netfilter-persistent"
-    ]
+    name: |
+      {{ ["iptables-persistent", "netfilter-persistent"] }} + {% if (router_dns_forwarder|bool) %}["dnsmasq"]{% else %}[]{% endif %}
     update_cache: yes
-    # # 1 hour
+    # 1 hour
     cache_valid_time: 3600
   become: yes
 

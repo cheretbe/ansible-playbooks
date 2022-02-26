@@ -1,4 +1,5 @@
 ---
+router_dns_forwarder: true
 router_allow_wan_ssh: false
 router_custom_ports: []
 # router_custom_ports:

@@ -2,6 +2,8 @@
 
 - hosts: all
   become: yes
+  vars:
+    router_dns_forwarder: false
   tasks:
     - include_role: name="{{ playbook_dir }}/ovpn-server"
 

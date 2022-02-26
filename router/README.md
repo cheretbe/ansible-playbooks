@@ -19,6 +19,8 @@ router_wan_if_ip_addr: "192.168.0.10"
 # ----------
 
 # Optional parameters
+# Default is true
+router_dns_forwarder: false
 # Default is false
 router_allow_wan_ssh: true
 # Default is []
@@ -34,7 +36,7 @@ vboxmanage showvminfo --machinereadable $(cat .vagrant/machines/ubuntu-focal/vir
 
 ansible-playbook -l ubuntu-focal /host_home/projects/ansible-playbooks/run_role.yml \
   --extra-vars "role_name=router" \
-  --extra-vars "router_lan_mac_addr=08:00:27:e4:7e:86" \
+  --extra-vars "router_lan_if_mac_addr=08:00:27:e4:7e:86" \
   --extra-vars "router_wan_if_name=ovpn-purevpn"
 
 ansible-playbook -l ubuntu-focal /host_home/projects/ansible-playbooks/run_role.yml \
