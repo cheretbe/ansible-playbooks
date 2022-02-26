@@ -1,17 +1,51 @@
 ### Notes
 
 ```yaml
-# Mandatory parameters
-purevpn_ovpn_client_server: "server"
-purevpn_ovpn_client_user: "user"
-purevpn_ovpn_client_password: "password"
+# Mandatory parameters (ovpn_client_server_type == "purevpn")
+ovpn_client_server: server
+ovpn_client_purevpn_user: user
+ovpn_client_purevpn_password: password
+
+# Mandatory parameters (ovpn_client_server_type == "chere")
+ovpn_client_server: server
+
+# ----------
+# either (1)
+ovpn_client_chere_ta_key: "-----BEGIN OpenVPN Static key V1-----\
+  00000000000000000000000000000000\
+  00000000000000000000000000000000\
+  -----END OpenVPN Static key V1-----"
+# or (2)
+ovpn_client_chere_ta_key_file: /path/to/ta.key
+# ----------
+
+# ----------
+# either (1)
+ovpn_client_chere_client_cert: "-----BEGIN CERTIFICATE-----\
+  0000000000000000000000000000000000000000000000000000000000000000\
+  000000000000000000000000000000000000000000000000000000==\
+  -----END CERTIFICATE-----"
+# or (2)
+ovpn_client_chere_client_cert_file: /path/to/client1.crt
+# ----------
+
+# ----------
+# either (1)
+ovpn_client_chere_client_key: "-----BEGIN PRIVATE KEY-----\
+  0000000000000000000000000000000000000000000000000000000000000000\
+  0000000000000000000000000000000000000000000000000000000000000000\
+  -----END PRIVATE KEY-----"
+# or (2)
+ovpn_client_chere_client_key_file: /path/to/client1.key
+# ----------
+
 # Optional parameters
-purevpn_ovpn_client_protocol: "udp" # default is "tcp"
-ovpn_client_operator: "username" # default is not defined
-ovpn_client_operator_key: "path/to/key/file": # Required when ovpn_client_operator
-                                                      # is parameter is defined
-ovpn_client_keys_dir: "/path/to/ppk/keys"     # Required when ovpn_client_operator
-                                                      # is parameter is defined
+ovpn_client_protocol: udp      # default is "tcp"
+ovpn_client_operator: username # default is not defined
+ovpn_client_operator_key: path/to/key/file # Required when ovpn_client_operator
+                                           # is parameter is defined
+ovpn_client_keys_dir: /path/to/ppk/keys    # Required when ovpn_client_operator
+                                           # is parameter is defined
 ```
 
 ### Debugging
