@@ -79,28 +79,40 @@
     - name: Make sure systemd-resolved DNS stub is disabled
       include_role: name="{{ role_path }}/../linux-dns"
 
-    - name: Create bind9 config file
+    - name: Create bind9 options file
       ansible.builtin.template:
-        src: etc_bind_named.conf.j2
-        dest: /etc/bind/named.conf
+        src: etc_bind_named.conf.options.j2
+        dest: /etc/bind/named.conf.options
         owner: root
         group: root
         mode: '0644'
+        backup: yes
       become: yes
-      # TODO: notify
+      notify: Restart 'named' service
 
-    - name: Create bind9 log directory
-      ansible.builtin.file:
-        path: /var/log/named
-        state: directory
-        owner: bind
-        group: bind
+    - name: Create bind9 service startup options file
+      ansible.builtin.template:
+        src: etc_default_named.j2
+        dest: /etc/default/named
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      become: yes
+      notify: Restart 'named' service
 
-    # - name: Enable and start 'bind9' service
-    #   ansible.builtin.systemd:
-    #     name: bind9
-    #     state: started
-    #     enabled: yes
-    #   become: yes
+    # - name: Create bind9 log directory
+    #   ansible.builtin.file:
+    #     path: /var/log/named
+    #     state: directory
+    #     owner: bind
+    #     group: bind
+
+    - name: Enable and start 'named' service
+      ansible.builtin.systemd:
+        name: named
+        state: started
+        enabled: yes
+      become: yes
 
   when: ovpn_server_dns_resolver|bool
