@@ -39,7 +39,7 @@ chmod 600 ${temp_key_file}
 rm ${temp_key_file}
 
 echo "${key_value}" >&${temp_key_fd}
-/usr/bin/ssh-keygen -lf /proc/$$/fd/${temp_key_fd}
+/usr/bin/ssh-keygen -yf /proc/$$/fd/${temp_key_fd}
 
 # Close the file
 eval "exec ${temp_key_fd}>&-"

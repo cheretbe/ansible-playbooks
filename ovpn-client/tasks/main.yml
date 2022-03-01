@@ -26,7 +26,7 @@
   assert:
     that:
       - ovpn_client_operator_key is defined
-      - ovpn_client_keys_dir is defined
+      # - ovpn_client_keys_dir is defined
   when: ovpn_client_operator is defined
 
 - name: Make sure systemd-resolved DNS stub is disabled
@@ -106,10 +106,3 @@
 
 - import_tasks: vpn_operator_config.yml
   when: ovpn_client_operator is defined
-
-- name: Copy 'purevpn_change_country.py' script
-  copy:
-    src: purevpn_change_country.py
-    dest: /etc/openvpn/client/purevpn_change_country.py
-    mode: 0755
-  become: true

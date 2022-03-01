@@ -40,12 +40,10 @@ ovpn_client_chere_client_key_file: /path/to/client1.key
 # ----------
 
 # Optional parameters
-ovpn_client_protocol: udp      # default is "tcp"
-ovpn_client_operator: username # default is not defined
+ovpn_client_protocol: udp                  # default is "tcp"
+ovpn_client_operator: username             # default is not defined
 ovpn_client_operator_key: path/to/key/file # Required when ovpn_client_operator
-                                           # is parameter is defined
-ovpn_client_keys_dir: /path/to/ppk/keys    # Required when ovpn_client_operator
-                                           # is parameter is defined
+                                           # parameter is defined
 ```
 
 ### Debugging
