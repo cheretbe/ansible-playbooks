@@ -59,7 +59,18 @@
         mode: 0644
       become: true
       when: linux_dns_disable_stub | bool
-      notify: Restart systemd-resolved service
+      # notify: Restart systemd-resolved service
+      register: systemd_resolved_stub_info
+
+      # Notification handler won't do: it might be called too late when this role
+      # is used from a playbook, that also uses other roles (and those might need
+      # working DNS)
+    - name: Restart systemd-resolved service
+      service:
+        name: systemd-resolved.service
+        state: restarted
+      become: true
+      when: systemd_resolved_stub_info.changed
 
     - name: "Get '/etc/resolv.conf' info"
       stat:
