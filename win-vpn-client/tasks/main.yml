@@ -2,9 +2,12 @@
   assert:
     that:
       - win_vpn_client_user_name is defined
-      - win_vpn_client_ssh_key is defined
+        # TODO: these should become optional (or go to a separate role?)
+        # https://github.com/cheretbe/ansible-playbooks/issues/11
       - win_vpn_client_router is defined
-      - win_vpn_client_router_user is defined
+      - win_vpn_client_router_operator is defined
+      - win_vpn_client_router_operator_key is defined
+      - win_vpn_client_router_vpn_service_name is defined
 
 - name: Get (or create) user profile
   community.windows.win_user_profile:
@@ -37,7 +40,7 @@
 
 - name: Copy VPN operator's SSH key
   ansible.builtin.copy:
-    src: "{{ win_vpn_client_ssh_key }}"
+    src: "{{ win_vpn_client_router_operator_key }}"
     dest: "{{ win_vpn_client_keys_dir }}\\vpn_operator_key"
 
 - name: Download DNS leak test script
@@ -71,7 +74,7 @@
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo /etc/openvpn/client/purevpn_change_country.py"
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_operator }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo /etc/openvpn/client/purevpn_change_country.py"
       ECHO Press any key to continue...
       PAUSE >NUL
     dest: "{{ win_vpn_client_shortcut_dir}}\\Change VPN country.bat"
@@ -120,21 +123,21 @@
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "ping 1.1.1.1"
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_operator }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "ping 1.1.1.1"
     dest: "{{ win_vpn_client_shortcut_dir}}\\ping from the router.bat"
 
 - name: Create a script to view OpenVPN client log
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo journalctl -u openvpn-client@purevpn.service -f"
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_operator }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo /usr/bin/journalctl -u openvpn-client@{{ win_vpn_client_router_vpn_service_name }}.service -f"
     dest: "{{ win_vpn_client_shortcut_dir}}\\OpenVPN client log.bat"
 
 - name: Create a script to restart OpenVPN client
   ansible.windows.win_copy:
     content: |
       @ECHO OFF
-      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_user }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo service openvpn-client@purevpn restart"
+      ssh -o StrictHostKeyChecking=no {{ win_vpn_client_router_operator }}@{{ win_vpn_client_router }} -i "{{ win_vpn_client_keys_dir }}\\vpn_operator_key" "sudo /usr/bin/systemctl restart openvpn-client@{{ win_vpn_client_router_vpn_service_name }}.service"
     dest: "{{ win_vpn_client_shortcut_dir}}\\Restart OpenVPN client.bat"
 
 - name: Copy PSExec
