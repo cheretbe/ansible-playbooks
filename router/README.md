@@ -21,6 +21,8 @@ router_wan_if_ip_addr: "192.168.0.10"
 # Optional parameters
 # Default is true
 router_dns_forwarder: false
+# Default is true
+router_http_proxy: false
 # Default is false
 router_allow_wan_ssh: true
 # Default is []

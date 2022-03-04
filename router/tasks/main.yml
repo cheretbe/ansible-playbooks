@@ -57,17 +57,41 @@
   include_role: name="{{ role_path }}/../linux-dns"
   when: router_dns_forwarder|bool
 
+- name: Set apt package names
+  set_fact:
+    router_apt_packages: ["iptables-persistent", "netfilter-persistent"]
+
+- name: Add 'dnsmasq' apt package
+  set_fact:
+    router_apt_packages: "{{ router_apt_packages }} + ['dnsmasq']"
+  when: router_dns_forwarder|bool
+
+- name: Add 'privoxy' apt package
+  set_fact:
+    router_apt_packages: "{{ router_apt_packages }} + ['privoxy']"
+  when: router_http_proxy|bool
+
 - name: Make sure dpkg frontend lock is released
   include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
 - name: Install apt packages
   apt:
-    name: |
-      {{ ["iptables-persistent", "netfilter-persistent"] }} + {% if (router_dns_forwarder|bool) %}["dnsmasq"]{% else %}[]{% endif %}
+    name: "{{ router_apt_packages }}"
     update_cache: yes
     # 1 hour
     cache_valid_time: 3600
   become: yes
+
+- name: Create privoxy config
+  ansible.builtin.template:
+    src: etc_privoxy_config.j2
+    dest: "/etc/privoxy/config"
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: Restart 'privoxy' service
+  when: router_http_proxy|bool
 
 - name: Enable IPv4 forwarding
   ansible.posix.sysctl:

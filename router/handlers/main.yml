@@ -3,3 +3,9 @@
     state: saved
     path: /etc/iptables/rules.v4
   become: yes
+
+- name: Restart 'privoxy' service
+  ansible.builtin.systemd:
+    name: privoxy.service
+    state: restarted
+  become: yes
