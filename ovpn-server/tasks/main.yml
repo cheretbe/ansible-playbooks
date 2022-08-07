@@ -13,7 +13,7 @@
 - name: Install apt packages
   apt:
     name: |
-      {{ ['openvpn'] + {% if (ovpn_server_dns_resolver|bool) %}['bind9', 'bind9utils']{% else %}[]{% endif %} }}
+      {{ ['openvpn'] + (['bind9', 'bind9utils'] if (ovpn_server_dns_resolver|bool) else []) }}
     update_cache: yes
     # 1 hour
     cache_valid_time: 3600
