@@ -63,12 +63,12 @@
 
 - name: Add 'dnsmasq' apt package
   set_fact:
-    router_apt_packages: "{{ router_apt_packages }} + ['dnsmasq']"
+    router_apt_packages: "{{ router_apt_packages + ['dnsmasq'] }}"
   when: router_dns_forwarder|bool
 
 - name: Add 'privoxy' apt package
   set_fact:
-    router_apt_packages: "{{ router_apt_packages }} + ['privoxy']"
+    router_apt_packages: "{{ router_apt_packages + ['privoxy'] }}"
   when: router_http_proxy|bool
 
 - name: Make sure dpkg frontend lock is released
