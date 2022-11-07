@@ -5,6 +5,17 @@ dependency:
 driver:
   name: docker
 platforms:
+  # TODO: use anchors here and in every base file
+  - name: ubuntu-jammy
+    image: geerlingguy/docker-ubuntu2204-ansible
+    pre_build_image: true
+    privileged: true
+    command: ""
+    volumes:
+      # https://github.com/geerlingguy/docker-ubuntu2204-ansible/issues/6
+      # https://serverfault.com/questions/1053187/systemd-fails-to-run-in-a-docker-container-when-using-cgroupv2-cgroupns-priva
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+
   - name: ubuntu-focal
     image: geerlingguy/docker-ubuntu2004-ansible
     pre_build_image: true
@@ -28,19 +39,6 @@ platforms:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
       - /sys/fs/fuse:/sys/fs/fuse:ro
     command: "/lib/systemd/systemd"
-
-  - name: ubuntu-xenial
-    image: geerlingguy/docker-ubuntu1604-ansible
-    pre_build_image: true
-    tmpfs:
-     - /run
-     - /run/lock
-     - /tmp:exec
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
-      - /sys/fs/fuse:/sys/fs/fuse:ro
-    command: "/lib/systemd/systemd"
-    privileged: true # Tired of applying ugly systemd hacks :(
 
   # - name: centos-8
   #   image: pycontribs/centos:8
