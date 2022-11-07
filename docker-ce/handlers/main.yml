@@ -2,7 +2,7 @@
 # handlers file for docker-ce
 
 - name: Restart Docker service
-  service:
+  ansible.builtin.service:
     name: docker
     state: restarted
   become: true

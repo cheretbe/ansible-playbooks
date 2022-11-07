@@ -1,82 +1,97 @@
 ---
 # tasks file for docker-ce
 
-- name: Check distribution
-  fail:
-    msg: "Only Ubuntu 18.04 and 20.04 are supported"
-  when: (ansible_distribution != "Ubuntu") or
-        (ansible_distribution_version not in ["18.04", "20.04"])
+- name: Check if distribution is supported
+  ansible.builtin.set_fact:
+    docker_ce_supported_dist: true
+  when:
+    - item.distribution == ansible_distribution and item.version == ansible_distribution_version
+  loop:
+    - { distribution: "Ubuntu", version: "18.04" }
+    - { distribution: "Ubuntu", version: "20.04" }
+    - { distribution: "Ubuntu", version: "22.04" }
+
+- name: Fail on not supported distributions
+  ansible.builtin.fail:
+    msg: >-
+      {{ ansible_distribution }} {{ ansible_distribution_version }} is not supported.
+      Use 'docker_ce_skip_dist_check' setting to skip the check
+  when: not ((docker_ce_supported_dist is defined) or (docker_ce_skip_dist_check is defined))
+
+- name: Install needed APT packages
+  ansible.builtin.apt:
+    name: ["gpg-agent", "apt-transport-https", "ca-certificates"]
+    update_cache: true
+    # 1 hour
+    cache_valid_time: 3600
+  become: true
+  # when: ansible_os_family == "Debian"
 
 - name: Add docker repository key
-  apt_key:
+  ansible.builtin.apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
     state: present
-  become: yes
+  become: true
 
 - name: Add docker repository
-  apt_repository:
+  ansible.builtin.apt_repository:
     repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
-  become: yes
+  become: true
 
 - name: Update and upgrade apt packages
-  become: yes
-  apt:
-    upgrade: "yes"
-    update_cache: yes
-    # 10 min
-    cache_valid_time: 600
-    # Fix for warning message "Could not find aptitude. Using apt-get instead"
-    force_apt_get: yes
+  become: true
+  ansible.builtin.apt:
+    upgrade: true
+    update_cache: true
+    # 1 hour
+    cache_valid_time: 3600
 
 - name: Install docker-ce package
-  apt:
+  ansible.builtin.apt:
     name: docker-ce
-    # Fix for warning message "Could not find aptitude. Using apt-get instead"
-    force_apt_get: yes
-    update_cache: no
-  become: yes
+    update_cache: false
+  become: true
 
-- block:
-
-  - name: Check if Docker daemon config file exists
-    stat:
-      path: /etc/docker/daemon.json
-    register: docker_daemon_config_stat
-
-  - block:
-    - name: Read current Docker daemon config file
-      slurp:
+- name: Set Docker registry mirrors
+  when: docker_ce_registry_mirrors | length > 0
+  block:
+    - name: Check if Docker daemon config file exists
+      ansible.builtin.stat:
         path: /etc/docker/daemon.json
-      register: docker_daemon_config_file
+      register: docker_daemon_config_stat
 
-    - name: Get current Docker daemon config
-      set_fact:
-        docker_daemon_config: "{{ docker_daemon_config_file.content| b64decode | from_json }}"
+    - name: Check current 'registry-mirrors' setting
+      when: docker_daemon_config_stat.stat.exists
+      block:
+        - name: Read current Docker daemon config file
+          ansible.builtin.slurp:
+            path: /etc/docker/daemon.json
+          register: docker_daemon_config_file
 
-    - name: Check if current 'registry-mirrors' parameter needs update
-      set_fact:
-        registry_mirrors_needs_update: >-
-          {{ (docker_daemon_config['registry-mirrors'] != docker_ce_registry_mirrors) | bool }}
-      when: "'registry-mirrors' in docker_daemon_config"
+        - name: Get current Docker daemon config
+          ansible.builtin.set_fact:
+            docker_daemon_config: "{{ docker_daemon_config_file.content | b64decode | from_json }}"
 
-    when: docker_daemon_config_stat.stat.exists
-
-  - block:
+        - name: Check if current 'registry-mirrors' parameter needs update
+          ansible.builtin.set_fact:
+            registry_mirrors_needs_update: >-
+              {{ (docker_daemon_config['registry-mirrors'] != docker_ce_registry_mirrors) | bool }}
+          when: "'registry-mirrors' in docker_daemon_config"
 
     - name: Set 'registry-mirrors' parameter in Docker daemon config
-      set_fact:
-        docker_daemon_config: >
-          {{ docker_daemon_config |
-            combine({'registry-mirrors': docker_ce_registry_mirrors}) }}
+      when: "registry_mirrors_needs_update | bool"
+      block:
+        - name: Set 'registry-mirrors' parameter in Docker daemon config
+          ansible.builtin.set_fact:
+            docker_daemon_config: >
+              {{ docker_daemon_config |
+                combine({'registry-mirrors': docker_ce_registry_mirrors}) }}
 
-    - name: Write Docker daemon config file file
-      copy:
-        content: "{{docker_daemon_config | to_nice_json }}"
-        dest: /etc/docker/daemon.json
-      notify: Restart Docker service
-      become: yes
-
-    when: "registry_mirrors_needs_update | bool"
-
-  when: docker_ce_registry_mirrors | length > 0
+        - name: Write Docker daemon config file file
+          ansible.builtin.copy:
+            content: "{{ docker_daemon_config | to_nice_json }}"
+            dest: /etc/docker/daemon.json
+            mode: 0644
+          notify: Restart Docker service
+          become: true
