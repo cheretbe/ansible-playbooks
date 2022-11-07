@@ -39,19 +39,19 @@
     state: present
   become: true
 
-- name: Update and upgrade apt packages
-  become: true
+- name: Install docker-ce packages
   ansible.builtin.apt:
-    upgrade: true
-    update_cache: true
-    # 1 hour
-    cache_valid_time: 3600
-
-- name: Install docker-ce package
-  ansible.builtin.apt:
-    name: docker-ce
+    name: ["docker-ce", "docker-compose-plugin"]
     update_cache: false
   become: true
+
+- name: Add users to 'docker' group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  become: true
+  loop: "{{ docker_ce_users }}"
 
 - name: Set Docker registry mirrors
   when: docker_ce_registry_mirrors | length > 0
