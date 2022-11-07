@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    # https://github.com/cheretbe/notes/blob/master/ansible.md#environment-variables
+    ansible_user: "{{ lookup('env','MOLECULE_USER_NAME') | default('ansible-test', true) }}"
+  tasks:
+    - name: "Include backuppc-client"
+      include_role:
+        name: "docker-ce"
