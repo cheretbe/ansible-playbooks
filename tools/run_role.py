@@ -5,6 +5,7 @@ import os
 import argparse
 import pathlib
 import json
+import subprocess
 import humanfriendly.prompts
 
 sys.path.append(str(pathlib.Path(__file__).resolve().parent / "lib"))
@@ -20,7 +21,7 @@ def parse_arguments():
         "role_name", nargs="?", help="Role name"
     )
     parser.add_argument(
-        "-l", "--limit", help="Limit execution to a pattern"
+        "limit", nargs="?", help="Limit execution to a pattern"
     )
     parser.add_argument(
         "-e", "--extra-vars", action="append", help="Set additional variables"
@@ -49,9 +50,33 @@ def select_role(roles_dir, last_used_role):
     )
     if selection == "Exit":
         sys.exit("Cancelled by user")
-
-
     return selection
+
+def select_subset(last_used_subset):
+    inventory = json.loads(
+        subprocess.check_output(["ansible-inventory", "--list"])
+    )
+    # [!] groups is a set, not a list, it will have unique items
+    groups = set()
+    for group in inventory["all"]["children"]:
+        if group != "ungrouped":
+            groups.add(group)
+    hosts = set()
+    for group in inventory:
+        if group not in ("_meta", "all"):
+            if inventory[group].get("hosts", None):
+                for host in inventory[group]["hosts"]:
+                    hosts.add(host)
+    # host_and_groups = ["all"] + list(sorted(groups)) + list(sorted(hosts))
+    selection = humanfriendly.prompts.prompt_for_choice(
+        ["all"] + list(sorted(groups)) + list(sorted(hosts)) + ["Exit"],
+        default=last_used_subset
+    )
+    if selection == "Exit":
+        sys.exit("Cancelled by user")
+    return selection
+    # print(host_and_groups)
+
 
 def main():
     options = parse_arguments()
@@ -72,12 +97,16 @@ def main():
         )
     config["last_used_role"] = options.role_name
 
+    if not options.limit:
+        options.limit = select_subset(
+            last_used_subset=config.get("last_used_subset", None)
+        )
+    config["last_used_subset"] = options.limit
+
     os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
     with open(config_file_name, "w", encoding="utf-8") as config_f:
         json.dump(config, config_f, ensure_ascii=False, indent=4)
 
-
-    # print(f"options.role_name: {options.role_name}")
     additional_params = ["--extra-vars", f"role_name={options.role_name}"]
     if options.extra_vars:
         for extra_var in options.extra_vars:
