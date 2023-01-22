@@ -1,8 +1,17 @@
 ---
 # handlers file for docker-ce
 
+- name: Run daemon-reload for systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
 - name: Restart Docker service
   ansible.builtin.service:
     name: docker
     state: restarted
+  become: true
+
+- name: Update CA Trust
+  ansible.builtin.command: "update-ca-certificates --fresh"
   become: true

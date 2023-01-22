@@ -4,3 +4,5 @@
 # docker_ce_registry_mirrors: ["http://localhost:5000"]
 docker_ce_registry_mirrors: []
 docker_ce_users: []
+# docker_ce_registry_proxy: "http://192.168.1.1:3128"
+docker_ce_registry_proxy: false
