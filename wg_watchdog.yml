@@ -56,7 +56,8 @@
           [Unit]
           Description=Wireguard wg-quick@{{ wg_client_service_name }} watchdog timer
           [Timer]
-          # Run every 4 minutes
+          # Run once after boot AND THEN run every 4 minutes
+          OnBootSec=1min
           OnUnitActiveSec=4m
           [Install]
           WantedBy=timers.target
