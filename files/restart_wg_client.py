@@ -8,9 +8,9 @@ import subprocess
 
 
 def print_exception(exc, verbose):
-    print(f"[!] ERROR: {str(exc)}", file=sys.stderr)
+    print(f"[!] ERROR: {str(exc)}", file=sys.stderr, flush=True)
     if verbose:
-        print(traceback.format_exc(), file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr, flush=True)
 
 
 def main(args):
@@ -31,13 +31,15 @@ def main(args):
         if args.verbose:
             latest_hs = datetime.datetime.fromtimestamp(latest_hs_timestamp)
             print(
-                f"Latest handshake: {latest_hs_delta}s ago at {latest_hs} ({latest_hs_timestamp})"
+                f"Latest handshake: {latest_hs_delta}s ago at {latest_hs} ({latest_hs_timestamp})",
+                flush=True,
             )
         # By default handshakes happen every two minutes
         if latest_hs_delta > args.timeout:
             print(
                 f"Latest handshake age of {latest_hs_delta}s is over "
-                f"the threshold of {args.timeout}s"
+                f"the threshold of {args.timeout}s",
+                flush=True,
             )
             restart_needed = True
     # This script is intended to run as systemd timer unit and we do want to catch
@@ -46,7 +48,7 @@ def main(args):
         print_exception(exc, args.verbose)
         restart_needed = True
     if restart_needed:
-        print(f"Restarting 'wg-quick@{args.wg_profile}' service")
+        print(f"Restarting 'wg-quick@{args.wg_profile}' service", flush=True)
         try:
             subprocess.check_call(
                 ("systemctl", "restart", f"wg-quick@{args.wg_profile}.service")
