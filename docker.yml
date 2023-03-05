@@ -23,7 +23,7 @@
       ansible.builtin.file:
         path: /opt/docker-configs
         state: directory
-        owner: "{{ ansible_user }}"
+        owner: "{{ docker_ce_users[0] }}"
         group: docker
         # 2 sets setgid bit
         mode: "02755"
