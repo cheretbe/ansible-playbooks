@@ -1,0 +1,27 @@
+---
+- name: Setup docker host
+  hosts: all
+  tasks:
+    - name: Check if mandatory variables are defined
+      ansible.builtin.assert:
+        that:
+          - docker_ce_users is defined
+        quiet: true
+
+    - name: Install and configure Docker
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/docker-ce" # noqa: role-name[path]
+
+    - name: Make sure shared docker configs directory exists
+      ansible.builtin.file:
+        path: /opt/docker-configs
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
+      become: true
+
+    - name: Checkout shared docker configs repository # noqa: latest[git]
+      ansible.builtin.git:
+        repo: https://github.com/cheretbe/docker-configs.git
+        dest: /opt/docker-configs
