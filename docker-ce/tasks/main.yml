@@ -22,20 +22,20 @@
   ansible.builtin.apt:
     name: ["gpg-agent", "apt-transport-https", "ca-certificates"]
     update_cache: true
-    # 1 hour
-    cache_valid_time: 3600
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
   become: true
-  # when: ansible_os_family == "Debian"
 
-- name: Add docker repository key
-  ansible.builtin.apt_key:
+- name: Add Docker repository key
+  get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
-    state: present
+    dest: /etc/apt/trusted.gpg.d/docker-keyring.asc
   become: true
 
-- name: Add docker repository
+- name: Add Docker repository
   ansible.builtin.apt_repository:
-    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+    repo: >
+      deb [arch={{ deb_architecture_map[ansible_architecture] }} signed-by=/etc/apt/trusted.gpg.d/docker-keyring.asc]
+      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
   become: true
 

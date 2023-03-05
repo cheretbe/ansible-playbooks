@@ -1,5 +1,12 @@
 ---
 # vars file for docker-ce
 
+deb_architecture_map:
+  "x86_64": "amd64"
+  "aarch64": "arm64"
+  "aarch": "arm64"
+  "armhf": "armhf"
+  "armv7l": "armhf"
+
 docker_daemon_config: {}
 registry_mirrors_needs_update: true
