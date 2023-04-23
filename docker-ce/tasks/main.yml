@@ -33,9 +33,10 @@
 
 - name: Add Docker repository
   ansible.builtin.apt_repository:
+    # Using http instead of https for apt-cacher-ng caching to work
     repo: >
       deb [arch={{ deb_architecture_map[ansible_architecture] }} signed-by=/etc/apt/trusted.gpg.d/docker-keyring.asc]
-      https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+      http://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
     state: present
   become: true
 
