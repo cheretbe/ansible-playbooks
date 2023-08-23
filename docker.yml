@@ -12,26 +12,26 @@
       ansible.builtin.include_role:
         name: "{{ playbook_dir }}/docker-ce" # noqa: role-name[path]
 
-    # become + become_user combination fails without this package
-    - name: Install acl APT package
-      ansible.builtin.apt:
-        name: ["acl"]
-        update_cache: false
-      become: true
+    # # become + become_user combination fails without this package
+    # - name: Install acl APT package
+    #   ansible.builtin.apt:
+    #     name: ["acl"]
+    #     update_cache: false
+    #   become: true
 
-    - name: Make sure shared docker configs directory exists
-      ansible.builtin.file:
-        path: /opt/docker-configs
-        state: directory
-        owner: "{{ docker_ce_users[0] }}"
-        group: docker
-        # 2 sets setgid bit
-        mode: "02755"
-      become: true
+    # - name: Make sure shared docker configs directory exists
+    #   ansible.builtin.file:
+    #     path: /opt/docker-configs
+    #     state: directory
+    #     owner: "{{ docker_ce_users[0] }}"
+    #     group: docker
+    #     # 2 sets setgid bit
+    #     mode: "02755"
+    #   become: true
 
     - name: Checkout shared docker configs repository # noqa: latest[git]
       ansible.builtin.git:
         repo: https://github.com/cheretbe/docker-configs.git
         dest: /opt/docker-configs
       become: true
-      become_user: "{{ docker_ce_users[0] }}"
+      # become_user: "{{ docker_ce_users[0] }}"
