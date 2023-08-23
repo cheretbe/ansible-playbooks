@@ -1,0 +1,14 @@
+---
+
+- name: Check that at least one compose config is defined
+  ansible.builtin.assert:
+    that:
+      (docker_compose_configs | length) > 0
+
+- name: Setup defined compose configs
+  ansible.builtin.include_tasks: init_compose_config.yml
+  vars:
+    docker_compose_config_to_init: "{{ item }}"
+  loop: "{{ docker_compose_configs | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"

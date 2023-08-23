@@ -1,8 +1,9 @@
 ansible
-pywinrm
+apacheconfig
+colorama
+humanfriendly
+jinja2
+jmespath
 pytest
 pytest-testinfra
-colorama
-apacheconfig
-jinja2
-humanfriendly
+pywinrm

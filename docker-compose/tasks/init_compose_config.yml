@@ -1,0 +1,69 @@
+---
+
+- name: Write env variables file
+  ansible.builtin.template:
+    src: "env.j2"
+    dest: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}/.env"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  when: docker_compose_config_to_init.value.env_variables is defined
+
+- name: Write local settings file
+  ansible.builtin.copy:
+    dest: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}/docker-compose.local.yml"
+    content: "{{ docker_compose_config_to_init.value.local_settings | to_nice_yaml(indent=2) }}"
+    mode: "0644"
+    owner: root
+    group: root
+  become: true
+  when: docker_compose_config_to_init.value.local_settings is defined
+
+- name: Get local settings file info
+  ansible.builtin.stat:
+    path: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}/docker-compose.local.yml"
+  register: dc_local_settings_file
+
+- name: Construct docker compose command
+  ansible.builtin.set_fact:
+    dc_compose_command: "docker compose -f docker-compose.yml{{ ' -f docker-compose.local.yml' if dc_local_settings_file.stat.exists else '' }}"
+
+- name: Get current config
+  ansible.builtin.command:
+    cmd: "{{ dc_compose_command }} config --format json"
+    chdir: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}"
+  become: true
+  register: __dc_current_config
+  changed_when: false
+
+# NOTE: Here we list all containers, not only running ones. And later just check
+#       that some state is present, not necessarily "running". Also we don't track
+#       config files changes to recreate containers on config update as this is
+#       potentially destructive action.
+#       But it could be easily done here if the need arises.
+# TODO: Add some variable? E.g. docker_compose_recreate_on_change
+- name: List existing containers
+  ansible.builtin.command:
+    cmd: "{{ dc_compose_command }} ps -a --format json"
+    chdir: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}"
+  become: true
+  register: __dc_containers
+  changed_when: false
+
+- name: Check if all services exist
+  ansible.builtin.set_fact:
+    dc_all_services_exist: false
+  when: not ((__dc_containers.stdout | from_json | json_query(_dc_test_query))[0].State | default(False))
+  vars:
+    _dc_test_query: "[?Service=='{{ _dc_service }}']"
+  loop: "{{ (__dc_current_config.stdout | from_json).services.keys() }}"
+  loop_control:
+    loop_var: _dc_service
+
+- name: Create and run containers
+  ansible.builtin.command:
+    cmd: "{{ dc_compose_command }} up -d"
+    chdir: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}"
+  become: true
+  when: not dc_all_services_exist

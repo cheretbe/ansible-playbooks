@@ -1,0 +1,18 @@
+---
+
+- name: Setup Docker compose services
+  hosts: all
+  tasks:
+    - name: Install and configure Docker
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/docker-ce" # noqa: role-name[path]
+
+    - name: Checkout shared docker configs repository # noqa: latest[git]
+      ansible.builtin.git:
+        repo: https://github.com/cheretbe/docker-configs.git
+        dest: /opt/docker-configs
+      become: true
+
+    - name: Prepare and run Docker compose config
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/docker-compose" # noqa: role-name[path]
