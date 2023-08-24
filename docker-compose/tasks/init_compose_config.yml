@@ -9,6 +9,7 @@
     mode: '0644'
   become: true
   when: docker_compose_config_to_init.value.env_variables is defined
+  register: __dc_env_result
 
 - name: Write local settings file
   ansible.builtin.copy:
@@ -19,6 +20,7 @@
     group: root
   become: true
   when: docker_compose_config_to_init.value.local_settings is defined
+  register: __dc_local_settings_result
 
 - name: Get local settings file info
   ansible.builtin.stat:
@@ -67,3 +69,40 @@
     chdir: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}"
   become: true
   when: not dc_all_services_exist
+
+- name: Write current config
+  when: __dc_env_result.changed or __dc_local_settings_result.changed
+  block:
+    - name: Make local data directory exists
+      ansible.builtin.file:
+        path: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}/local-data"
+        state: directory
+        mode: "0755"
+        owner: root
+        group: root
+      become: true
+
+    # It would have been better to save JSON config, that we already have in
+    # __dc_current_config variable, using copy module rather than frowned upon shell.
+    # But strangely it appears to lose newline ans space characters when
+    # using 'content' with a variable.
+    # TODO: review and debug this when time permits
+    #
+    # - name: Write current config file
+    #   ansible.builtin.copy:
+    #     dest: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}/local-data/config_{{ '%Y-%m-%d_%H-%M' | strftime }}.json"
+    #     # content: "{{ __dc_current_config.stdout | join('\\n') }}"
+    #     # content: "{{ __dc_current_config.stdout_lines | join('\n') }}"
+    #     content: |
+    #       {{ __dc_current_config.stdout }}
+    #     mode: "0644"
+    #     owner: root
+    #     group: root
+    #   become: true
+
+    - name: Write current config file
+      ansible.builtin.shell: |
+        {{ dc_compose_command }} config > local-data/config_{{ '%Y-%m-%d_%H-%M' | strftime }}.txt
+      args:
+        chdir: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}"
+      become: true
