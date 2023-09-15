@@ -1,0 +1,102 @@
+---
+
+- name: Create VM using Terraform libvirt provider
+  hosts: "{{ ansible_limit | default(omit) }}"
+  # Facts gathering will fail since the VM doesn't exist so far
+  gather_facts: false
+  vars:
+    _terraform_libvirt_object_count: 0
+  tasks:
+    - name: Check if mandatory variables are defined
+      ansible.builtin.assert:
+        that:
+          - terraform_config_name is defined
+          - terraform_libvirt_host is defined
+      delegate_to: localhost
+
+    - name: Checkout shared terraform configs repository # noqa: latest[git]
+      ansible.builtin.git:
+        repo: https://github.com/cheretbe/terraform-configs.git
+        dest: /opt/terraform-configs
+      become: true
+      delegate_to: "{{ terraform_libvirt_host }}"
+
+    - name: Write local variables file
+      ansible.builtin.copy:
+        content: "{{ terraform_vars_file_content }}"
+        dest: "/opt/terraform-configs/{{ terraform_config_name }}/terraform.tfvars"
+        mode: "0644"
+        owner: root
+        group: root
+      become: true
+      delegate_to: "{{ terraform_libvirt_host }}"
+
+    # community.general.terraform's 'check_destroy' doesn't prevent replacement
+    # actions which are basically "destroy and recreate" and therefore potentially
+    # desctructive.
+    # To avoid this we explicitly call 'terraform plan' and check if there is any diff
+    # to current state.
+
+    - name: Get Terraform state file info
+      ansible.builtin.stat:
+        path: "/opt/terraform-configs/{{ terraform_config_name }}/terraform.tfstate"
+      become: true
+      delegate_to: "{{ terraform_libvirt_host }}"
+      register: __terraform_state_file_stat
+
+    - name: Run terraform show
+      when: __terraform_state_file_stat.stat.exists
+      ansible.builtin.command:
+        cmd: terraform show -json terraform.tfstate
+        chdir: "/opt/terraform-configs/{{ terraform_config_name }}"
+      become: true
+      delegate_to: "{{ terraform_libvirt_host }}"
+      register: __terraform_libvirt_show
+      changed_when: false
+
+    - name: Set existing resource count fact
+      when: __terraform_state_file_stat.stat.exists
+      ansible.builtin.set_fact:
+        # 'terraform show' returns JSON, that contains 'values' key. It clashes with
+        # Ansible dict's internal 'values' function. To overcome this we reference
+        # it as ['values']
+        _terraform_libvirt_object_count: |-
+          {{
+            ((__terraform_libvirt_show.stdout | from_json)['values'].root_module.resources | length)
+              if (__terraform_libvirt_show.stdout | from_json)['values'].root_module.resources is defined
+            else
+              0
+          }}
+
+    # -detailed-exitcode  Return detailed exit codes when the command exits.
+    #                     This will change the meaning of exit codes to:
+    #                     0 - Succeeded, diff is empty (no changes)
+    #                     1 - Errored
+    #                     2 - Succeeded, there is a diff
+    - name: Run 'terraform plan'
+      when: __terraform_state_file_stat.stat.exists
+      ansible.builtin.command:
+        cmd: terraform plan -no-color -input=false -detailed-exitcode
+        chdir: "/opt/terraform-configs/{{ terraform_config_name }}"
+      become: true
+      delegate_to: "{{ terraform_libvirt_host }}"
+      register: __terraform_libvirt_plan
+      failed_when: __terraform_libvirt_plan.rc not in [0, 2]
+      changed_when: false
+
+    - name: Check for replaced/destroyed resources
+      when: |
+        __terraform_state_file_stat.stat.exists and
+        ((_terraform_libvirt_object_count|int) != 0) and
+        (__terraform_libvirt_plan.rc == 2)
+      ansible.builtin.fail:
+        msg: Not applying config as it would replace/destroy some resources
+
+    - name: Apply Terraform configuration
+      community.general.terraform:
+        project_path: "/opt/terraform-configs/{{ terraform_config_name }}"
+        state: "present"
+        force_init: true
+        overwrite_init: false
+      become: true
+      delegate_to: "{{ terraform_libvirt_host }}"
