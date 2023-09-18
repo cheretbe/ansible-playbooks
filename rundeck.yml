@@ -1,0 +1,45 @@
+---
+
+- name: Setup Rundeck server in Docker compose
+  hosts: "{{ ansible_limit | default(omit) }}"
+  tasks:
+
+    - name: Create data directory structure with correct permissions
+      ansible.builtin.file:
+        path: "{{ _rundeck_data_dir.name }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ _rundeck_data_dir.owner }}"
+        group: root
+      become: true
+      loop_control:
+        loop_var: _rundeck_data_dir
+      loop:
+        - name: /opt/docker-data
+          owner: root
+        - name: /opt/docker-data/rundeck
+          owner: root
+        - name: /opt/docker-data/rundeck/server_data
+          owner: 1000
+        - name: /opt/docker-data/rundeck/config
+          owner: 1000
+
+    - name: Get realm.properties file information
+      ansible.builtin.stat:
+        path: /opt/docker-data/rundeck/config/realm.properties
+      register: __rundeck_realm_properties_stat
+
+    - name: Create default realm.properties file
+      when: not __rundeck_realm_properties_stat.stat.exists
+      ansible.builtin.copy:
+        dest: /opt/docker-data/rundeck/config/realm.properties
+        content: |
+          admin:BCRYPT:\$2a\$10\$BXlqczm1WOw.rfSfxmBDx.M4dKuN.raHXqF9FzKqCIHmw.0LiYQhy,user,admin
+        mode: "0644"
+        owner: 1000
+        group: root
+      become: true
+
+    - name: Deploy Docker compose config
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/docker-compose" # noqa: role-name[path]
