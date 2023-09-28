@@ -6,3 +6,17 @@ can't be used.
 
 * https://github.com/ansible-collections/community.docker/issues/676#issuecomment-1656146970
 * https://github.com/ansible-collections/community.docker/pull/586
+
+
+```yaml
+docker_compose_configs:
+  seafile:
+    env_variables:
+      VAR1: 4.16.0
+    local_settings:
+     services:
+       seafile:
+         # 1Gb with no swap
+         mem_limit: 1g
+         memswap_limit: 1g
+```
