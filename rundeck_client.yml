@@ -1,0 +1,38 @@
+---
+
+ - name: Configure Rundeck client
+   hosts: "{{ ansible_limit | default(omit) }}"
+   tasks:
+
+      - name: Add 'rundeck-user' user
+        ansible.builtin.user:
+          name: rundeck-user
+          # locked/disabled password
+          password: "!"
+          groups: "{{ rundeck_user_groups | default(omit) }}"
+        become: true
+
+      - name: Add 'rundeck-user' user authorized key
+        ansible.posix.authorized_key:
+          user: rundeck-user
+          state: present
+          key: "{{ rundeck_user_ssh_key }}"
+        become: true
+
+      - name: Make sure /etc/sudoers.d exists
+        ansible.builtin.file:
+          state: directory
+          path: /etc/sudoers.d
+          owner: root
+          group: root
+          mode: 0750
+        become: true
+
+      - name: Add sudoers file for 'rundeck-user'
+        ansible.builtin.copy:
+          content: "{{ rundeck_user_groups_sudoers_entry }}"
+          dest: /etc/sudoers.d/rundeck-user
+          mode: 0440
+          validate: "/usr/sbin/visudo -cf %s"
+        become: true
+        when: rundeck_user_groups_sudoers_entry is defined
