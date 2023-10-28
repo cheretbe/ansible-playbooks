@@ -1,0 +1,21 @@
+---
+
+- name: Add static DNS records to Mikrotik router
+  hosts: all
+  gather_facts: false
+  module_defaults:
+    group/community.routeros.api:
+      hostname: "{{ mikrotik_host_name | default(inventory_hostname) }}"
+      password: "{{ mikrotik_api_password }}"
+      username: "{{ ansible_user }}"
+      tls: true
+      validate_certs: true
+      validate_cert_hostname: true
+  tasks:
+
+    - name: Apply static DNS records
+      community.routeros.api_modify:
+        path: ip dns static
+        data: "{{ lookup('vars', *query('varnames', '^mt_dns_static_records')) | flatten(levels=1) }}"
+        handle_absent_entries: remove
+        handle_entries_content: remove_as_much_as_possible

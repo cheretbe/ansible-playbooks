@@ -1,9 +1,11 @@
 ansible
+ansible-pylibssh
 apacheconfig
 colorama
 humanfriendly
 jinja2
 jmespath
+librouteros
 pytest
 pytest-testinfra
 pywinrm
