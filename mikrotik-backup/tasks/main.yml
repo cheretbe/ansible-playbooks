@@ -1,0 +1,50 @@
+---
+
+- name: Set backup directory path on Ansible host
+  ansible.builtin.set_fact:
+    _mb_backup_path: "{{ mikrotik_backup_path if mikrotik_backup_path is defined else lookup('env','HOME') + '/Documents/data/mikrotik/' + inventory_hostname }}"
+
+- name: Make sure Ansible host backup directory exists
+  ansible.builtin.file:
+    state: directory
+    path: "{{ _mb_backup_path }}"
+  delegate_to: localhost
+
+- name: Generate backup file name
+  set_fact:
+    _mb_backup_name: "{{ '%Y-%m-%d_%H-%M-%S'|strftime }}_{{ mikrotik_backup_file_suffix }}"
+
+- name: Create current config script file
+  community.routeros.api:
+    path: "/"
+    cmd: "export file={{ _mb_backup_name }} terse=yes"
+    # This can take longer than default 10s on slow devices
+    timeout: 30
+
+- name: Create backup file
+  community.routeros.api:
+    path: system backup
+    cmd: "save name={{ _mb_backup_name }}"
+    timeout: 30
+
+- name: Download config and backup files to Ansible host
+  ansible.netcommon.net_get:
+    src: "{{ _mb_file_to_copy }}"
+    dest: "{{ _mb_backup_path }}/{{ _mb_file_to_copy }}"
+  loop:
+    - "{{ _mb_backup_name }}.rsc"
+    - "{{ _mb_backup_name }}.backup"
+  loop_control:
+    loop_var: _mb_file_to_copy
+    label: "{{ _mb_backup_path }}/{{ _mb_file_to_copy }}"
+
+- name: Remove config and backup files
+  community.routeros.api:
+    path: file
+    cmd: "remove numbers={{ _mb_file_to_remove }}"
+  loop:
+    - "{{ _mb_backup_name }}.rsc"
+    - "{{ _mb_backup_name }}.backup"
+  loop_control:
+    loop_var: _mb_file_to_remove
+    label: "{{ _mb_file_to_remove }}"

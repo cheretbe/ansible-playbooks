@@ -1,0 +1,16 @@
+---
+
+- name: Backup Mikrotik device
+  hosts: "{{ ansible_limit | default(omit) }}"
+  gather_facts: false
+  module_defaults:
+    group/community.routeros.api:
+      hostname: "{{ mikrotik_host_name | default(inventory_hostname) }}"
+      password: "{{ mikrotik_api_password }}"
+      username: "{{ ansible_user }}"
+      tls: "{{ mikrotik_use_tls | default(true) }}"
+      validate_certs: "{{ mikrotik_use_tls | default(true) }}"
+      validate_cert_hostname: "{{ mikrotik_use_tls | default(true) }}"
+
+  roles:
+    - mikrotik-backup
