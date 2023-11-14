@@ -6,6 +6,8 @@ humanfriendly
 jinja2
 jmespath
 librouteros
+paramiko
 pytest
 pytest-testinfra
 pywinrm
+scp

@@ -1,0 +1,79 @@
+---
+
+- name: Set update release channel
+  community.routeros.api_modify:
+    path: system package update
+    data:
+      - channel: "{{ mikrotik_update_channel }}"
+
+- name: Check for updates
+  community.routeros.api:
+    path: system package update
+    cmd: check-for-updates
+
+- name: Get current update status
+  community.routeros.api:
+    path: system package update
+    query: status installed-version latest-version
+  register: __mur_update_status
+
+- name: Display current update status
+  debug:
+    msg: >-
+      {{ __mur_update_status.msg[0].status }};
+      installed: {{ __mur_update_status.msg[0]["installed-version"] }};
+      latest: {{ __mur_update_status.msg[0]["latest-version"] }}
+
+- name: Update the system
+  when: __mur_update_status.msg[0].status == 'New version is available'
+  block:
+    - name: Create backup
+      include_role:
+        name: "{{ role_path }}/../mikrotik-backup"
+      vars:
+        mikrotik_backup_file_suffix: upgrade
+
+    - name: Download new packages and reboot
+      community.routeros.api:
+        path: system package update
+        cmd: install
+
+    - name: Wait for reboot to finish
+      ansible.builtin.wait_for_connection:
+        # Slow underpowered devices can still be processing reboot request
+        delay: 3
+        timeout: 300
+
+- name: Get firmware upgrade status
+  community.routeros.api:
+    path: system routerboard
+    query: routerboard current-firmware upgrade-firmware
+  register: __mur_firmware_status
+
+- name: Display firmware versions
+  debug:
+    msg: >-
+      Current firmware: {{ __mur_firmware_status.msg[0]["current-firmware"] }};
+      Upgrade firmware: {{ __mur_firmware_status.msg[0]["upgrade-firmware"] }}
+  when: __mur_firmware_status.msg[0].routerboard
+
+- name: Upgrade firmware
+  when: |
+    __mur_firmware_status.msg[0].routerboard and
+    (__mur_firmware_status.msg[0]["current-firmware"] != __mur_firmware_status.msg[0]["upgrade-firmware"])
+  block:
+
+    - name: Upgrade firmware
+      community.routeros.api:
+        path: system routerboard
+        cmd: upgrade
+
+    - name: Reboot
+      community.routeros.api:
+        path: system
+        cmd: reboot
+
+    - name: Wait for reboot to finish
+      ansible.builtin.wait_for_connection:
+        delay: 3
+        timeout: 300
