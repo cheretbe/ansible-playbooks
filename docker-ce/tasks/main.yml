@@ -97,6 +97,9 @@
           notify: Restart Docker service
           become: true
 
+        - name: Flush handlers
+          meta: flush_handlers
+
 - name: Set Docker registry proxy
   when: docker_ce_registry_proxy
   block:
@@ -132,3 +135,6 @@
         mode: "0440"
       become: true
       notify: Update CA Trust
+
+    - name: Flush handlers
+      meta: flush_handlers
