@@ -7,11 +7,44 @@
       ansible.builtin.include_role:
         name: "{{ playbook_dir }}/docker-ce" # noqa: role-name[path]
 
-    - name: Checkout shared docker configs repository # noqa: latest[git]
-      ansible.builtin.git:
-        repo: https://github.com/cheretbe/docker-configs.git
-        dest: /opt/docker-configs
-      become: true
+    - name: Get shared docker configs directory information
+      ansible.builtin.stat:
+        path: /opt/docker-configs
+      register: __dcs_config_dir_info
+
+    - name: Checkout shared docker configs repo
+      when: not (dcs_debug_local_configs_source | default(False))
+      block:
+        - name: Make sure target directory is not a symlink
+          ansible.builtin.file:
+            path: /opt/docker-configs
+            state: absent
+          become: true
+          when: __dcs_config_dir_info.stat.exists and __dcs_config_dir_info.stat.islnk
+
+        - name: Checkout shared docker configs repo # noqa: latest[git]
+          git:
+            repo: https://github.com/cheretbe/docker-configs.git
+            dest: /opt/docker-configs
+          become: true
+
+    - name: Symlink shared docker configs to custom directory
+      when: dcs_debug_local_configs_source | default(False)
+      block:
+        - name: Make sure target directory doesn't exist as a regular directory
+          ansible.builtin.file:
+            path: /opt/docker-configs
+            state: absent
+          become: true
+          when: __dcs_config_dir_info.stat.exists and (not __dcs_config_dir_info.stat.islnk)
+
+        - name: Symlink shared docker configs to custom directory
+          ansible.builtin.file:
+            state: link
+            src: "{{ dcs_debug_local_configs_source }}"
+            dest: /opt/docker-configs
+            force: true
+          become: true
 
     - name: Prepare and run Docker compose config
       ansible.builtin.include_role:
