@@ -1,22 +1,20 @@
+---
+
 - name: Check if mandatory variables are defined
   assert:
     that:
       - ovpn_server_ca_cert is defined
       - ovpn_server_cert is defined
       - ovpn_server_key is defined
-      - ovpn_server_ta_key is defined
       - ovpn_server_dns_name is defined
-
-- name: Make sure dpkg frontend lock is released
-  include_role: name="{{ role_path }}/../apt-wait-for-unlock"
 
 - name: Install apt packages
   apt:
     name: |
       {{ ['openvpn'] + (['bind9', 'bind9utils'] if (ovpn_server_dns_resolver|bool) else []) }}
     update_cache: yes
-    # 1 hour
-    cache_valid_time: 3600
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: yes
 
 - name: Create server config directory structure
@@ -39,7 +37,16 @@
     - {"src": "{{ ovpn_server_ca_cert }}", "dest": "ca.crt", mode: "0644"}
     - {"src": "{{ ovpn_server_cert }}", "dest": "server.crt", mode: "0644"}
     - {"src": "{{ ovpn_server_key }}", "dest": "server.key", mode: "0600"}
-    - {"src": "{{ ovpn_server_ta_key }}", "dest": "ta.key", mode: "0644"}
+
+- name: Generate HMAC key
+  ansible.builtin.command: /usr/sbin/openvpn --genkey --secret /etc/openvpn/server/ta.key
+  args:
+    creates: /etc/openvpn/server/ta.key
+
+- name: Set HMAC key permissions
+  ansible.builtin.file:
+    path: /etc/openvpn/server/ta.key
+    mode: '0644'
 
 - name: Create OpenVPN server config
   ansible.builtin.template:
