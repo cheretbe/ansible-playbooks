@@ -8,6 +8,7 @@ ovpn_server_key:      /path/to/server.key
 ovpn_server_dns_name: vpn.example.com
 
 # Optional parameters
+ovpn_server_ta_key:   /path/to/ta.key # will be generated if ommited
 ovpn_server_port: "1194"
 ovpn_server_protocol: udp
 ovpn_server_dns_resolver: true

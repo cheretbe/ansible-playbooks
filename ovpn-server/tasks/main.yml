@@ -37,16 +37,31 @@
     - {"src": "{{ ovpn_server_ca_cert }}", "dest": "ca.crt", mode: "0644"}
     - {"src": "{{ ovpn_server_cert }}", "dest": "server.crt", mode: "0644"}
     - {"src": "{{ ovpn_server_key }}", "dest": "server.key", mode: "0600"}
+  notify: Restart 'openvpn-server@server' service
+
+- name: Copy pre-configured HMAC key
+  ansible.builtin.copy:
+    src: "{{ ovpn_server_ta_key }}"
+    dest: "/etc/openvpn/server/ta.key"
+    mode: "0644"
+  become: yes
+  when: ovpn_server_ta_key is defined
+  notify: Restart 'openvpn-server@server' service
 
 - name: Generate HMAC key
   ansible.builtin.command: /usr/sbin/openvpn --genkey --secret /etc/openvpn/server/ta.key
   args:
     creates: /etc/openvpn/server/ta.key
+  become: yes
+  when: ovpn_server_ta_key is not defined
+  notify: Restart 'openvpn-server@server' service
 
 - name: Set HMAC key permissions
   ansible.builtin.file:
     path: /etc/openvpn/server/ta.key
     mode: '0644'
+  become: yes
+  when: ovpn_server_ta_key is not defined
 
 - name: Create OpenVPN server config
   ansible.builtin.template:
