@@ -14,10 +14,20 @@
   set_fact:
     _mb_backup_name: "{{ '%Y-%m-%d_%H-%M-%S'|strftime }}_{{ mikrotik_backup_file_suffix }}"
 
+- name: Get system version info
+  community.routeros.api:
+    path: system resource
+    query: version
+  register: __mb_version_info
+
+- name: Set sensitive parameter fact based on system version
+  ansible.builtin.set_fact:
+    _mb_sensitive_option: "{{ (((__mb_version_info.msg[0].version | split('.'))[0] | int) >= 7) | ternary('show-sensitive=yes', 'hide-sensitive=no') }}"
+
 - name: Create current config script file
   community.routeros.api:
     path: "/"
-    cmd: "export file={{ _mb_backup_name }} terse=yes"
+    cmd: "export file={{ _mb_backup_name }} terse=yes {{ _mb_sensitive_option }}"
     # This can take longer than default 10s on slow devices
     timeout: 30
 
