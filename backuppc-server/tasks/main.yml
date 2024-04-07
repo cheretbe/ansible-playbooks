@@ -1,11 +1,22 @@
 ---
 # tasks file for backuppc-server
 
-- name: Check distribution
-  fail:
-    msg: "Only Ubuntu 18.04 and 20.04 are supported"
-  when: (ansible_distribution != "Ubuntu") or
-        (ansible_distribution_version not in ["18.04", "20.04"])
+- name: Check if distribution is supported
+  ansible.builtin.set_fact:
+    _backuppc_server_supported_dist: true
+  when:
+    - item.distribution == ansible_distribution and item.version == ansible_distribution_version
+  loop:
+    - { distribution: "Ubuntu", version: "18.04" }
+    - { distribution: "Ubuntu", version: "20.04" }
+    - { distribution: "Ubuntu", version: "22.04" }
+
+- name: Fail on not supported distributions
+  ansible.builtin.fail:
+    msg: >-
+      {{ ansible_distribution }} {{ ansible_distribution_version }} is not supported.
+      Use 'backuppc_server_skip_dist_check' setting to skip the check
+  when: not ((_backuppc_server_supported_dist is defined) or (backuppc_server_skip_dist_check is defined))
 
 - name: Wait for dpkg frontend to unlock
   include_role: name="{{ role_path }}/../apt-wait-for-unlock"
