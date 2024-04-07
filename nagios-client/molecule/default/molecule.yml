@@ -1,4 +1,5 @@
 ---
+
 lint: |
   set -e
   yamllint .
@@ -7,31 +8,29 @@ lint: |
 dependency:
   name: galaxy
 driver:
-  name: docker
+  name: podman
+  name: vagrant
 platforms:
-  - name: ubuntu-focal
-    image: geerlingguy/docker-ubuntu2004-ansible
-    pre_build_image: true
-    privileged: true
-    command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: ubuntu-jammy
+    box: ubuntu/jammy64
 
-  - name: ubuntu-bionic
-    image: geerlingguy/docker-ubuntu1804-ansible
-    pre_build_image: true
-    privileged: true
-    command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  - name: debian-12
+    box: debian/bookworm64
 
-  - name: ubuntu-xenial
-    image: geerlingguy/docker-ubuntu1604-ansible
-    pre_build_image: true
-    privileged: true
-    command: ""
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+  # - name: ubuntu-jammy
+  #   image: docker.io/geerlingguy/docker-ubuntu2204-ansible
+  #   pre_build_image: true
+  #   command: /lib/systemd/systemd
+
+  # - name: debian-11
+  #   image: docker.io/geerlingguy/docker-debian11-ansible:latest
+  #   pre_build_image: true
+  #   command: /lib/systemd/systemd
+
+  # - name: debian-12
+  #   image: docker.io/geerlingguy/docker-debian12-ansible:latest
+  #   pre_build_image: true
+  #   command: /lib/systemd/systemd
 
 provisioner:
   name: ansible

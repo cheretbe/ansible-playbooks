@@ -1,57 +1,22 @@
 ---
 # tasks file for nagios-client
 
-- name: Set common packages
-  set_fact:
-    nagios_client_apt_packages: [
-      "acl", "git", "libconfig-json-perl", "nagios-nrpe-server", "python-tz",
-      "python-dateutil", "python-lxml"
-    ]
-
-- name: Add packages specific to Ubuntu Bionic and Xenial
-  set_fact:
-    nagios_client_apt_packages: >
-      {{ nagios_client_apt_packages + ['python', 'nagios-plugins', 'python-requests'] }}
-  when: ansible_distribution_release == "bionic" or ansible_distribution_release == "xenial"
-
-- name: Add packages specific to Ubuntu Focal
-  set_fact:
-    nagios_client_apt_packages: >
-      {{ nagios_client_apt_packages + [
-          'python-is-python2', 'monitoring-plugins', 'python-idna', 'python-certifi',
-          'xz-utils'
-      ] }}
-  when: ansible_distribution_release == "focal"
-
 - name: Configure smartmontools when not running in a VM
   include_role:
     name: "{{ role_path }}/../smartmontools"
   when: ansible_virtualization_role != "guest"
 
-# - debug:
-#     var: nagios_client_apt_packages
-
-- include_role: name="../apt-wait-for-unlock"
-  when: ansible_os_family == "Debian"
-
 - name: Install prerequisite packages
-  apt:
-    name: "{{ nagios_client_apt_packages }}"
+  ansible.builtin.apt:
+    name: [
+      "acl", "git", "libconfig-json-perl", "smartmontools", "monitoring-plugins",
+      "nagios-nrpe-server"
+    ]
     state: present
-    update_cache: yes
-    # 10 min
-    cache_valid_time: 600
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: true
-
-- name: Manually download and install Python 2 packages, missing in Ubuntu Focal
-  apt:
-    deb: "{{ item }}"
-    state: present
-  become: true
-  when: ansible_distribution_release == "focal"
-  with_items:
-      - "http://security.ubuntu.com/ubuntu/pool/main/p/python-urllib3/python-urllib3_1.24.1-1ubuntu1_all.deb"
-      - "http://security.ubuntu.com/ubuntu/pool/main/r/requests/python-requests_2.21.0-1_all.deb"
 
 - name: Checkout custom plugins git repo
   git:
@@ -69,19 +34,8 @@
     owner: root
     group: root
     mode: 0440
+    validate: "/usr/sbin/visudo -cf %s"
   become: true
-
-- name: Set 'allowed_hosts' parameter in '/etc/nagios/nrpe_local.cfg'
-  ini_file:
-    path: /etc/nagios/nrpe_local.cfg
-    section: ""
-    no_extra_spaces: true
-    option: allowed_hosts
-    value: "{{ nagios_client_allowed_hosts }}"
-    backup: true
-  become: true
-  notify: Restart Nagios NRPE service
-
 
 - name: "Add custom NRPE settings template"
   template:
@@ -94,34 +48,3 @@
     force: no
   become: true
   notify: Restart Nagios NRPE service
-
-- name: Create log directory for update script
-  file:
-    path: /var/lib/nagios/log
-    state: directory
-    mode: 0755
-    owner: nagios
-    group: nagios
-  become: true
-
-- name: Add cron job for daily nagios-plugins repo update
-  cron:
-    name: Check for nagios-plugins repository updates daily
-    # Using seed ensures random, but idempotent numbers
-    minute: "{{ 59 | random(seed=inventory_hostname) }}"
-    hour: "{{ 23 | random(seed=inventory_hostname) }}"
-    user: nagios
-    job: >
-      /var/lib/nagios/nagios-plugins/update/update_nagios_plugins.sh >>
-      /var/lib/nagios/log/nagios-plugins-update.log
-    cron_file: nagios-plugins-update
-  become: true
-
-- name: "Add log rotation rule for update script log"
-  template:
-    src: etc_logrotate.d_nagios-plugins-update.j2
-    dest: /etc/logrotate.d/nagios-plugins-update
-    owner: root
-    group: root
-    mode: 0644
-  become: true

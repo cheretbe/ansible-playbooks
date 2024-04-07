@@ -5,5 +5,10 @@
     - name: "Include nagios-client"
       include_role:
         name: "nagios-client"
-      # vars:
+      vars:
       #   smartmontools_force_vm: true
+        nagios_client_zfs_checks: true
+
+    - name: "Debug"
+      include_role:
+        name: "linux-unattended-upgrades"

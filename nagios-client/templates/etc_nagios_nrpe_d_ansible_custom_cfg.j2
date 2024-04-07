@@ -2,11 +2,17 @@
 # Latest version is at:
 # https://github.com/cheretbe/ansible-playbooks/blob/master/nagios-client/templates/etc_nagios_nrpe_d_ansible_custom_cfg.j2
 
+allowed_hosts={{ nagios_client_allowed_hosts }}
+
 command[check_root]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /
 command[check_swap]=/usr/lib/nagios/plugins/check_swap -w 20 -c 10
-command[check_nagios_plugins_update_status]=/var/lib/nagios/nagios-plugins/check_status_file/check_status_file.py /var/lib/nagios/plugins_update_status
 command[check_unattended_upgrades]=/var/lib/nagios/nagios-plugins/check_ubuntu_unattended_upgrades/unattended_upgrades.py --config-file /etc/apt/apt.conf.d/90-ansible-unattended-upgrades
+
+# -g is Perl glob option. Examples: "/dev/sd[a,c-z]", "/dev/sd{a,b,d}", "/dev/sdb /dev/sd[d-z] /dev/nvme?n1"
+# https://www.claudiokuenzler.com/monitoring-plugins/check_smart.php
+# https://perldoc.perl.org/functions/glob
 command[check_smart]=/var/lib/nagios/nagios-plugins/check_smart/check_smart.pl -g "/dev/sd[a-z]" -i auto
+
 command[check_zfs_pools]=sudo /var/lib/nagios/nagios-plugins/check_zpools/check_zpools.sh -p ALL -w 80 -c 90
 command[check_sanoid_snapshots]=/usr/bin/sudo /opt/sanoid/sanoid --monitor-snapshots
 command[check_sanoid_health]=/usr/bin/sudo /opt/sanoid/sanoid --monitor-health
