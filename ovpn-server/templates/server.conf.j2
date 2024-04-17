@@ -11,6 +11,9 @@ proto {{ ovpn_server_protocol }}
 dev tun
 
 ca ca.crt
+{% if ovpn_server_ca_crl is defined %}
+crl-verify /etc/openvpn/server/ca_crl.pem
+{% endif %}
 cert server.crt
 key server.key
 

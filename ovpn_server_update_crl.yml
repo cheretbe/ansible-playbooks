@@ -1,0 +1,17 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+
+    - name: Copy CA CRL file
+      ansible.builtin.copy:
+        src: "{{ ovpn_server_ca_crl }}"
+        dest: "/etc/openvpn/server/ca_crl.pem"
+        mode: "0644"
+      become: yes
+      when: ovpn_server_ca_crl is defined
+      # No need to restart the service as the CRL file will be re-read any time a
+      # new client connects or an existing client renegotiates the SSL/TLS
+      # connection (by default once per hour).
+      # https://openvpn.net/community-resources/revoking-certificates/

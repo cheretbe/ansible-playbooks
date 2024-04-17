@@ -39,6 +39,14 @@
     - {"src": "{{ ovpn_server_key }}", "dest": "server.key", mode: "0600"}
   notify: Restart 'openvpn-server@server' service
 
+- name: Copy CA CRL file
+  ansible.builtin.copy:
+    src: "{{ ovpn_server_ca_crl }}"
+    dest: "/etc/openvpn/server/ca_crl.pem"
+    mode: "0644"
+  become: yes
+  when: ovpn_server_ca_crl is defined
+
 - name: Copy pre-configured HMAC key
   ansible.builtin.copy:
     src: "{{ ovpn_server_ta_key }}"
