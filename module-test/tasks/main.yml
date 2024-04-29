@@ -1,8 +1,0 @@
----
-- debug:
-    msg: there you go
-
-# - debug:
-#     var: hostvars
-
-- my_module:
