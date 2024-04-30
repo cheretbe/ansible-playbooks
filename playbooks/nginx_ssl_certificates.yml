@@ -1,0 +1,30 @@
+---
+
+- hosts: all
+  become: yes
+  tasks:
+
+    - name: Copy Nginx SSL certificates
+      ansible.builtin.copy:
+        src:   "{{ _nsc_file.src }}"
+        dest:  "{{ _nsc_file.dest }}"
+        owner: "{{ _nsc_file.owner }}"
+        group: "{{ _nsc_file.group }}"
+        mode:  "{{ _nsc_file.mode }}"
+        backup: true
+      loop: "{{ nginx_ssl_certificate_files }}"
+      loop_control:
+        loop_var: _nsc_file
+      become: true
+      notify: Restart nginx.service
+
+    - name: Test Nginx configuration
+      ansible.builtin.command: /usr/sbin/nginx -t
+      changed_when: false
+
+  handlers:
+    - name: Restart nginx.service
+      ansible.builtin.systemd:
+        name: nginx.service
+        state: restarted
+      become: true
