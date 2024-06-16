@@ -63,6 +63,6 @@
       ansible.builtin.copy:
         content: "{{ linux_motd_custom_message }}"
         dest: /etc/update-motd.d/ansible_custom_message.txt
-        mode: 0440
+        mode: 0644
       become: true
       when: linux_motd_custom_message is defined
