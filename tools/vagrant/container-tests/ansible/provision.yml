@@ -11,7 +11,6 @@
 
     # Docker should be installed at this point, we run it just so that
     # local "docker_ce_registry_mirrors" setting is propagated
-    - include_role: name="/ansible-playbooks/apt-wait-for-unlock"
     - include_role: name="/ansible-playbooks/docker-ce"
 
     - name: Export PACKAGE_CACHE_HOST env variable

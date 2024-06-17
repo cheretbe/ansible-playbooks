@@ -1,14 +1,11 @@
 ---
 
 - block:
-    - name: Wait for dpkg frontend to unlock
-      include_role: name="../apt-wait-for-unlock"
-
     - name: Make sure apt 'sendmail' package is not installed
       apt:
         name: sendmail
         state: absent
-        purge: yes
+        purge: true
 
     # We select "No configuration" option to prevent configuration being
     # overwritten on possible future dpkg-reconfigure calls
@@ -20,15 +17,15 @@
         question: "postfix/main_mailer_type"
         value: "No configuration"
         vtype: select
-      become: yes
+      become: true
 
     - name: Install apt 'postfix' package
       apt:
         name: postfix
-        update_cache: yes
-        # 1 hour
-        cache_valid_time: 3600
-      become: yes
+        update_cache: true
+        cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+        lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+      become: true
 
   when: ansible_os_family == "Debian"
 
@@ -37,13 +34,13 @@
       yum:
         name: sendmail
         state: absent
-      become: yes
+      become: true
 
     - name: Install yum 'postfix' package
       yum:
         name: postfix
         state: present
-      become: yes
+      become: true
 
   when: ansible_os_family == "RedHat"
 
@@ -54,8 +51,8 @@
     owner: root
     group: root
     mode: 0644
-    backup: yes
-  become: yes
+    backup: true
+  become: true
   notify: Restart 'postfix' service
 
 - name: Update system aliases table
@@ -65,6 +62,6 @@
     owner: root
     group: root
     mode: 0644
-    backup: yes
-  become: yes
+    backup: true
+  become: true
   notify: Re-initialize aliases database

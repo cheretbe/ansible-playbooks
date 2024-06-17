@@ -1,14 +1,11 @@
 ---
-- name: Wait for dpkg frontend to unlock
-  include_role: name="../apt-wait-for-unlock"
-
 - name: Install apt 'unattended-upgrades' package
   apt:
     name: unattended-upgrades
-    update_cache: yes
-    # 1 hour
-    cache_valid_time: 3600
-  become: yes
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
 
 - name: Create custom unattended upgrades configuration file
   template:
@@ -17,4 +14,4 @@
     owner: root
     group: root
     mode: 0644
-  become: yes
+  become: true

@@ -71,16 +71,13 @@
     router_apt_packages: "{{ router_apt_packages + ['privoxy'] }}"
   when: router_http_proxy|bool
 
-- name: Make sure dpkg frontend lock is released
-  include_role: name="{{ role_path }}/../apt-wait-for-unlock"
-
 - name: Install apt packages
   apt:
     name: "{{ router_apt_packages }}"
-    update_cache: yes
-    # 1 hour
-    cache_valid_time: 3600
-  become: yes
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
 
 - name: Create privoxy config
   ansible.builtin.template:
@@ -89,7 +86,7 @@
     owner: root
     group: root
     mode: '0644'
-  become: yes
+  become: true
   notify: Restart 'privoxy' service
   when: router_http_proxy|bool
 
@@ -97,10 +94,10 @@
   ansible.posix.sysctl:
     name: net.ipv4.ip_forward
     value: '1'
-    sysctl_set: yes
+    sysctl_set: true
     state: present
-    reload: yes
-  become: yes
+    reload: true
+  become: true
 
 - name: iptables - NAT LAN client's connections
   ansible.builtin.iptables:
@@ -110,7 +107,7 @@
     out_interface: "{{ router_wan_if_name }}"
     jump: MASQUERADE
     comment: NAT LAN client's connections
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Drop non-VPN LAN client's connections
@@ -122,7 +119,7 @@
     out_interface: "!{{ router_wan_if_name }}"
     jump: DROP
     comment: Drop non-VPN LAN client's connections
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Allow SSH from non-WAN interfaces
@@ -135,7 +132,7 @@
     in_interface: "!{{ router_wan_if_name }}"
     jump: ACCEPT
     comment: Allow SSH from non-WAN interfaces
-  become: yes
+  become: true
   when: not router_allow_wan_ssh
   notify: Save iptables state
 
@@ -147,7 +144,7 @@
     destination_port: 22
     jump: ACCEPT
     comment: Allow SSH
-  become: yes
+  become: true
   when: router_allow_wan_ssh
   notify: Save iptables state
 
@@ -158,7 +155,7 @@
     in_interface: lo
     jump: ACCEPT
     comment: Allow loopback connections
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Allow ICMP (INPUT)
@@ -168,7 +165,7 @@
     protocol: icmp
     jump: ACCEPT
     comment: Allow ICMP
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Allow LAN connections (INPUT)
@@ -178,7 +175,7 @@
     in_interface: "{{ router_lan_if.device }}"
     jump: ACCEPT
     comment: Allow LAN connections
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Allow LAN connections (FORWARD)
@@ -188,7 +185,7 @@
     in_interface: "{{ router_lan_if.device }}"
     jump: ACCEPT
     comment: Allow LAN connections
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Allow established and related connections (INPUT)
@@ -198,7 +195,7 @@
     ctstate: ESTABLISHED,RELATED
     jump: ACCEPT
     comment: Allow established and related connections
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Allow established and related connections (FORWARD)
@@ -208,7 +205,7 @@
     ctstate: ESTABLISHED,RELATED
     jump: ACCEPT
     comment: Allow established and related connections
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: Allow connections on custom ports
@@ -219,7 +216,7 @@
     destination_port: "{{ item.port }}"
     jump: ACCEPT
     comment: "{{ item.comment }}"
-  become: yes
+  become: true
   loop: "{{ router_custom_ports }}"
   notify: Save iptables state
 
@@ -227,12 +224,12 @@
   ansible.builtin.iptables:
     chain: INPUT
     policy: DROP
-  become: yes
+  become: true
   notify: Save iptables state
 
 - name: iptables - Set the policy for the FORWARD chain to DROP
   ansible.builtin.iptables:
     chain: FORWARD
     policy: DROP
-  become: yes
+  become: true
   notify: Save iptables state

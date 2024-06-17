@@ -23,6 +23,7 @@
     name: ["gpg-agent", "apt-transport-https", "ca-certificates"]
     update_cache: true
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: true
 
 - name: Add Docker repository key
