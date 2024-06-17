@@ -1,7 +1,7 @@
 ---
 # tasks file for smartmontools
 
-- name: Check if running in a physical machine
+- name: Check if running on a physical machine
   fail:
     msg: "Will not install in a VM or a container. Use 'smartmontools_force_vm' parameter to override"
   when: ansible_virtualization_role == "guest"
@@ -10,12 +10,14 @@
 # smartmontools package depends on postfix package. We use MTA installation
 # role to make sure that postfix is configured properly.
 - include_role:
-    name: ../linux-mta
+    name: linux-mta
 
 - name: Install smartmontools package
   apt:
     name:  "smartmontools"
-    update_cache: yes
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: true
 
 - name: "Write custom smartd config"
