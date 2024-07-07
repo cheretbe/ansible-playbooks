@@ -19,6 +19,7 @@
 
     - name: Test Nginx configuration
       ansible.builtin.command: /usr/sbin/nginx -t
+      become: true
       changed_when: false
 
   handlers:
