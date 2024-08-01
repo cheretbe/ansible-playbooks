@@ -1,0 +1,15 @@
+---
+
+- name: Check that at least one terraform project is defined
+  ansible.builtin.assert:
+    that:
+      (ta_terraform_projects | length) > 0
+
+- name: Apply configs for defined terraform projects
+  ansible.builtin.include_tasks: apply_terraform_config.yml
+  vars:
+    docker_compose_config_to_init: "{{ _ta_tf_project }}"
+  loop: "{{ ta_terraform_projects | dict2items }}"
+  loop_control:
+    loop_var: _ta_tf_project
+    label: "{{ _ta_tf_project.key }}"
