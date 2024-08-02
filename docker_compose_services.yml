@@ -5,7 +5,7 @@
   tasks:
     - name: Install and configure Docker
       ansible.builtin.include_role:
-        name: "{{ playbook_dir }}/docker-ce" # noqa: role-name[path]
+        name: "{{ playbook_dir }}/roles/docker-ce" # noqa: role-name[path]
 
     - name: Get shared docker configs directory information
       ansible.builtin.stat:
@@ -48,4 +48,4 @@
 
     - name: Prepare and run Docker compose config
       ansible.builtin.include_role:
-        name: "{{ playbook_dir }}/docker-compose" # noqa: role-name[path]
+        name: "{{ playbook_dir }}/roles/docker-compose" # noqa: role-name[path]
