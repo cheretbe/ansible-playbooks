@@ -109,7 +109,7 @@
 
     - name: Write current config file
       ansible.builtin.shell: |
-        {{ __dc_compose_command }} config > local-data/config_{{ '%Y-%m-%d_%H-%M' | strftime }}.txt
+        {{ __dc_compose_command }} config --format json > local-data/config_{{ '%Y-%m-%d_%H-%M' | strftime }}.json
       args:
         chdir: "/opt/docker-configs/{{ docker_compose_config_to_init.key }}"
       become: true
