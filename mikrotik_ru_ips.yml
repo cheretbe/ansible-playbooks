@@ -1,0 +1,70 @@
+---
+
+- name: Add anti-lock targets list to Mikrotik router
+  hosts: all
+  gather_facts: false
+  module_defaults:
+    group/community.routeros.api:
+      hostname: "{{ mikrotik_host_name | default(inventory_hostname) }}"
+      password: "{{ mikrotik_api_password }}"
+      username: "{{ ansible_user }}"
+      tls: "{{ mikrotik_use_tls | default(true) }}"
+      validate_certs: "{{ mikrotik_use_tls | default(true) }}"
+      validate_cert_hostname: "{{ mikrotik_use_tls | default(true) }}"
+  tasks:
+
+    - name: Get IP address data
+      uri:
+        url: https://stat.ripe.net/data/country-resource-list/data.json?resource=RU
+        return_content: yes
+      delegate_to: localhost
+      run_once: true
+      register: __mri_ripe_ip_data
+
+    - name: Extract IP address list
+      ansible.builtin.set_fact:
+        # __mri_ripe_ip_list: ["217.197.112.0/20", "217.198.112.0/20", "217.199.112.0/20"]
+        __mri_ripe_ip_list: "{{ (__mri_ripe_ip_data.content | from_json).data.resources.ipv4 }}"
+
+    # This ugly Jinja contraption is here to avoid adding records one by one
+    - name: Create IP data dict
+      ansible.builtin.set_fact:
+        __mri_ripe_address_list: |
+          {% set temp_dict = [] %}
+          {% for _mri_ip_network in __mri_ripe_ip_list %}
+          {% set temp_dict = temp_dict.append({'list': 'antilock-targets-ru-auto', 'address': _mri_ip_network}) %}
+          {% endfor %}
+          {{ temp_dict }}
+
+    - name: Get existing 'antilock-targets-ru-auto' list items
+      community.routeros.api:
+        path: "ip firewall address-list"
+        extended_query:
+          attributes:
+            - address
+            - list
+            - .id
+          where:
+            - attribute: "list"
+              is: "=="
+              value: "antilock-targets-ru-auto"
+      register: __mri_address_list
+
+    - name: Build address list diff
+      mikrotik_address_list_diff:
+        existing_records: "{{ __mri_address_list.msg }}"
+        new_ips: "{{ __mri_ripe_address_list }}"
+      register:
+        __mri_diff_data
+
+    # Optimize performance by combining record IDs into a comma-delimited list and deleting all
+    # records in one API call
+    - name: Remove obsolete 'antilock-targets-ru-auto' list items
+      community.routeros.api:
+        path: ip firewall address-list
+        remove: "{{ __mri_diff_data.ids_to_delete | join(',') }}"
+
+    - name: Add new IPs to the 'antilock-targets-ru-auto' list
+      community.routeros.api_modify:
+        path: "ip firewall address-list"
+        data: "{{ __mri_diff_data.ips_to_add }}"
