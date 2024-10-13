@@ -2,15 +2,14 @@
 - name: Setup docker host
   hosts: all
   tasks:
-    - name: Check if mandatory variables are defined
-      ansible.builtin.assert:
-        that:
-          - docker_ce_users is defined
-        quiet: true
+    - name: Check if recommended variables are defined
+      display_warning:
+        msg: Consider setting 'docker_ce_users' variable
+      when: docker_ce_users is not defined
 
     - name: Install and configure Docker
       ansible.builtin.include_role:
-        name: "{{ playbook_dir }}/docker-ce" # noqa: role-name[path]
+        name: docker-ce
 
     # # become + become_user combination fails without this package
     # - name: Install acl APT package
