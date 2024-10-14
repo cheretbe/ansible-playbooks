@@ -5,9 +5,9 @@
   vars:
     router_dns_forwarder: false
   tasks:
-    - include_role: name="{{ playbook_dir }}/ovpn-server"
+    - include_role: name=ovpn-server
 
     - name: Update facts to make ansible_tun0 variable available
       setup:
 
-    - include_role: name="{{ playbook_dir }}/router"
+    - include_role: name=router
