@@ -15,16 +15,28 @@
 
     - name: Get IP address data
       uri:
-        url: https://stat.ripe.net/data/country-resource-list/data.json?resource=RU
+        url: "https://stat.ripe.net/data/country-resource-list/data.json?resource={{ _mri_country }}"
         return_content: yes
+      loop:
+        - RU
+        - BY
+      loop_control:
+        loop_var: _mri_country
       delegate_to: localhost
       run_once: true
       register: __mri_ripe_ip_data
 
-    - name: Extract IP address list
+    - name: Extract combined IP address list
       ansible.builtin.set_fact:
-        # __mri_ripe_ip_list: ["217.197.112.0/20", "217.198.112.0/20", "217.199.112.0/20"]
-        __mri_ripe_ip_list: "{{ (__mri_ripe_ip_data.content | from_json).data.resources.ipv4 }}"
+        __mri_ripe_ip_list: "{{ (__mri_ripe_ip_list | default([])) + _mri_country_ips.json.data.resources.ipv4 }}"
+      loop: "{{ __mri_ripe_ip_data.results }}"
+      loop_control:
+        loop_var: _mri_country_ips
+        label: "{{ _mri_country_ips._mri_country }}"
+
+    # - name: Set debug IP address list
+    #   ansible.builtin.set_fact:
+    #     __mri_ripe_ip_list: ["217.197.112.0/20", "217.198.112.0/20", "217.199.112.0/20"]
 
     # This ugly Jinja contraption is here to avoid adding records one by one
     - name: Create IP data dict
