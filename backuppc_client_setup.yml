@@ -2,6 +2,12 @@
 
 - hosts: all
   tasks:
+    - name: Check that mandatory variables are defined
+      ansible.builtin.assert:
+        that:
+          - (backuppc_client_ssh_auth_key is defined) or (backuppc_client_rsync_password is defined)
+      when: ansible_system == "Linux"
+
     - include_role:
         name: backuppc-client
       when: ansible_system == "Linux" and backuppc_client_ssh_auth_key is defined
