@@ -1,0 +1,14 @@
+---
+
+- name: Check that at least one compose project is defined
+  ansible.builtin.assert:
+    that:
+      (docker_compose_projects | length) > 0
+
+- name: Deploy Docker Compose services
+  ansible.builtin.include_tasks:
+    file: deploy_compose_project.yml
+  loop: "{{ docker_compose_projects }}"
+  loop_control:
+    loop_var: _docker_compose_project
+    label: "{{ _docker_compose_project.name }}"

@@ -1,3 +1,5 @@
+:warning: Deprecated: use `docker-compose-projects` instead
+
 Why this role is being used instead of [docker_compose](https://docs.ansible.com/ansible/latest/collections/community/docker/docker_compose_module.html) module?
 
 As of 13.01.23 `docker_compose` module has a requirement: (docker-compose >= 1.7.0, < 2.0.0)[https://docs.ansible.com/ansible/latest/collections/community/docker/docker_compose_module.html#ansible-collections-community-docker-docker-compose-module-requirements].

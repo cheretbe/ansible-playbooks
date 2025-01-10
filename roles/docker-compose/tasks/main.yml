@@ -1,5 +1,9 @@
 ---
 
+- name: Display deprecation warning
+  display_warning:
+    msg: docker-compose role is deprecated. Use docker-compose-services role instead
+
 - name: Check that at least one compose config is defined
   ansible.builtin.assert:
     that:

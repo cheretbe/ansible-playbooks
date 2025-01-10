@@ -1,26 +1,22 @@
 ---
 
-- name: Setup Docker compose services
+- name: Setup Docker compose projects
   hosts: all
   tasks:
-    - name: Install and configure Docker
-      ansible.builtin.include_role:
-        name: "{{ playbook_dir }}/roles/docker-ce" # noqa: role-name[path]
-
     - name: Get shared docker configs directory information
       ansible.builtin.stat:
         path: /opt/docker-configs
-      register: __dcs_config_dir_info
+      register: __dcp_config_dir_info
 
     - name: Checkout shared docker configs repo
-      when: not (dcs_debug_local_configs_source | default(False))
+      when: not (docker_compose_projects_debug_local_config_symlink | default(False))
       block:
         - name: Make sure target directory is not a symlink
           ansible.builtin.file:
             path: /opt/docker-configs
             state: absent
           become: true
-          when: __dcs_config_dir_info.stat.exists and __dcs_config_dir_info.stat.islnk
+          when: __dcp_config_dir_info.stat.exists and __dcp_config_dir_info.stat.islnk
 
         - name: Checkout shared docker configs repo # noqa: latest[git]
           git:
@@ -29,23 +25,23 @@
           become: true
 
     - name: Symlink shared docker configs to custom directory
-      when: dcs_debug_local_configs_source | default(False)
+      when: docker_compose_projects_debug_local_config_symlink | default(False)
       block:
         - name: Make sure target directory doesn't exist as a regular directory
           ansible.builtin.file:
             path: /opt/docker-configs
             state: absent
           become: true
-          when: __dcs_config_dir_info.stat.exists and (not __dcs_config_dir_info.stat.islnk)
+          when: __dcp_config_dir_info.stat.exists and (not __dcp_config_dir_info.stat.islnk)
 
         - name: Symlink shared docker configs to custom directory
           ansible.builtin.file:
             state: link
-            src: "{{ dcs_debug_local_configs_source }}"
+            src: "{{ docker_compose_projects_debug_local_config_symlink }}"
             dest: /opt/docker-configs
             force: true
           become: true
 
-    - name: Prepare and run Docker compose config
+    - name: Prepare and run Docker compose projects
       ansible.builtin.include_role:
-        name: "{{ playbook_dir }}/roles/docker-compose" # noqa: role-name[path]
+        name: "docker-compose-projects"
