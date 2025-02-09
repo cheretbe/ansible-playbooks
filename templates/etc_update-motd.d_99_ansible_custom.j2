@@ -1,9 +1,0 @@
-#!/usr/bin/env python3
-
-import os
-import rich.console
-
-if os.path.isfile("/etc/update-motd.d/ansible_custom_message.txt"):
-    console = rich.console.Console(force_terminal=True, highlight=False, color_system="truecolor", width=256)
-    with open("/etc/update-motd.d/ansible_custom_message.txt", "r") as msg_f:
-        console.print(msg_f.read())
