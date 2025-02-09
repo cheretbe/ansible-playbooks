@@ -1,0 +1,22 @@
+---
+
+- name: Converge
+  hosts: all
+  gather_facts: true
+  vars:
+    # linux_provision_dns: false
+    # linux_provision_upgrade_packages: false
+    # linux_provision_locale: false
+    # # linux_locale_default_LC: ru_RU.UTF-8
+    # linux_provision_mta: false
+    # linux_provision_timezone: false
+    # linux_provision_unattended_upgrades: false
+    # # linux_provision_force_smartmontools: true
+    # linux_provision_smartmontools: false
+    # # linux_motd_custom_message: "[blue bold]there you go[/]"
+    # linux_provision_motd: false
+    # linux_provision_users: false
+  tasks:
+    - name: Import linux-provision role
+      import_role:
+        name: linux-provision

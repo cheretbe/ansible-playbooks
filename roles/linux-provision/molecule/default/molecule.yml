@@ -1,0 +1,18 @@
+---
+
+driver:
+  name: vagrant
+platforms:
+  # change_host_name in VagrantPlugins::ProviderVirtualBox::Provider correctly sets FQDN in /etc/hosts when
+  # host.domain.tld name format is used
+  - name: debian-11.local.test
+    box: debian/bullseye64
+  - name: debian-12.local.test
+    box: debian/bookworm64
+  - name: ubuntu-22.04.local.test
+    box: ubuntu/jammy64
+  # Canonical will no longer publish Vagrant images directly starting with Ubuntu 24.04 LTS (Noble Numbat)
+  # https://documentation.ubuntu.com/public-images/en/latest/public-images-explanation/vagrant/#support
+  # https://github.com/chef/bento
+  - name: ubuntu-24.04.local.test
+    box: bento/ubuntu-24.04

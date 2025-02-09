@@ -1,0 +1,74 @@
+---
+
+- name: Check host FQDN
+  ansible.builtin.assert:
+    that: inventory_hostname == ansible_fqdn
+
+- name: Check if distribution is supported
+  ansible.builtin.set_fact:
+    _linux_provision_supported_dist: true
+  when:
+    - _linux_provision_dist_check_info.matched
+  loop:
+    - {name: "Debian 11 (bullseye)", matched: "{{ ansible_distribution == 'Debian' and ansible_distribution_major_version == '11' }}"}
+    - {name: "Debian 12 (bookworm)", matched: "{{ ansible_distribution == 'Debian' and ansible_distribution_major_version == '12' }}"}
+    - {name: "Ubuntu 22.04 (jammy)", matched: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_version == '22.04' }}"}
+    - {name: "Ubuntu 24.04 (noble)", matched: "{{ ansible_distribution == 'Ubuntu' and ansible_distribution_version == '24.04' }}"}
+  loop_control:
+    loop_var: _linux_provision_dist_check_info
+    label: "{{ _linux_provision_dist_check_info.name }}"
+
+- name: Fail is distribution is not supported
+  ansible.builtin.fail:
+    msg: >-
+      {{ ansible_distribution }} {{ ansible_distribution_version }} is not supported.
+      Use 'linux_provision_skip_dist_check' setting to skip the check
+  when: not (_linux_provision_supported_dist or (linux_provision_skip_dist_check | bool))
+
+# TODO: Rename to linux-packages and include linux-utils
+- name: Include upgrade-packages role
+  ansible.builtin.include_role:
+    name: upgrade-packages
+  when: linux_provision_upgrade_packages | bool
+
+- name: Include linux-dns role
+  ansible.builtin.include_role:
+    name: linux-dns
+  when: linux_provision_dns | bool
+
+- name: Include linux-locale role
+  ansible.builtin.include_role:
+    name: linux-locale
+  when: linux_provision_locale | bool
+
+- name: Include linux-timezone role
+  ansible.builtin.include_role:
+    name: linux-timezone
+  when: linux_provision_timezone | bool
+
+- name: Include linux-mta role
+  ansible.builtin.include_role:
+    name: linux-mta
+  # TODO: remove linux_mta_no_config from tasks file and update inventory settings
+  when: linux_provision_mta | bool
+
+- name: Include linux-unattended-upgrades role
+  ansible.builtin.include_role:
+    name: linux-unattended-upgrades
+  when: linux_provision_unattended_upgrades | bool
+
+  # TODO: remove smartmontools_force_vm from tasks file and check it's not used in inventory
+- name: Include smartmontools role
+  ansible.builtin.include_role:
+    name: smartmontools
+  when: (linux_provision_smartmontools | bool) and ((ansible_virtualization_role != "guest") or linux_provision_force_smartmontools)
+
+- name: Include linux-motd role
+  ansible.builtin.include_role:
+    name: linux-motd
+  when: linux_provision_motd | bool
+
+- name: Include linux-users role
+  ansible.builtin.include_role:
+    name: linux-users
+  when: linux_provision_users | bool
