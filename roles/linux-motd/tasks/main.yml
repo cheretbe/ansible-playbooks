@@ -1,0 +1,89 @@
+---
+
+- name: Remove executable permission from unnecessary scripts in /etc/update-motd.d/
+  ansible.builtin.file:
+    path: "/etc/update-motd.d/{{ _linux_motd_script_to_disable }}"
+    state: file
+    mode: u-x,g-x,o-x
+  become: true
+  loop_control:
+    loop_var: _linux_motd_script_to_disable
+  loop:
+    - 10-help-text
+    - 50-motd-news
+  when: ansible_distribution == "Ubuntu"
+
+- name: Remove extra MOTD files
+  ansible.builtin.file:
+    path: "{{ _linux_motd_file_to_remove }}"
+    state: absent
+  become: true
+  loop_control:
+    loop_var: _linux_motd_file_to_remove
+  loop:
+    # On Debian it contains just copyright info, nothing else
+    - /etc/motd
+    - /etc/update-motd.d/99-bento
+
+- name: Install python3-rich package
+  ansible.builtin.apt:
+    name: ["python3-rich"]
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
+# update-notifier-common on Ubuntu should be recent enough to support ESM disable marker file
+# https://canonical-ubuntu-pro-client.readthedocs-hosted.com/en/latest/explanations/motd_messages/
+- name: Make sure update-notifier-common package is the latest version # noqa package-latest
+  ansible.builtin.apt:
+    name: ["python3-rich", "update-notifier-common"]
+    state: latest
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add disable ESM marker file
+  ansible.builtin.file:
+    path: /var/lib/update-notifier/hide-esm-in-motd
+    state: touch
+    mode: "0644"
+    access_time: preserve
+    modification_time: preserve
+  become: true
+  register: __linux_motd_esm_marker_file
+  when: ansible_distribution == "Ubuntu"
+
+- name: Remove current updates message file # noqa no-handler
+  ansible.builtin.file:
+    path: /var/lib/update-notifier/updates-available
+    state: absent
+  become: true
+  when: __linux_motd_esm_marker_file.changed
+
+- name: Update repositories cache to regenerate updates message file # noqa package-latest no-handler
+  ansible.builtin.apt:
+    name: ["update-notifier-common"]
+    state: latest
+    update_cache: true
+  become: true
+  when: __linux_motd_esm_marker_file.changed
+
+- name: Create custom MOTD script
+  ansible.builtin.template:
+    src: templates/etc_update-motd.d_99_ansible_custom.j2
+    dest: /etc/update-motd.d/99-ansible-custom
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Create custom MOTD
+  ansible.builtin.copy:
+    content: "{{ linux_motd_custom_message }}"
+    dest: /etc/update-motd.d/ansible_custom_message.txt
+    mode: "0644"
+  become: true
+  when: linux_motd_custom_message is defined
