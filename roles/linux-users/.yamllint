@@ -1,0 +1,16 @@
+---
+extends: default
+rules:
+  line-length: disable
+  quoted-strings:
+    quote-type: double
+    required: false
+  # https://ansible.readthedocs.io/projects/lint/rules/yaml/
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
