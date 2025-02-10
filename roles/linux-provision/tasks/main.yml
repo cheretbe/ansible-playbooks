@@ -31,6 +31,11 @@
     name: upgrade-packages
   when: linux_provision_upgrade_packages | bool
 
+- name: Include linux-utils role
+  ansible.builtin.include_role:
+    name: linux-utils
+  # when: linux_provision_upgrade_packages | bool
+
 - name: Include linux-dns role
   ansible.builtin.include_role:
     name: linux-dns
