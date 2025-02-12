@@ -1,0 +1,8 @@
+---
+
+- hosts: "{{ ansible_limit | default(omit) }}"
+
+  tasks:
+    - name: Import linux-users role
+      import_role:
+        name: linux-users
