@@ -20,4 +20,35 @@
     validate: "/usr/sbin/visudo -cf %s"
   become: true
 
-# TODO: add actual users creation here
+- name: Set combined user list fact
+  ansible.builtin.set_fact:
+    # https://docs.ansible.com/ansible/latest/collections/ansible/builtin/varnames_lookup.html
+    # The difference between lookup and query is largely that query will always return a list
+    # https://docs.ansible.com/ansible/latest/plugins/lookup.html#forcing-lookups-to-return-lists-query-and-wantlist-true
+    # "*" is used to dereference the list to a list of arguments
+    _linux_users_combined_list: "{{ lookup('vars', *query('varnames', '^linux_users_list')) | flatten(levels=1) }}"
+
+- name: Add users
+  ansible.builtin.user:
+    name: "{{ _linux_users_user_to_create.name }}"
+    comment: "{{ _linux_users_user_to_create.comment | default(omit) }}"
+    password: "{{ _linux_users_user_to_create.password | default(omit) }}"
+    shell: "{{ _linux_users_user_to_create.shell | default(omit) }}"
+    groups: "{{ _linux_users_user_to_create.groups | default(omit) }}"
+    append: "{{ _linux_users_user_to_create.append | default(omit) }}"
+  loop: "{{ _linux_users_combined_list }}"
+  loop_control:
+    loop_var: _linux_users_user_to_create
+    label: "{{ _linux_users_user_to_create.name }}"
+  become: true
+
+- name: Add SSH authorized keys
+  ansible.posix.authorized_key:
+    user: "{{ _linux_users_user_to_create.name }}"
+    key: "{{ _linux_users_user_to_create.ssh_authorized_key }}"
+  when: _linux_users_user_to_create.ssh_authorized_key is defined
+  loop: "{{ _linux_users_combined_list }}"
+  loop_control:
+    loop_var: _linux_users_user_to_create
+    label: "{{ _linux_users_user_to_create.name }}"
+  become: true

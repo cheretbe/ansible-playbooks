@@ -1,0 +1,12 @@
+---
+# linux_users_list:
+#   - name: username
+#     comment: description
+#     # mkpasswd -m sha512crypt
+#     password: $6$eGkreiwVFWkjdwsn$0kcDTvSXv5gHG8GpvJRGbW1eptemcHcHTWTNQKrXa2SOhI1i/KqTqXP4qylr0FrAyR9NfUE86y9MKkwiVm412/
+#     shell: /bin/bash
+#     # By default, the user is removed from all other groups. Configure append to modify this.
+#     groups: sudo,docker
+#     append: false
+#     ssh_authorized_key: "ssh-ed25519 00000000000 username"
+linux_users_list: []
