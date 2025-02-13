@@ -1,0 +1,5 @@
+---
+
+proxmox_provision_apt_repos: true
+proxmox_provision_subscription_msg: true
+proxmox_provision_certificate: true

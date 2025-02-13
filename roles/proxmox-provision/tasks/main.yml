@@ -1,0 +1,59 @@
+---
+
+- name: Comment out apt repos that require a subscription
+  ansible.builtin.replace:
+    path: "{{ _proxmox_provision_apt_repo }}"
+    regexp: "^deb https"
+    replace: "#deb https"
+  loop:
+    - /etc/apt/sources.list.d/pve-enterprise.list
+    - /etc/apt/sources.list.d/ceph.list
+  loop_control:
+    loop_var: _proxmox_provision_apt_repo
+  become: true
+  when: proxmox_provision_apt_repos | bool
+  notify: Update apt packages
+
+- name: Add public repo with no subscription
+  ansible.builtin.copy:
+    content: |
+      deb http://download.proxmox.com/debian/pve bookworm pve-no-subscription
+    dest: /etc/apt/sources.list.d/pve-no-subscription.list
+    mode: "0644"
+  become: true
+  when: proxmox_provision_apt_repos | bool
+  notify: Update apt packages
+
+- name: Remove "You do not have a valid subscription for this server" message
+  ansible.builtin.replace:
+    path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
+    #   if (res === null || res === undefined || !res || res
+    #       .data.status.toLowerCase() !== 'active') {
+    regexp: "res === null \\|\\| res === undefined \\|\\| \\!res \\|\\| res\\n\\t\\t\\t.data.status.toLowerCase\\(\\) \\!== 'active'"
+    replace: "false"
+    backup: true
+  become: true
+  when: proxmox_provision_subscription_msg | bool
+  notify: Restart pveproxy service
+
+- name: Copy Web UI SSL certificate
+  ansible.builtin.copy:
+    src: "{{ proxmox_provision_web_ui_cert }}"
+    dest: /etc/pve/local/pve-ssl.pem
+    owner: root
+    group: www-data
+    mode: "0640"
+  become: true
+  when: proxmox_provision_certificate | bool
+  notify: Restart pveproxy service
+
+- name: Copy Web UI SSL certificate key
+  ansible.builtin.copy:
+    src: "{{ proxmox_provision_web_ui_cert_key }}"
+    dest: /etc/pve/local/pve-ssl.key
+    owner: root
+    group: www-data
+    mode: "0640"
+  become: true
+  when: proxmox_provision_certificate | bool
+  notify: Restart pveproxy service

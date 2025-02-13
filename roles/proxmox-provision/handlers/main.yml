@@ -1,0 +1,13 @@
+---
+
+- name: Update apt packages
+  ansible.builtin.apt:
+    update_cache: true
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
+- name: Restart pveproxy service
+  ansible.builtin.systemd:
+    name: pveproxy.service
+    state: restarted
+  become: true

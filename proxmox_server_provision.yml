@@ -1,0 +1,7 @@
+---
+
+- hosts: "{{ ansible_limit | default(omit) }}"
+  tasks:
+    - name: Import proxmox-provision role
+      import_role:
+        name: proxmox-provision
