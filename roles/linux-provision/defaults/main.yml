@@ -12,3 +12,4 @@ linux_provision_unattended_upgrades: true
 linux_provision_smartmontools: true
 linux_provision_motd: true
 linux_provision_users: true
+linux_provision_ca_certificates: true

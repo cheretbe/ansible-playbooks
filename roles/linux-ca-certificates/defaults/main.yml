@@ -1,0 +1,6 @@
+---
+
+# linux_ca_certificate_files: [
+#   {src: "/path/to/cert/file", dst_file_name: "my_ca.crt"}
+# ]
+linux_ca_certificate_files: []

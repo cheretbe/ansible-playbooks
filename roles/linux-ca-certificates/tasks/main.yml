@@ -1,0 +1,25 @@
+---
+
+- name: Make sure ca-certificates package is installed
+  ansible.builtin.apt:
+    name: ["ca-certificates"]
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
+- name: Install CA certificates
+  ansible.builtin.copy:
+    src: "{{ _linux_ca_certificates_cert_file.src }}"
+    dest: "/usr/local/share/ca-certificates/{{ _linux_ca_certificates_cert_file.dst_file_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ linux_ca_certificate_files }}"
+  loop_control:
+    loop_var: _linux_ca_certificates_cert_file
+  become: true
+  notify: update-ca-certificates
+
+- name: Flush handlers
+  meta: flush_handlers

@@ -36,6 +36,11 @@
     name: linux-utils
   # when: linux_provision_upgrade_packages | bool
 
+- name: Include linux-ca-certificates role
+  ansible.builtin.include_role:
+    name: linux-ca-certificates
+  when: linux_provision_ca_certificates | bool
+
 - name: Include linux-dns role
   ansible.builtin.include_role:
     name: linux-dns

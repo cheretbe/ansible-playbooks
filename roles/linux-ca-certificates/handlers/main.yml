@@ -1,0 +1,6 @@
+---
+
+- name: Update local machine TLS certificate list
+  ansible.builtin.command: "update-ca-certificates --fresh"
+  listen: update-ca-certificates
+  become: true

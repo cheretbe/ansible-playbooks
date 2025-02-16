@@ -1,0 +1,8 @@
+---
+
+- hosts: "{{ ansible_limit | default(omit) }}"
+  tasks:
+
+    - name: Import linux-ca-certificates role
+      import_role:
+        name: linux-ca-certificates
