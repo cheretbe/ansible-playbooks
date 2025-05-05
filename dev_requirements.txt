@@ -1,9 +1,8 @@
-# In version 6.5.0 host.socket.get_listening_sockets() fails on Ubuntu Bionic
-# with some weird internal error
 ansible
 ansible-lint
 apacheconfig
 colorama
+dnspython
 humanfriendly
 invoke
 jinja2
@@ -12,7 +11,8 @@ molecule-docker
 molecule-lxd
 molecule-vagrant
 molecule[ansible]
+proxmoxer
 pylint
 pytest
-pytest-testinfra == 6.4.0
+pytest-testinfra
 pywinrm

@@ -1,0 +1,5 @@
+---
+
+- name: Reboot VM to activate QEMU guest agent
+  ansible.builtin.reboot:
+  become: true

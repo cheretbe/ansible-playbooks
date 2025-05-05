@@ -2,11 +2,13 @@ ansible
 ansible-pylibssh
 apacheconfig
 colorama
+dnspython
 humanfriendly
 jinja2
 jmespath
 librouteros
 paramiko
+proxmoxer
 pytest
 pytest-testinfra
 pywinrm

@@ -1,0 +1,195 @@
+---
+
+- name: Check that mandatory variables are defined
+  ansible.builtin.assert:
+    that:
+      - proxmox_vm_node is defined
+      - proxmox_vm_api_user is defined
+      - proxmox_vm_api_token_id is defined
+      - proxmox_vm_api_token_secret is defined
+      - proxmox_vm_api_host is defined
+      - proxmox_vm_config.storage
+      - proxmox_vm_config.cloud_image_url
+    quiet: true
+
+- name: Get cloud image size
+  # Using get() with stream=True instead of requests.head('url').headers['Content-length'] just in case
+  # https://stackoverflow.com/questions/14270698/get-file-size-using-python-requests-while-only-getting-the-header/44299915#44299915
+  ansible.builtin.command: |
+    python3 -c
+    "
+    import requests
+    with requests.get('{{ proxmox_vm_config.cloud_image_url }}', stream=True) as get_res:
+        get_res.raise_for_status()
+        print(get_res.headers['Content-length'])
+    "
+  changed_when: false
+  delegate_to: localhost
+  register: __pvm_cloud_image_size
+
+# 'community.general.proxmox_storage_info' doesn't return needed 'avail' field
+- name: Get download storage status
+  ansible.builtin.uri:
+    url: "https://{{ proxmox_vm_api_host }}:8006/api2/json/nodes/{{ proxmox_vm_node }}/storage/{{ proxmox_vm_image_download_location }}/status"
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_vm_api_user }}!{{ proxmox_vm_api_token_id }}={{ proxmox_vm_api_token_secret }}"
+  delegate_to: localhost
+  register: __pvm_download_storage_status
+
+- name: Check that download storage can hold VM disk image
+  ansible.builtin.assert:
+    that:
+      - "'images' in (__pvm_download_storage_status.json.data.content | split(','))"
+      - __pvm_download_storage_status.json.data.avail > (__pvm_cloud_image_size.stdout_lines[0] | int)
+
+- name: Get download storage info
+  ansible.builtin.uri:
+    url: "https://{{ proxmox_vm_api_host }}:8006/api2/json/storage/{{ proxmox_vm_image_download_location }}"
+    headers:
+      Authorization: "PVEAPIToken={{ proxmox_vm_api_user }}!{{ proxmox_vm_api_token_id }}={{ proxmox_vm_api_token_secret }}"
+  delegate_to: localhost
+  register: __pvm_download_storage_info
+
+# https://github.com/cheretbe/notes/blob/master/linux/proxmox.md#vm-creation-gotchas
+#   option 3 - using non-existing VM ID (9999)
+- name: Set cloud image directory fact
+  ansible.builtin.set_fact:
+    _pvm_cloud_image_dir: "{{ __pvm_download_storage_info.json.data.path }}/images/9999"
+
+- name: Set cloud image filename fact
+  ansible.builtin.set_fact:
+    # Force qcow2 extension otherwise the file will not show up in the UI
+    _pvm_cloud_image_filename: "{{ (proxmox_vm_config.cloud_image_url | basename | splitext)[0] }}.qcow2"
+
+- name: Make sure download directory exists
+  ansible.builtin.file:
+    state: directory
+    path: "{{ _pvm_cloud_image_dir }}"
+    owner: root
+    group: root
+    mode: "0740"
+  become: true
+  delegate_to: "{{ proxmox_vm_api_host }}"
+
+- name: Download cloud image
+  ansible.builtin.get_url:
+    url: "{{ proxmox_vm_config.cloud_image_url }}"
+    dest: "{{ _pvm_cloud_image_dir }}/{{ _pvm_cloud_image_filename }}"
+    mode: "0644"
+  become: true
+  delegate_to: "{{ proxmox_vm_api_host }}"
+
+- name: Create Proxmox VM
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_vm_node }}"
+    name: "{{ proxmox_vm_config.name | default(inventory_hostname) }}"
+    api_user: "{{ proxmox_vm_api_user }}"
+    api_token_id: "{{ proxmox_vm_api_token_id }}"
+    api_token_secret: "{{ proxmox_vm_api_token_secret }}"
+    api_host: "{{ proxmox_vm_api_host }}"
+    storage: "{{ proxmox_vm_config.storage }}"
+    timeout: 90
+    cpu: "{{ proxmox_vm_config.cpu | default('host') }}"
+    cores: "{{ proxmox_vm_config.cores | default(1) }}"
+    # Emulates physical CPUs (sockets), each with a specific number of cores.
+    # Can be important when running enterprise stuff (e.g. Microsoft, Oracle)
+    # licensed per socket and per core. A single socket with needed number of
+    # cores is usually just fine.
+    sockets: "{{ proxmox_vm_config.sockets | default(1) }}"
+    memory: "{{ proxmox_vm_config.memory | default(1024) }}"
+    # This is to fix kernel panic on Diban 12 boot
+    # https://forum.proxmox.com/threads/8-3-debian-12-cloud-init-expanded-disk-ovmf-kernel-panic-on-first-boot.160125/
+    serial:
+      serial0: socket
+    scsihw: virtio-scsi-single
+    virtio:
+      virtio0: "ssd-1:0,import-from={{ proxmox_vm_image_download_location }}:9999/{{ _pvm_cloud_image_filename }}"
+      # This fails with "Only root can pass arbitrary filesystem paths" error:
+      #   virtio0: "ssd-1:0,import-from=/var/lib/vz/template/iso/debian-12-generic-amd64.img"
+    net:
+      net0: "virtio,bridge={{ proxmox_vm_config.net_bridge }}"
+    ide:
+      ide2: "local:cloudinit,format=qcow2"
+    ciuser: "{{ proxmox_vm_config.ciuser | default(omit) }}"
+    cipassword: "{{ proxmox_vm_config.cipassword | default(omit) }}"
+    sshkeys: "{{ proxmox_vm_config.sshkeys | default(omit) }}"
+    # Needs to be explicitly defined to correctly set hosts FQDN is name is not FQDN
+    # https://forum.proxmox.com/threads/cloud-init-cant-generate-fqdn-when-use-host-settings.120756/
+    searchdomains: "{{ proxmox_vm_config.searchdomains | default(omit) }}"
+    nameservers: "{{ proxmox_vm_config.nameservers | default(omit) }}"
+    ipconfig:
+      # yamllint disable rule:line-length
+      ipconfig0: |-
+        {% if (proxmox_vm_config.dhcp | default(true)) %}
+        ip=dhcp
+        {% else %}
+        ip={{ (lookup('community.dns.lookup', inventory_hostname) + '/' + ((proxmox_vm_config.net_cidr | default('24')) | string)) }},gw={{ proxmox_vm_config.net_gw }}
+        {%- endif %}
+      # yamllint enable rule:line-length
+    agent: "enabled=1"
+    onboot: "{{ proxmox_vm_config.onboot | default(true) }}"
+    ostype: "{{ proxmox_vm_config.ostype | default('l26') }}" # l26: Linux 2.6/3.X Kernel
+  delegate_to: localhost
+  register: __pvm_vm_data
+
+- name: Resize system disk
+  community.general.proxmox_disk:
+    api_user: "{{ proxmox_vm_api_user }}"
+    api_token_id: "{{ proxmox_vm_api_token_id }}"
+    api_token_secret: "{{ proxmox_vm_api_token_secret }}"
+    api_host: "{{ proxmox_vm_api_host }}"
+    vmid: "{{ __pvm_vm_data.vmid }}"
+    disk: virtio0
+    size: "{{ proxmox_vm_config.system_disk_size | default('10G') }}"
+    state: resized
+  delegate_to: localhost
+
+- name: Start created VM
+  community.general.proxmox_kvm:
+    node: "{{ proxmox_vm_node }}"
+    api_user: "{{ proxmox_vm_api_user }}"
+    api_token_id: "{{ proxmox_vm_api_token_id }}"
+    api_token_secret: "{{ proxmox_vm_api_token_secret }}"
+    api_host: "{{ proxmox_vm_api_host }}"
+    vmid: "{{ __pvm_vm_data.vmid }}"
+    state: started
+  delegate_to: localhost
+
+# This is to fix weird SSH client behavior when the VM is recreated after deletion:
+# the role goes on ok, but times out on ansible.builtin.reboot because Ansible
+# is not able to reconnect (Host key verification failed)
+# Most likely it has something to do with UpdateHostKeys option, that is on by default
+#   https://unix.stackexchange.com/questions/486760/is-it-possible-to-allow-multiple-ssh-host-keys-for-the-same-ip/761585#761585
+#   https://stackoverflow.com/questions/67401049/pulling-from-git-fails-and-gives-me-following-error-client-global-hostkeys-priv/67556915#67556915
+#   TL,DR This means it will not accept arbitrary host keys from anybody but only
+#   accept these keys from an already trusted host
+# Didn't investigate further, but at first glance it looks like known_hosts contains
+# several old keys for the host (ssh-rsa, ecdsa-sha2-nistp256, etc) and connecting
+# with "StrictHostKeyChecking=no" updates only one of them, leaving us with a mishmash
+# of old and new keys.
+- name: Remove existing SSH keys for the host
+  ansible.builtin.known_hosts:
+    name: "{{ inventory_hostname }}"
+    state: absent
+  when: __pvm_vm_data.changed # noqa: no-handler
+  delegate_to: localhost
+
+- name: Wait for Ansible connection to become available
+  # Default timeout is 600s
+  ansible.builtin.wait_for_connection:
+  vars:
+    # This will add SSH key back
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
+- name: Install qemu-guest-agent package
+  ansible.builtin.apt:
+    name: ["qemu-guest-agent"]
+    update_cache: true
+    # https://github.com/ansible/ansible/issues/79206
+    # cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+  notify: Reboot VM to activate QEMU guest agent
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
