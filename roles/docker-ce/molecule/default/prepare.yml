@@ -6,7 +6,7 @@
 
   tasks:
     - name: "Set local package cache"
-      include_tasks: "../../../tests/helper_tasks/set_local_package_cache.yml"
+      ansible.builtin.include_tasks: "../../../tests/helper_tasks/set_local_package_cache.yml"
 
     - name: "Add test user"
-      include_tasks: "../../../tests/helper_tasks/add_test_user.yml"
+      ansible.builtin.include_tasks: "../../../tests/helper_tasks/add_test_user.yml"

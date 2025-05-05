@@ -30,9 +30,10 @@
   become: true
 
 - name: Add Docker repository key
-  get_url:
+  ansible.builtin.get_url:
     url: https://download.docker.com/linux/ubuntu/gpg
     dest: /etc/apt/trusted.gpg.d/docker-keyring.asc
+    mode: "0644"
   become: true
 
 - name: Add Docker repository
@@ -97,12 +98,12 @@
           ansible.builtin.copy:
             content: "{{ docker_daemon_config | to_nice_json }}"
             dest: /etc/docker/daemon.json
-            mode: 0644
+            mode: "0644"
           notify: Restart Docker service
           become: true
 
         - name: Flush handlers
-          meta: flush_handlers
+          ansible.builtin.meta: flush_handlers
 
 - name: Set Docker registry proxy
   when: docker_ce_registry_proxy
@@ -111,7 +112,7 @@
       ansible.builtin.file:
         path: "/etc/systemd/system/docker.service.d"
         state: directory
-        mode: 0755
+        mode: "0755"
         owner: root
         group: root
       become: true
@@ -125,7 +126,7 @@
           Environment="HTTP_PROXY={{ docker_ce_registry_proxy }}"
           Environment="HTTPS_PROXY={{ docker_ce_registry_proxy }}"
         dest: "/etc/systemd/system/docker.service.d/http-proxy.conf"
-        mode: 0644
+        mode: "0644"
       become: true
       # [!!] Hanlders run in order they are defined, not in order they are listed in notify
       notify:
@@ -141,4 +142,4 @@
       notify: Update CA Trust
 
     - name: Flush handlers
-      meta: flush_handlers
+      ansible.builtin.meta: flush_handlers

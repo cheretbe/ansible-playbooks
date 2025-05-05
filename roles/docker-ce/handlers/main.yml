@@ -12,6 +12,6 @@
     state: restarted
   become: true
 
-- name: Update CA Trust
+- name: Update CA Trust # noqa: no-changed-when
   ansible.builtin.command: "update-ca-certificates --fresh"
   become: true
