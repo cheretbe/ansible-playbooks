@@ -1,5 +1,6 @@
 ---
-# vars file for docker-ce
+
+_docker_ce_supported_dist: false
 
 deb_architecture_map:
   "x86_64": "amd64"

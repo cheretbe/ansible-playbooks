@@ -1,5 +1,6 @@
 ---
-# defaults file for docker-ce
+
+docker_ce_skip_dist_check: false
 
 # docker_ce_registry_mirrors: ["http://localhost:5000"]
 docker_ce_registry_mirrors: []
