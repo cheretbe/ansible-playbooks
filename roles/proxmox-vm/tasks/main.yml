@@ -144,6 +144,24 @@
     state: resized
   delegate_to: localhost
 
+- name: Create additional disk(s)
+  community.general.proxmox_disk:
+    api_user: "{{ proxmox_vm_api_user }}"
+    api_token_id: "{{ proxmox_vm_api_token_id }}"
+    api_token_secret: "{{ proxmox_vm_api_token_secret }}"
+    api_host: "{{ proxmox_vm_api_host }}"
+    vmid: "{{ __pvm_vm_data.vmid }}"
+    disk: "virtio{{ ansible_loop.index }}"
+    format: "{{ _pvm_extra_disk.format }}"
+    storage: "{{ _pvm_extra_disk.storage }}"
+    size: "{{ _pvm_extra_disk.size }}"
+    state: present
+  loop: "{{ proxmox_vm_config.extra_disks | default([]) }}"
+  loop_control:
+    extended: true
+    loop_var: _pvm_extra_disk
+  delegate_to: localhost
+
 - name: Start created VM
   community.general.proxmox_kvm:
     node: "{{ proxmox_vm_node }}"
