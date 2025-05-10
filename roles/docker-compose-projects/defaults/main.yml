@@ -4,4 +4,3 @@ docker_compose_projects: []
 docker_compose_projects_target_dir: /opt/docker-configs/local
 docker_compose_projects_generate_only: false
 docker_compose_projects_debug_local_config_symlink: false
-docker_compose_projects_debug_local_config_symlink: false
