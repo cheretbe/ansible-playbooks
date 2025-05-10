@@ -5,6 +5,45 @@
     that:
       (docker_compose_projects | length) > 0
 
+- name: Get shared docker configs directory information
+  ansible.builtin.stat:
+    path: /opt/docker-configs
+  register: __dcp_config_dir_info
+
+- name: Checkout shared docker configs repo
+  when: not docker_compose_projects_debug_local_config_symlink
+  block:
+    - name: Make sure target directory is not a symlink
+      ansible.builtin.file:
+        path: /opt/docker-configs
+        state: absent
+      become: true
+      when: __dcp_config_dir_info.stat.exists and __dcp_config_dir_info.stat.islnk
+
+    - name: Checkout shared docker configs repo # noqa: latest[git]
+      git:
+        repo: https://github.com/cheretbe/docker-configs.git
+        dest: /opt/docker-configs
+      become: true
+
+- name: Symlink shared docker configs to custom directory
+  when: docker_compose_projects_debug_local_config_symlink
+  block:
+    - name: Make sure target directory doesn't exist as a regular directory
+      ansible.builtin.file:
+        path: /opt/docker-configs
+        state: absent
+      become: true
+      when: __dcp_config_dir_info.stat.exists and (not __dcp_config_dir_info.stat.islnk)
+
+    - name: Symlink shared docker configs to custom directory
+      ansible.builtin.file:
+        state: link
+        src: "{{ docker_compose_projects_debug_local_config_symlink }}"
+        dest: /opt/docker-configs
+        force: true
+      become: true
+
 - name: Deploy Docker Compose services
   ansible.builtin.include_tasks:
     file: deploy_compose_project.yml
