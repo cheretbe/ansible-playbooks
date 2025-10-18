@@ -27,6 +27,9 @@ def main(args):
         print(json.dumps(host_list, ensure_ascii=False, indent=4))
     elif args.output_format == "yaml":
         print(yaml.dump(host_list, default_flow_style=False))
+    elif args.output_format == "menu":
+        menu_items = [{"label": host, "text": host} for host in host_list]
+        print(yaml.dump(menu_items, default_flow_style=False))
 
 
 if __name__ == "__main__":
@@ -34,8 +37,9 @@ if __name__ == "__main__":
 
     parser.add_argument("-i", "--inventory", dest="inventory")
     parser.add_argument("-l", "--limit", default="all")
-    parser.add_argument("-o", "--output-format", choices=["text", "list", "csv", "json", "yaml"],
-        default="text")
+    parser.add_argument(
+        "-o", "--output-format", choices=["text", "list", "csv", "json", "yaml", "menu"], default="text"
+    )
 
     args = parser.parse_args()
     main(args)
