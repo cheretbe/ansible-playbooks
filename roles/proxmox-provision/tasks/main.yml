@@ -27,11 +27,17 @@
 - name: Remove "You do not have a valid subscription for this server" message
   ansible.builtin.replace:
     path: /usr/share/javascript/proxmox-widget-toolkit/proxmoxlib.js
-    #   if (res === null || res === undefined || !res || res
-    #       .data.status.toLowerCase() !== 'active') {
-    regexp: "res === null \\|\\| res === undefined \\|\\| \\!res \\|\\| res\\n\\t\\t\\t.data.status.toLowerCase\\(\\) \\!== 'active'"
-    replace: "false"
+    regexp: "{{ _poxmox_provision_replace_regexp }}"
+    replace: "(false)"
     backup: true
+  loop:
+    - "\\(res === null[\\s\\S]*?\\.data\\.status\\.toLowerCase\\(\\) \\!== 'active'\\)"
+    - "\\(\\!res [\\s\\S]*?\\.data\\.status\\.toLowerCase\\(\\) \\!== 'active'\\)"
+    # new version with extra newlines
+    - "\\(\\n[ \\t]*?res === null[\\s\\S]*?\\.data\\.status\\.toLowerCase\\(\\) \\!== 'active'\\n[ \\t]*?\\)"
+    - "\\(\\n[ \\t]*?\\!res [\\s\\S]*?\\.data\\.status\\.toLowerCase\\(\\) \\!== 'active'\\n[ \\t]*?\\)"
+  loop_control:
+    loop_var: _poxmox_provision_replace_regexp
   become: true
   when: proxmox_provision_subscription_msg | bool
   notify: Restart pveproxy service
