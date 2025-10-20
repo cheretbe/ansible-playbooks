@@ -1,0 +1,43 @@
+---
+# tasks file for zabbix-agent2
+
+- name: Add Zabbix repository GPG key
+  ansible.builtin.get_url:
+    url: "https://repo.zabbix.com/zabbix-official-repo.key"
+    dest: /etc/apt/trusted.gpg.d/zabbix-keyring.asc
+    mode: "0644"
+  become: true
+
+- name: Add Zabbix APT repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/trusted.gpg.d/zabbix-keyring.asc] https://repo.zabbix.com/zabbix/{{ zabbix_agent2_version }}/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install zabbix-agent2 apt package
+  ansible.builtin.apt:
+    name: ["zabbix-agent2"]
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
+- name: Add zabbix user to docker group
+  ansible.builtin.user:
+    name: zabbix
+    groups: docker
+    append: true
+  become: true
+  when: zabbix_agent2_docker_enabled
+  notify: Restart zabbix-agent2 service
+
+- name: Deploy zabbix-agent2 configuration override
+  ansible.builtin.template:
+    src: 00-ansible.conf.j2
+    dest: /etc/zabbix/zabbix_agent2.d/00-ansible.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: Restart zabbix-agent2 service

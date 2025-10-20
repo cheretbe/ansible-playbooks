@@ -1,0 +1,5 @@
+---
+
+- hosts: "{{ ansible_limit | default(omit) }}"
+  roles:
+    - zabbix-agent2

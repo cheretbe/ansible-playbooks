@@ -1,0 +1,4 @@
+---
+# defaults file for zabbix-agent2
+
+zabbix_agent2_docker_enabled: false

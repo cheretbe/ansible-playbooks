@@ -1,0 +1,18 @@
+---
+argument_specs:
+  main:
+    short_description: Zabbix Agent 2 role
+    options:
+      zabbix_agent2_server_name:
+        description: Zabbix server name or IP address
+        required: true
+        type: str
+      zabbix_agent2_version:
+        description: Zabbix version for repository configuration (e.g., "7.0")
+        required: true
+        type: str
+      zabbix_agent2_docker_enabled:
+        description: Enable Docker plugin for monitoring Docker containers
+        required: false
+        type: bool
+        default: false
