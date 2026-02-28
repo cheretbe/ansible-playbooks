@@ -9,6 +9,7 @@
     state: directory
     path: "{{ _mb_backup_path }}"
   delegate_to: localhost
+  run_once: true
 
 - name: Generate backup file name
   set_fact:
