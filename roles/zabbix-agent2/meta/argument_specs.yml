@@ -16,3 +16,8 @@ argument_specs:
         required: false
         type: bool
         default: false
+      zabbix_agent2_smart_enabled:
+        description: Enable SMART monitoring by granting zabbix user passwordless sudo access to smartctl
+        required: false
+        type: bool
+        default: false

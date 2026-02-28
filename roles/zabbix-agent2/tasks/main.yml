@@ -41,3 +41,24 @@
     mode: '0644'
   become: true
   notify: Restart zabbix-agent2 service
+
+- name: Make sure /etc/sudoers.d exists
+  ansible.builtin.file:
+    state: directory
+    path: /etc/sudoers.d
+    owner: root
+    group: root
+    mode: 0750
+  become: true
+  when: zabbix_agent2_smart_enabled
+
+- name: Add sudoers file for zabbix user (smartctl access)
+  ansible.builtin.copy:
+    content: "zabbix ALL=(ALL) NOPASSWD:/usr/sbin/smartctl"
+    dest: /etc/sudoers.d/zabbix-smartctl
+    owner: root
+    group: root
+    mode: 0440
+    validate: "/usr/sbin/visudo -cf %s"
+  become: true
+  when: zabbix_agent2_smart_enabled
