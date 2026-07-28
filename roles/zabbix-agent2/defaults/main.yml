@@ -1,5 +1,6 @@
 ---
 # defaults file for zabbix-agent2
 
+zabbix_agent2_server_active: "{{ zabbix_agent2_server }}:10051"
 zabbix_agent2_docker_enabled: false
 zabbix_agent2_smart_enabled: false

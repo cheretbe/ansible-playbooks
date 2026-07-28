@@ -3,9 +3,13 @@ argument_specs:
   main:
     short_description: Zabbix Agent 2 role
     options:
-      zabbix_agent2_server_name:
+      zabbix_agent2_server:
         description: Zabbix server name or IP address
         required: true
+        type: str
+      zabbix_agent2_server_active:
+        description: Zabbix active server name or IP address with port
+        required: false
         type: str
       zabbix_agent2_version:
         description: Zabbix version for repository configuration (e.g., "7.0")
