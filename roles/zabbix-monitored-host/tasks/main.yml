@@ -1,0 +1,43 @@
+---
+# tasks file for zabbix-monitored-host
+
+- name: Validate proxy configuration
+  ansible.builtin.assert:
+    that:
+      - zabbix_monitored_host_sender_target | length > 0
+    fail_msg: >-
+      zabbix_monitored_host_sender_target is empty. Set
+      zabbix_monitored_host_server (direct) or
+      zabbix_monitored_host_proxy_address (proxy).
+
+- name: Validate host groups
+  ansible.builtin.assert:
+    that:
+      - zabbix_monitored_host_combined_groups | length > 0
+    fail_msg: >-
+      A Zabbix host must belong to at least one host group. Set
+      zabbix_monitored_host_groups and/or zabbix_monitored_host_extra_groups.
+
+# Runs on the control host; configure the community.zabbix httpapi connection
+# in your inventory.
+- name: Create/update Zabbix host object
+  community.zabbix.zabbix_host:
+    host_name: "{{ zabbix_monitored_host_name }}"
+    visible_name: "{{ zabbix_monitored_host_visible_name }}"
+    host_groups: "{{ zabbix_monitored_host_combined_groups }}"
+    link_templates: "{{ zabbix_monitored_host_combined_templates }}"
+    status: "{{ zabbix_monitored_host_status }}"
+    monitored_by: "{{ zabbix_monitored_host_monitored_by }}"
+    proxy: "{{ zabbix_monitored_host_proxy | default(omit, true) }}"
+    proxy_group: "{{ zabbix_monitored_host_proxy_group | default(omit, true) }}"
+    interfaces: "{{ zabbix_monitored_host_interfaces }}"
+    state: present
+  delegate_to: localhost
+
+- name: Configure Linux target
+  ansible.builtin.include_tasks: linux.yml
+  when: ansible_os_family != 'Windows'
+
+- name: Configure Windows target
+  ansible.builtin.include_tasks: windows.yml
+  when: ansible_os_family == 'Windows'

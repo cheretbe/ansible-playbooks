@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+[Unit]
+Description={{ item.description | default('Monitored job: ' ~ item.name) }} (monitored via Zabbix)
+
+[Service]
+Type=oneshot
+TimeoutStartSec={{ item.timeout_start_sec | default(zabbix_monitored_host_default_timeout_start_sec) }}
+{% if item.user is defined %}
+User={{ item.user }}
+{% endif %}
+{% if item.working_directory is defined %}
+WorkingDirectory={{ item.working_directory }}
+{% endif %}
+Environment="ZBX={{ zabbix_monitored_host_sender_target }}"
+Environment="HOST={{ zabbix_monitored_host_name }}"
+Environment="JOB={{ item.key }}"
+{% for key, value in (item.environment | default({})).items() %}
+Environment="{{ key }}={{ value }}"
+{% endfor %}
+ExecStart={{ item.exec_start }}
+# END event: 0 on success, 1 on any failure/timeout/kill.
+# Leading '-' means a Zabbix hiccup never marks the job failed.
+ExecStopPost=-/bin/sh -c 'test "$$SERVICE_RESULT" = success && v=0 || v=1; exec {{ zabbix_monitored_host_sender_bin }} -z "${ZBX}" -s "${HOST}" -k "job.exit[${JOB}]" -o "$$v"'

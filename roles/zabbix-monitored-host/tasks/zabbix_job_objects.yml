@@ -1,0 +1,55 @@
+---
+# Per monitored job, create a trapper item plus the "failed" and "did not run"
+# triggers. Runs on the control host; configure the community.zabbix httpapi
+# connection in your inventory.
+
+# Items first: present items must exist before their trigger expressions
+# reference them.
+- name: Manage trapper items
+  community.zabbix.zabbix_item:
+    name: "Job {{ item.name }}: exit status"
+    host_name: "{{ zabbix_monitored_host_name }}"
+    params:
+      type: zabbix_trapper
+      key: "job.exit[{{ item.key }}]"
+      value_type: numeric_unsigned
+      trapper_hosts: "{{ zabbix_monitored_host_trapper_allowed_hosts }}"
+    state: present
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost
+
+- name: Manage "job failed" triggers
+  community.zabbix.zabbix_trigger:
+    name: "Job {{ item.name }} failed"
+    host_name: "{{ zabbix_monitored_host_name }}"
+    desc: "zabbix_sender reported a non-zero exit for job '{{ item.name }}'."
+    params:
+      severity: "{{ item.failed_severity | default(zabbix_monitored_host_default_failed_severity) }}"
+      expression: "last(/{{ zabbix_monitored_host_name }}/job.exit[{{ item.key }}])<>0"
+      manual_close: true
+      enabled: true
+    state: present
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost
+
+- name: Manage "job did not run" triggers
+  community.zabbix.zabbix_trigger:
+    name: "Job {{ item.name }} did not run"
+    host_name: "{{ zabbix_monitored_host_name }}"
+    desc: >-
+      No exit status received for job '{{ item.name }}' within
+      {{ item.no_run_threshold }} (dead man's switch).
+    params:
+      severity: "{{ item.no_run_severity | default(zabbix_monitored_host_default_no_run_severity) }}"
+      expression: "nodata(/{{ zabbix_monitored_host_name }}/job.exit[{{ item.key }}],{{ item.no_run_threshold }})=1"
+      manual_close: true
+      enabled: true
+    state: present
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  delegate_to: localhost

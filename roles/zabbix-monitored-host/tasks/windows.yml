@@ -1,0 +1,12 @@
+---
+# Windows target configuration.
+#
+# Monitored scheduled jobs (zabbix_monitored_host_scheduled_tasks) are Linux
+# only for now: the host object above is all this role manages on Windows.
+
+- name: (Windows) Report the host this role was applied to
+  ansible.builtin.debug:
+    msg: >-
+      zabbix-monitored-host: host {{ inventory_hostname }}
+      (fqdn {{ ansible_fqdn | default('unknown') }}) — no Windows-specific
+      configuration is managed by this role.

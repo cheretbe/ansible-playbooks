@@ -1,0 +1,77 @@
+---
+# Deploy a systemd oneshot service + timer per monitored job. The service's
+# ExecStopPost reports the exit status to Zabbix via zabbix_sender.
+
+- name: Validate scheduled task definitions
+  ansible.builtin.assert:
+    that:
+      - item.name is defined
+      - item.key is defined
+      # key ends up in the unit file name and the Zabbix item key, so keep it
+      # to characters that are safe in both.
+      - item.key is match('^[A-Za-z0-9_.-]+$')
+      - item.exec_start is defined
+      - item.timer_on_calendar is defined
+      - item.no_run_threshold is defined
+    fail_msg: >-
+      Each entry of zabbix_monitored_host_scheduled_tasks needs name, key
+      (matching ^[A-Za-z0-9_.-]+$), exec_start, timer_on_calendar and
+      no_run_threshold.
+    quiet: true
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name | default('<unnamed>') }}"
+
+# Items and triggers before the units, so a job that fires right after being
+# enabled has somewhere to send its exit status.
+- name: Manage Zabbix items and triggers for monitored jobs
+  ansible.builtin.include_tasks: zabbix_job_objects.yml
+
+- name: Install zabbix-sender
+  ansible.builtin.apt:
+    name: zabbix-sender
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+  when: zabbix_monitored_host_install_sender
+
+- name: Deploy monitored job service units
+  ansible.builtin.template:
+    src: zbxjob.service.j2
+    dest: "/etc/systemd/system/{{ zabbix_monitored_host_unit_prefix }}{{ item.key }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
+
+- name: Deploy monitored job timer units
+  ansible.builtin.template:
+    src: zbxjob.timer.j2
+    dest: "/etc/systemd/system/{{ zabbix_monitored_host_unit_prefix }}{{ item.key }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  notify: Reload systemd daemon
+
+# Reload before enabling so freshly written units are known to systemd.
+- name: Reload systemd daemon now
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start monitored job timers
+  ansible.builtin.systemd:
+    name: "{{ zabbix_monitored_host_unit_prefix }}{{ item.key }}.timer"
+    enabled: true
+    state: started
+  become: true
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name }}"

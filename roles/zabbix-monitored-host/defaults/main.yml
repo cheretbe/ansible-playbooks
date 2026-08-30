@@ -1,0 +1,62 @@
+---
+# defaults file for zabbix-monitored-host
+
+# --- Zabbix host object -------------------------------------------------------
+# Technical host name. MUST match the -s value used by zabbix_sender.
+zabbix_monitored_host_name: "{{ inventory_hostname }}"
+zabbix_monitored_host_visible_name: "{{ zabbix_monitored_host_name }}"
+zabbix_monitored_host_status: enabled
+# Host groups and templates come from two variables that are added together:
+# the base list (set it once for a whole inventory group) and the extra list
+# (set it per host to add to the base list instead of replacing it).
+zabbix_monitored_host_groups: []
+zabbix_monitored_host_extra_groups: []
+zabbix_monitored_host_templates: []
+zabbix_monitored_host_extra_templates: []
+
+# Agent interface created on the host object. Override the whole list to change
+# it, or set it to [] for a trapper-only host with no interface.
+zabbix_monitored_host_agent_dns: "{{ ansible_fqdn | default(inventory_hostname) }}"
+zabbix_monitored_host_interfaces:
+  - type: agent
+    main: 1
+    useip: 0
+    dns: "{{ zabbix_monitored_host_agent_dns }}"
+    port: "10050"
+
+# --- Monitoring path (direct vs proxy) ----------------------------------------
+# zabbix_server | proxy | proxy_group
+zabbix_monitored_host_monitored_by: zabbix_server
+# Name of the Zabbix proxy / proxy group object (as known to Zabbix), if any.
+zabbix_monitored_host_proxy: ""
+zabbix_monitored_host_proxy_group: ""
+
+# --- zabbix_sender target -----------------------------------------------------
+# Network address of the Zabbix server.
+zabbix_monitored_host_server: ""
+# Network address of the proxy that receives sender data (the proxy OBJECT name
+# in Zabbix is not necessarily its address, so this is a separate variable).
+zabbix_monitored_host_proxy_address: ""
+# Where zabbix_sender actually sends. Direct -> server; behind a proxy -> proxy.
+zabbix_monitored_host_sender_target: >-
+  {{ zabbix_monitored_host_proxy_address
+     if zabbix_monitored_host_monitored_by in ['proxy', 'proxy_group']
+     else zabbix_monitored_host_server }}
+
+# Comma-separated source addresses allowed to feed the trapper items, as seen by
+# whichever component (server/proxy) receives the data. Empty = allow anywhere.
+zabbix_monitored_host_trapper_allowed_hosts: "{{ ansible_host | default(inventory_hostname) }}"
+
+# --- Scheduled monitored jobs (Linux only) ------------------------------------
+# See meta/argument_specs.yml for the per-job schema. Ignored on Windows targets.
+zabbix_monitored_host_scheduled_tasks: []
+
+# Defaults applied to each job unless overridden per job.
+zabbix_monitored_host_default_timeout_start_sec: "1h"
+zabbix_monitored_host_default_failed_severity: high
+zabbix_monitored_host_default_no_run_severity: warning
+
+# --- Linux specifics ----------------------------------------------------------
+zabbix_monitored_host_unit_prefix: "zbxjob-"
+zabbix_monitored_host_sender_bin: /usr/bin/zabbix_sender
+zabbix_monitored_host_install_sender: true

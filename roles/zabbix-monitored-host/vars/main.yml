@@ -1,0 +1,11 @@
+---
+# vars file for zabbix-monitored-host
+#
+# The lists the role actually sends to Zabbix: base + extra. Defined here rather
+# than in defaults/ so they always reflect both variables; do not set them.
+
+zabbix_monitored_host_combined_groups: >-
+  {{ (zabbix_monitored_host_groups + zabbix_monitored_host_extra_groups) | unique }}
+
+zabbix_monitored_host_combined_templates: >-
+  {{ (zabbix_monitored_host_templates + zabbix_monitored_host_extra_templates) | unique }}

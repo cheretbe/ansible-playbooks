@@ -1,0 +1,138 @@
+---
+argument_specs:
+  main:
+    short_description: Register a host in Zabbix and monitor scheduled jobs
+    description:
+      - Creates/updates the Zabbix host object with an agent interface, custom
+        items and triggers
+    options:
+      zabbix_monitored_host_name:
+        description: Technical host name in Zabbix. Must match zabbix_sender -s.
+        type: str
+      zabbix_monitored_host_visible_name:
+        description: Visible name of the host object.
+        type: str
+      zabbix_monitored_host_status:
+        description: Host object status.
+        type: str
+        choices: [enabled, disabled]
+      zabbix_monitored_host_groups:
+        description:
+          - Zabbix host groups the host belongs to.
+          - Base list, meant to be set for a whole inventory group.
+          - Added to zabbix_monitored_host_extra_groups.
+        type: list
+        elements: str
+      zabbix_monitored_host_extra_groups:
+        description:
+          - Extra Zabbix host groups, meant to be set per host.
+          - Added to zabbix_monitored_host_groups rather than replacing it.
+        type: list
+        elements: str
+      zabbix_monitored_host_templates:
+        description:
+          - Zabbix templates linked to the host.
+          - Base list, meant to be set for a whole inventory group.
+          - Added to zabbix_monitored_host_extra_templates.
+        type: list
+        elements: str
+      zabbix_monitored_host_extra_templates:
+        description:
+          - Extra Zabbix templates, meant to be set per host.
+          - Added to zabbix_monitored_host_templates rather than replacing it.
+        type: list
+        elements: str
+      zabbix_monitored_host_interfaces:
+        description: Host interfaces (as accepted by community.zabbix.zabbix_host).
+        type: list
+        elements: dict
+      zabbix_monitored_host_monitored_by:
+        description: Whether the host is monitored directly or via a proxy.
+        type: str
+        choices: [zabbix_server, proxy, proxy_group]
+      zabbix_monitored_host_proxy:
+        description: Name of the Zabbix proxy object (when monitored_by=proxy).
+        type: str
+      zabbix_monitored_host_proxy_group:
+        description: Name of the proxy group object (when monitored_by=proxy_group).
+        type: str
+      zabbix_monitored_host_server:
+        description: Network address of the Zabbix server.
+        type: str
+      zabbix_monitored_host_proxy_address:
+        description: Network address of the proxy that receives sender data.
+        type: str
+      zabbix_monitored_host_sender_target:
+        description: Address zabbix_sender sends to (server or proxy).
+        type: str
+      zabbix_monitored_host_trapper_allowed_hosts:
+        description: Comma-separated source addresses allowed to feed trapper items.
+        type: str
+      zabbix_monitored_host_scheduled_tasks:
+        description:
+          - List of monitored scheduled jobs.
+          - Linux targets only; ignored on Windows.
+        type: list
+        elements: dict
+        options:
+          name:
+            description: Human-readable job name (used in item/trigger names).
+            type: str
+            required: true
+          key:
+            description:
+              - Job key, used for the unit name, JOB env and Zabbix item key.
+              - Must match ^[A-Za-z0-9_.-]+$ and be unique per host.
+            type: str
+            required: true
+          exec_start:
+            description: Command run by the systemd service (ExecStart).
+            type: str
+            required: true
+          timer_on_calendar:
+            description: systemd OnCalendar schedule expression.
+            type: str
+            required: true
+          no_run_threshold:
+            description: nodata() window for the "did not run" trigger (e.g. 26h).
+            type: str
+            required: true
+          timeout_start_sec:
+            description: systemd TimeoutStartSec for the oneshot service.
+            type: str
+          persistent:
+            description: systemd Persistent= on the timer (catch up missed runs).
+            type: bool
+          user:
+            description: systemd User= to run the job as.
+            type: str
+          working_directory:
+            description: systemd WorkingDirectory= for the job.
+            type: str
+          environment:
+            description: Extra environment variables for the job command.
+            type: dict
+          failed_severity:
+            description: Severity of the "job failed" trigger.
+            type: str
+          no_run_severity:
+            description: Severity of the "job did not run" trigger.
+            type: str
+      zabbix_monitored_host_default_timeout_start_sec:
+        description: Default TimeoutStartSec applied to jobs.
+        type: str
+      zabbix_monitored_host_default_failed_severity:
+        description: Default severity for "job failed" triggers.
+        type: str
+      zabbix_monitored_host_default_no_run_severity:
+        description: Default severity for "job did not run" triggers.
+        type: str
+      zabbix_monitored_host_unit_prefix:
+        description: Prefix for generated systemd unit names.
+        type: str
+      zabbix_monitored_host_sender_bin:
+        description: Path to zabbix_sender on Linux.
+        type: str
+      zabbix_monitored_host_install_sender:
+        description: Install the zabbix-sender package on Linux.
+        type: bool

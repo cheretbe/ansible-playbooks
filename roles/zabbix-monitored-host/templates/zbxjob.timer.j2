@@ -1,0 +1,10 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Schedule for {{ item.description | default(item.name) }}
+
+[Timer]
+OnCalendar={{ item.timer_on_calendar }}
+Persistent={{ (item.persistent | default(true)) | ternary('true', 'false') }}
+
+[Install]
+WantedBy=timers.target
