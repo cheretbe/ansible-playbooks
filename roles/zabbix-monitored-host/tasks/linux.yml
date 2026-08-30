@@ -66,6 +66,19 @@
 - name: Reload systemd daemon now
   ansible.builtin.meta: flush_handlers
 
+# In check mode the template tasks above don't actually write the unit files,
+# but the systemd module still queries the real unit state and fails for units
+# that are not on disk. Find out which timers really exist so the enable task
+# can skip the ones that would only be created by a real run.
+- name: Check which timer units already exist
+  ansible.builtin.stat:
+    path: "/etc/systemd/system/{{ zabbix_monitored_host_unit_prefix }}{{ item.key }}.timer"
+  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: __zabbix_monitored_host_timer_stats
+  when: ansible_check_mode
+
 - name: Enable and start monitored job timers
   ansible.builtin.systemd:
     name: "{{ zabbix_monitored_host_unit_prefix }}{{ item.key }}.timer"
@@ -75,3 +88,9 @@
   loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
   loop_control:
     label: "{{ item.name }}"
+    index_var: __zabbix_monitored_host_timer_idx
+  # In check mode, only report on timers whose unit file exists; freshly
+  # templated ones have no real unit for systemd to inspect yet.
+  when: >-
+    not ansible_check_mode
+    or __zabbix_monitored_host_timer_stats.results[__zabbix_monitored_host_timer_idx].stat.exists
