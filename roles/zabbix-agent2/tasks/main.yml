@@ -8,6 +8,16 @@
     mode: "0644"
   become: true
 
+# apt_repository refuses to work without a gpg binary on Debian 13+, where
+# apt-key is gone and gnupg is no longer part of the base system
+- name: Install gnupg
+  ansible.builtin.apt:
+    name: ["gnupg"]
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
 - name: Add Zabbix APT repository
   ansible.builtin.apt_repository:
     repo: "deb [signed-by=/etc/apt/trusted.gpg.d/zabbix-keyring.asc] https://repo.zabbix.com/zabbix/{{ zabbix_agent2_version }}/stable/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} main"

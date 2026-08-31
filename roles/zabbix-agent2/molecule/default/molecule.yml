@@ -1,0 +1,14 @@
+---
+
+# Driver, platforms and test sequence come from the shared base config
+# (.config/molecule/config.yml at the repo root). Only the role-specific
+# inventory variants live here: each optional feature is enabled on one
+# platform so all role branches are covered in a single converge.
+
+provisioner:
+  inventory:
+    host_vars:
+      debian-12:
+        zabbix_agent2_smart_enabled: true
+      ubuntu-24.04:
+        zabbix_agent2_docker_enabled: true

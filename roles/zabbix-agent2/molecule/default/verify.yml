@@ -1,0 +1,60 @@
+---
+
+- name: Verify
+  hosts: all
+  tasks:
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+
+    - name: Check that zabbix-agent2 package is installed
+      ansible.builtin.assert:
+        that: "'zabbix-agent2' in ansible_facts.packages"
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Check that zabbix-agent2 service is running and enabled
+      ansible.builtin.assert:
+        that:
+          - ansible_facts.services['zabbix-agent2.service'].state == 'running'
+          - ansible_facts.services['zabbix-agent2.service'].status == 'enabled'
+
+    - name: Read agent configuration override
+      ansible.builtin.slurp:
+        path: /etc/zabbix/zabbix_agent2.d/00-ansible.conf
+      register: zabbix_agent2_verify_conf
+
+    - name: Check configuration contents
+      vars:
+        conf: "{{ zabbix_agent2_verify_conf.content | b64decode }}"
+      ansible.builtin.assert:
+        that:
+          - "('Hostname=' ~ inventory_hostname) in conf"
+          - "'Server=127.0.0.1' in conf"
+          - "'ServerActive=127.0.0.1:10051' in conf"
+          # Docker plugin endpoint present exactly on docker-enabled hosts
+          - >-
+            (zabbix_agent2_docker_enabled | default(false))
+            == ('Plugins.Docker.Endpoint' in conf)
+
+    - name: Check that the agent is listening on port 10050
+      ansible.builtin.wait_for:
+        port: 10050
+        timeout: 10
+
+    - name: Check smartctl sudoers file (smart-enabled hosts)
+      ansible.builtin.command: visudo -cf /etc/sudoers.d/zabbix-smartctl
+      changed_when: false
+      become: true
+      when: zabbix_agent2_smart_enabled | default(false)
+
+    - name: Get zabbix user groups (docker-enabled hosts)
+      ansible.builtin.command: id -nG zabbix
+      register: zabbix_agent2_verify_groups
+      changed_when: false
+      when: zabbix_agent2_docker_enabled | default(false)
+
+    - name: Check that zabbix user is in the docker group (docker-enabled hosts)
+      ansible.builtin.assert:
+        that: "'docker' in zabbix_agent2_verify_groups.stdout.split()"
+      when: zabbix_agent2_docker_enabled | default(false)

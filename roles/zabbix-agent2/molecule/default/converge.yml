@@ -1,0 +1,10 @@
+---
+
+- name: Converge
+  hosts: all
+  vars:
+    zabbix_agent2_server: 127.0.0.1
+    zabbix_agent2_version: >-
+      {{ lookup('env', 'TEST_ZABBIX_VERSION') | default('7.4', true) }}
+  roles:
+    - zabbix-agent2

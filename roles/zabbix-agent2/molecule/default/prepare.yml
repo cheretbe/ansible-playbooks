@@ -1,0 +1,24 @@
+---
+
+- name: Prepare all hosts
+  hosts: all
+  gather_facts: false
+  tasks:
+    # The test images ship with emptied apt lists but fresh cache timestamps,
+    # so role tasks relying on cache_valid_time would see an empty index.
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+
+# The docker-enabled variant only needs the 'docker' group to exist; docker
+# itself is not installed in the test container.
+- name: Prepare docker-enabled hosts
+  hosts: ubuntu-24.04
+  gather_facts: false
+  tasks:
+    - name: Create docker group
+      ansible.builtin.group:
+        name: docker
+        state: present
+      become: true

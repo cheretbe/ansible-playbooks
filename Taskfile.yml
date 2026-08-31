@@ -1,0 +1,78 @@
+---
+
+# Molecule test runner. Run from inside a role directory:
+#   cd roles/zabbix-agent2 && task test
+# The python venv with molecule is created automatically on first use;
+# 'task venv:rebuild' recreates it from scratch. Shared molecule defaults
+# live in .config/molecule/config.yml (auto-discovered by molecule via the
+# VCS root).
+
+version: '3'
+
+vars:
+  VENV: '{{.ROOT_DIR}}/.venv'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  venv:
+    internal: true
+    dir: '{{.ROOT_DIR}}'
+    status:
+      - test -x '{{.VENV}}/bin/molecule'
+    preconditions:
+      - sh: dpkg --status python3-venv build-essential python3-dev > /dev/null 2>&1
+        msg: >-
+          Missing build packages. Install with:
+          sudo apt install python3-venv build-essential python3-dev
+    cmds:
+      - python3 -m venv '{{.VENV}}'
+      - '{{.VENV}}/bin/pip install --upgrade pip'
+      - '{{.VENV}}/bin/pip install wheel'
+      - '{{.VENV}}/bin/pip install -r requirements.txt -r dev_requirements.txt'
+
+  venv:rebuild:
+    desc: Recreate the python venv from scratch
+    dir: '{{.ROOT_DIR}}'
+    cmds:
+      - rm -rf '{{.VENV}}'
+      - task: venv
+
+  test:
+    desc: Run all molecule scenarios for the role in the current directory
+    deps: [venv]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - PATH="{{.VENV}}/bin:$PATH" molecule test --all
+
+  converge:
+    desc: 'Run molecule converge (args after --: task converge -- -s upgrade)'
+    deps: [venv]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - PATH="{{.VENV}}/bin:$PATH" molecule converge {{.CLI_ARGS}}
+
+  verify:
+    desc: Run molecule verify
+    deps: [venv]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - PATH="{{.VENV}}/bin:$PATH" molecule verify {{.CLI_ARGS}}
+
+  destroy:
+    desc: Destroy molecule instances
+    deps: [venv]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - PATH="{{.VENV}}/bin:$PATH" molecule destroy {{.CLI_ARGS}}
+
+  molecule:
+    desc: 'Run an arbitrary molecule command: task molecule -- list'
+    deps: [venv]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - PATH="{{.VENV}}/bin:$PATH" molecule {{.CLI_ARGS}}

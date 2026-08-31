@@ -3,6 +3,6 @@
 Hostname={{ inventory_hostname }}
 Server={{ zabbix_agent2_server }}
 ServerActive={{ zabbix_agent2_server_active }}
-{%- if zabbix_agent2_docker_enabled %}
+{% if zabbix_agent2_docker_enabled %}
 Plugins.Docker.Endpoint=unix:///var/run/docker.sock
 {% endif %}

@@ -7,10 +7,8 @@ humanfriendly
 invoke
 jinja2
 jmespath
-molecule-docker
-molecule-lxd
-molecule-vagrant
-molecule[ansible]
+molecule
+molecule-plugins[docker,vagrant]
 proxmoxer
 pylint
 pytest

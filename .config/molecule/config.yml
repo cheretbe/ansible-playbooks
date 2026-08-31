@@ -1,0 +1,71 @@
+---
+
+# Shared Molecule base config, auto-discovered via the VCS root when molecule
+# runs from any role directory. Scenario molecule.yml files override per key:
+# dicts merge recursively, lists (e.g. platforms) are replaced wholesale.
+
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  # Systemd-capable test images. If these ever go unmaintained, switch to
+  # locally built images (pre_build_image: false + a Dockerfile.j2 installing
+  # systemd + python3 + sudo on stock distro images).
+  - name: debian-11
+    image: docker.io/geerlingguy/docker-debian11-ansible:latest
+    pre_build_image: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+  - name: debian-12
+    image: docker.io/geerlingguy/docker-debian12-ansible:latest
+    pre_build_image: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+  - name: debian-13
+    image: docker.io/geerlingguy/docker-debian13-ansible:latest
+    pre_build_image: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+  - name: ubuntu-22.04
+    image: docker.io/geerlingguy/docker-ubuntu2204-ansible:latest
+    pre_build_image: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+  - name: ubuntu-24.04
+    image: docker.io/geerlingguy/docker-ubuntu2404-ansible:latest
+    pre_build_image: true
+    command: /lib/systemd/systemd
+    cgroupns_mode: host
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    privileged: true
+provisioner:
+  name: ansible
+  env:
+    # Make the repo's roles/ directory resolvable from any role's scenario
+    # (molecule no longer adds the role's parent directory implicitly).
+    ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - destroy
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - verify
+    - destroy
