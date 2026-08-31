@@ -1,0 +1,46 @@
+---
+
+- name: Prepare monitored hosts
+  hosts: monitored
+  vars:
+    zabbix_agent2_server: zbx-server
+    zabbix_agent2_version: >-
+      {{ lookup('env', 'TEST_ZABBIX_VERSION') | default('7.4', true) }}
+  tasks:
+    # The test images ship with emptied apt lists but fresh cache timestamps,
+    # so role tasks relying on cache_valid_time would see an empty index.
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+
+    # Provides the Zabbix apt repository (the role's zabbix-sender install
+    # needs it) and mirrors how production monitored hosts actually look.
+    - name: Install Zabbix agent
+      ansible.builtin.include_role:
+        name: zabbix-agent2
+
+    - name: Wait for the Zabbix API to come up
+      ansible.builtin.uri:
+        url: http://zbx-web:8080/api_jsonrpc.php
+        method: POST
+        body_format: json
+        body:
+          jsonrpc: "2.0"
+          method: apiinfo.version
+          params: {}
+          id: 1
+        return_content: true
+      register: zabbix_api_check
+      until: zabbix_api_check.json.result is defined
+      retries: 60
+      delay: 5
+      run_once: true
+
+    - name: Create the test host group
+      community.zabbix.zabbix_group:
+        host_groups:
+          - Molecule test
+        state: present
+      delegate_to: localhost
+      run_once: true

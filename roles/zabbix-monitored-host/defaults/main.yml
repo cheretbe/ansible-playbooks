@@ -45,7 +45,10 @@ zabbix_monitored_host_sender_target: >-
 
 # Comma-separated source addresses allowed to feed the trapper items, as seen by
 # whichever component (server/proxy) receives the data. Empty = allow anywhere.
-zabbix_monitored_host_trapper_allowed_hosts: "{{ ansible_host | default(inventory_hostname) }}"
+# Looked up via hostvars because the consuming tasks delegate to localhost,
+# where a bare ansible_host would resolve to the delegate, not this host.
+zabbix_monitored_host_trapper_allowed_hosts: >-
+  {{ hostvars[inventory_hostname].ansible_host | default(inventory_hostname) }}
 
 # --- Scheduled monitored jobs (Linux only) ------------------------------------
 # See meta/argument_specs.yml for the per-job schema. Ignored on Windows targets.

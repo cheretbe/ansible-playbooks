@@ -1,0 +1,128 @@
+---
+
+- name: Verify
+  hosts: monitored
+  vars:
+    zabbix_verify_api_url: http://zbx-web:8080/api_jsonrpc.php
+    zabbix_verify_jobs:
+      - key: molecule_ok
+        expected_exit: "0"
+      - key: molecule_fail
+        expected_exit: "1"
+  tasks:
+    # --- on-host artifacts ----------------------------------------------------
+    - name: Stat job unit files
+      ansible.builtin.stat:
+        path: "/etc/systemd/system/zbxjob-{{ item.0.key }}.{{ item.1 }}"
+      loop: "{{ zabbix_verify_jobs | product(['service', 'timer']) | list }}"
+      loop_control:
+        label: "zbxjob-{{ item.0.key }}.{{ item.1 }}"
+      register: zabbix_verify_units
+
+    - name: Check that unit files exist
+      ansible.builtin.assert:
+        that: item.stat.exists
+      loop: "{{ zabbix_verify_units.results }}"
+      loop_control:
+        label: "{{ item.stat.path }}"
+
+    - name: Check that timers are enabled and active
+      ansible.builtin.command: "systemctl is-{{ item.1 }} zbxjob-{{ item.0.key }}.timer"
+      changed_when: false
+      register: zabbix_verify_timers
+      failed_when: zabbix_verify_timers.stdout not in ['enabled', 'active']
+      loop: "{{ zabbix_verify_jobs | product(['enabled', 'active']) | list }}"
+      loop_control:
+        label: "zbxjob-{{ item.0.key }}.timer is-{{ item.1 }}"
+
+    # --- Zabbix host object ----------------------------------------------------
+    - name: Get Zabbix host object
+      community.zabbix.zabbix_host_info:
+        host_name: "{{ inventory_hostname }}"
+      delegate_to: localhost
+      register: zabbix_verify_host
+
+    - name: Check host object and group membership
+      ansible.builtin.assert:
+        that:
+          - zabbix_verify_host.hosts | length == 1
+          - >-
+            'Molecule test' in
+            (zabbix_verify_host.hosts[0].hostgroups | map(attribute='name'))
+
+    # --- end to end: run the jobs, expect exit values in Zabbix ----------------
+    - name: Run monitored jobs now
+      ansible.builtin.systemd:
+        name: "zbxjob-{{ item.key }}.service"
+        state: started
+      become: true
+      # the failing job's unit is supposed to end up in a failed state
+      failed_when: false
+      loop: "{{ zabbix_verify_jobs }}"
+      loop_control:
+        label: "zbxjob-{{ item.key }}.service"
+
+    - name: Log in to the Zabbix API
+      ansible.builtin.uri:
+        url: "{{ zabbix_verify_api_url }}"
+        method: POST
+        body_format: json
+        body:
+          jsonrpc: "2.0"
+          method: user.login
+          params:
+            username: Admin
+            password: zabbix
+          id: 1
+      register: zabbix_verify_login
+      run_once: true
+
+    - name: Check that job exit values arrived in Zabbix
+      ansible.builtin.uri:
+        url: "{{ zabbix_verify_api_url }}"
+        method: POST
+        body_format: json
+        headers:
+          Authorization: "Bearer {{ zabbix_verify_login.json.result }}"
+        body:
+          jsonrpc: "2.0"
+          method: item.get
+          params:
+            host: "{{ inventory_hostname }}"
+            search:
+              key_: "job.exit[{{ item.key }}]"
+            output: ["key_", "lastvalue", "lastclock"]
+          id: 2
+      register: zabbix_verify_item
+      until:
+        - zabbix_verify_item.json.result | default([]) | length == 1
+        - zabbix_verify_item.json.result[0].lastclock | default(0) | int > 0
+        - zabbix_verify_item.json.result[0].lastvalue == item.expected_exit
+      retries: 20
+      delay: 3
+      loop: "{{ zabbix_verify_jobs }}"
+      loop_control:
+        label: "job.exit[{{ item.key }}]"
+
+    - name: Get job triggers
+      ansible.builtin.uri:
+        url: "{{ zabbix_verify_api_url }}"
+        method: POST
+        body_format: json
+        headers:
+          Authorization: "Bearer {{ zabbix_verify_login.json.result }}"
+        body:
+          jsonrpc: "2.0"
+          method: trigger.get
+          params:
+            host: "{{ inventory_hostname }}"
+            output: ["description"]
+          id: 3
+      register: zabbix_verify_triggers
+
+    - name: Check that both triggers exist per job
+      ansible.builtin.assert:
+        # a "failed" and a "did not run" trigger for each job
+        that: >-
+          zabbix_verify_triggers.json.result | default([]) | length
+          == (zabbix_verify_jobs | length) * 2
