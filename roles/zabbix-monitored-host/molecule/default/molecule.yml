@@ -110,19 +110,15 @@ platforms:
 
 provisioner:
   inventory:
-    hosts:
-      all:
-        hosts:
-          # The role's API tasks delegate to localhost; give it the
-          # community.zabbix httpapi connection pointing at the published
-          # zbx-web port (mirrors the production inventory setup).
-          localhost:
-            ansible_connection: httpapi
-            ansible_network_os: community.zabbix.zabbix
-            ansible_host: 127.0.0.1
-            ansible_httpapi_port: 18080
-            ansible_httpapi_use_ssl: false
-            ansible_zabbix_url_path: ''
-            ansible_user: Admin
-            ansible_httpapi_pass: zabbix
-            ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    group_vars:
+      # API endpoint as seen from the control host (the published zbx-web port),
+      # set once for the whole group the way a production inventory would. The
+      # role applies these as connection variables on its API tasks only, so
+      # localhost stays a plain local connection for everything else.
+      monitored:
+        zabbix_monitored_host_api_server: 127.0.0.1
+        zabbix_monitored_host_api_port: 18080
+        zabbix_monitored_host_api_use_ssl: false
+        zabbix_monitored_host_api_url_path: ''
+        zabbix_monitored_host_api_user: Admin
+        zabbix_monitored_host_api_password: zabbix

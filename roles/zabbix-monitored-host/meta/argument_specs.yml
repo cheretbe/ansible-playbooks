@@ -6,6 +6,39 @@ argument_specs:
       - Creates/updates the Zabbix host object with an agent interface, custom
         items and triggers
     options:
+      zabbix_monitored_host_api_delegate:
+        description: Host the API tasks are delegated to (the control host).
+        type: str
+      zabbix_monitored_host_api_server:
+        description:
+          - Address of the Zabbix frontend serving the API.
+          - Defaults to zabbix_monitored_host_server.
+        type: str
+      zabbix_monitored_host_api_port:
+        description: TCP port of the Zabbix frontend.
+        type: int
+      zabbix_monitored_host_api_use_ssl:
+        description: Use HTTPS to reach the API.
+        type: bool
+      zabbix_monitored_host_api_validate_certs:
+        description: Validate the frontend's TLS certificate.
+        type: bool
+      zabbix_monitored_host_api_url_path:
+        description:
+          - Path portion of the frontend URL ('zabbix' for https://host/zabbix).
+          - Empty string when the frontend is served from the root.
+        type: str
+      zabbix_monitored_host_api_token:
+        description: Zabbix API token, used instead of user and password.
+        type: str
+        no_log: true
+      zabbix_monitored_host_api_user:
+        description: Zabbix API user name (when no token is set).
+        type: str
+      zabbix_monitored_host_api_password:
+        description: Zabbix API password (when no token is set).
+        type: str
+        no_log: true
       zabbix_monitored_host_name:
         description: Technical host name in Zabbix. Must match zabbix_sender -s.
         type: str

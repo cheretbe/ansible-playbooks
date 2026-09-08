@@ -1,6 +1,25 @@
 ---
 # defaults file for zabbix-monitored-host
 
+# --- Zabbix API connection ----------------------------------------------------
+# Set these once per inventory group (password/token from a vault).
+# tasks/zabbix_api.yml turns them into httpapi connection variables scoped to
+# the API tasks alone, so the delegate host keeps its own connection settings
+# for every other task.
+zabbix_monitored_host_api_delegate: localhost
+# Same host as the server, just another port; a proxy never serves the API.
+zabbix_monitored_host_api_server: "{{ zabbix_monitored_host_server }}"
+zabbix_monitored_host_api_port: 443
+zabbix_monitored_host_api_use_ssl: true
+zabbix_monitored_host_api_validate_certs: true
+# Path portion of the frontend URL: 'zabbix' for https://host/zabbix,
+# '' (empty string) when the frontend is served from the root.
+zabbix_monitored_host_api_url_path: zabbix
+# Either an API token, or a user name plus password.
+zabbix_monitored_host_api_token: ""
+zabbix_monitored_host_api_user: ""
+zabbix_monitored_host_api_password: ""
+
 # --- Zabbix host object -------------------------------------------------------
 # Technical host name. MUST match the -s value used by zabbix_sender.
 zabbix_monitored_host_name: "{{ inventory_hostname }}"

@@ -1,55 +1,70 @@
 ---
 # Per monitored job, create a trapper item plus the "failed" and "did not run"
-# triggers. Runs on the control host; configure the community.zabbix httpapi
-# connection in your inventory.
+# triggers. Runs on the control host over the httpapi connection declared on the
+# block below, built from the zabbix_monitored_host_api_* variables. The
+# connection is set here rather than on the delegate host in the inventory, so
+# that delegating to localhost does not make localhost a Zabbix API endpoint for
+# the rest of the play.
 
-# Items first: present items must exist before their trigger expressions
-# reference them.
-- name: Manage trapper items
-  community.zabbix.zabbix_item:
-    name: "Job {{ item.name }}: exit status"
-    host_name: "{{ zabbix_monitored_host_name }}"
-    params:
-      type: zabbix_trapper
-      key: "job.exit[{{ item.key }}]"
-      value_type: numeric_unsigned
-      trapper_hosts: "{{ zabbix_monitored_host_trapper_allowed_hosts }}"
-    state: present
-  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
-  loop_control:
-    label: "{{ item.name }}"
-  delegate_to: localhost
+- name: Manage Zabbix objects for monitored jobs
+  delegate_to: "{{ zabbix_monitored_host_api_delegate }}"
+  vars:
+    ansible_connection: httpapi
+    ansible_network_os: community.zabbix.zabbix
+    ansible_host: "{{ zabbix_monitored_host_api_server }}"
+    ansible_httpapi_port: "{{ zabbix_monitored_host_api_port }}"
+    ansible_httpapi_use_ssl: "{{ zabbix_monitored_host_api_use_ssl }}"
+    ansible_httpapi_validate_certs: "{{ zabbix_monitored_host_api_validate_certs }}"
+    ansible_zabbix_url_path: "{{ zabbix_monitored_host_api_url_path }}"
+    ansible_zabbix_auth_key: "{{ zabbix_monitored_host_api_token }}"
+    ansible_user: "{{ zabbix_monitored_host_api_user }}"
+    ansible_httpapi_pass: "{{ zabbix_monitored_host_api_password }}"
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  block:
+    # Items first: present items must exist before their trigger expressions
+    # reference them.
+    - name: Manage trapper items
+      community.zabbix.zabbix_item:
+        name: "Job {{ item.name }}: exit status"
+        host_name: "{{ zabbix_monitored_host_name }}"
+        params:
+          type: zabbix_trapper
+          key: "job.exit[{{ item.key }}]"
+          value_type: numeric_unsigned
+          trapper_hosts: "{{ zabbix_monitored_host_trapper_allowed_hosts }}"
+        state: present
+      loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+      loop_control:
+        label: "{{ item.name }}"
 
-- name: Manage "job failed" triggers
-  community.zabbix.zabbix_trigger:
-    name: "Job {{ item.name }} failed"
-    host_name: "{{ zabbix_monitored_host_name }}"
-    desc: "zabbix_sender reported a non-zero exit for job '{{ item.name }}'."
-    params:
-      severity: "{{ item.failed_severity | default(zabbix_monitored_host_default_failed_severity) }}"
-      expression: "last(/{{ zabbix_monitored_host_name }}/job.exit[{{ item.key }}])<>0"
-      manual_close: true
-      enabled: true
-    state: present
-  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
-  loop_control:
-    label: "{{ item.name }}"
-  delegate_to: localhost
+    - name: Manage "job failed" triggers
+      community.zabbix.zabbix_trigger:
+        name: "Job {{ item.name }} failed"
+        host_name: "{{ zabbix_monitored_host_name }}"
+        desc: "zabbix_sender reported a non-zero exit for job '{{ item.name }}'."
+        params:
+          severity: "{{ item.failed_severity | default(zabbix_monitored_host_default_failed_severity) }}"
+          expression: "last(/{{ zabbix_monitored_host_name }}/job.exit[{{ item.key }}])<>0"
+          manual_close: true
+          enabled: true
+        state: present
+      loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+      loop_control:
+        label: "{{ item.name }}"
 
-- name: Manage "job did not run" triggers
-  community.zabbix.zabbix_trigger:
-    name: "Job {{ item.name }} did not run"
-    host_name: "{{ zabbix_monitored_host_name }}"
-    desc: >-
-      No exit status received for job '{{ item.name }}' within
-      {{ item.no_run_threshold }} (dead man's switch).
-    params:
-      severity: "{{ item.no_run_severity | default(zabbix_monitored_host_default_no_run_severity) }}"
-      expression: "nodata(/{{ zabbix_monitored_host_name }}/job.exit[{{ item.key }}],{{ item.no_run_threshold }})=1"
-      manual_close: true
-      enabled: true
-    state: present
-  loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
-  loop_control:
-    label: "{{ item.name }}"
-  delegate_to: localhost
+    - name: Manage "job did not run" triggers
+      community.zabbix.zabbix_trigger:
+        name: "Job {{ item.name }} did not run"
+        host_name: "{{ zabbix_monitored_host_name }}"
+        desc: >-
+          No exit status received for job '{{ item.name }}' within
+          {{ item.no_run_threshold }} (dead man's switch).
+        params:
+          severity: "{{ item.no_run_severity | default(zabbix_monitored_host_default_no_run_severity) }}"
+          expression: "nodata(/{{ zabbix_monitored_host_name }}/job.exit[{{ item.key }}],{{ item.no_run_threshold }})=1"
+          manual_close: true
+          enabled: true
+        state: present
+      loop: "{{ zabbix_monitored_host_scheduled_tasks }}"
+      loop_control:
+        label: "{{ item.name }}"

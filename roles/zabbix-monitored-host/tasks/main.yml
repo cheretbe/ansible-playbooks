@@ -18,8 +18,22 @@
       A Zabbix host must belong to at least one host group. Set
       zabbix_monitored_host_groups and/or zabbix_monitored_host_extra_groups.
 
-# Runs on the control host; configure the community.zabbix httpapi connection
-# in your inventory.
+- name: Validate Zabbix API connection settings
+  ansible.builtin.assert:
+    that:
+      - zabbix_monitored_host_api_server | length > 0
+      - >-
+        (zabbix_monitored_host_api_token | length > 0)
+        or (zabbix_monitored_host_api_user | length > 0
+            and zabbix_monitored_host_api_password | length > 0)
+    fail_msg: >-
+      Set zabbix_monitored_host_api_server (defaults to
+      zabbix_monitored_host_server) plus either
+      zabbix_monitored_host_api_token or zabbix_monitored_host_api_user and
+      zabbix_monitored_host_api_password.
+
+# Runs on the control host over the httpapi connection declared below, built
+# from the zabbix_monitored_host_api_* variables.
 - name: Create/update Zabbix host object
   community.zabbix.zabbix_host:
     host_name: "{{ zabbix_monitored_host_name }}"
@@ -32,7 +46,22 @@
     proxy_group: "{{ zabbix_monitored_host_proxy_group | default(omit, true) }}"
     interfaces: "{{ zabbix_monitored_host_interfaces }}"
     state: present
-  delegate_to: localhost
+  delegate_to: "{{ zabbix_monitored_host_api_delegate }}"
+  vars:
+    ansible_connection: httpapi
+    ansible_network_os: community.zabbix.zabbix
+    ansible_host: "{{ zabbix_monitored_host_api_server }}"
+    ansible_httpapi_port: "{{ zabbix_monitored_host_api_port }}"
+    ansible_httpapi_use_ssl: "{{ zabbix_monitored_host_api_use_ssl }}"
+    ansible_httpapi_validate_certs: "{{ zabbix_monitored_host_api_validate_certs }}"
+    ansible_zabbix_url_path: "{{ zabbix_monitored_host_api_url_path }}"
+    # Empty key -> the connection plugin logs in with user/password instead.
+    ansible_zabbix_auth_key: "{{ zabbix_monitored_host_api_token }}"
+    ansible_user: "{{ zabbix_monitored_host_api_user }}"
+    ansible_httpapi_pass: "{{ zabbix_monitored_host_api_password }}"
+    # httpapi modules always execute on the control node, so use the same
+    # interpreter as ansible-playbook, where community.zabbix is installed.
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
 - name: Configure Linux target
   ansible.builtin.include_tasks: linux.yml

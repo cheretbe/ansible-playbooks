@@ -41,6 +41,16 @@
         host_name: "{{ inventory_hostname }}"
       delegate_to: localhost
       register: zabbix_verify_host
+      vars:
+        ansible_connection: httpapi
+        ansible_network_os: community.zabbix.zabbix
+        ansible_host: "{{ zabbix_monitored_host_api_server }}"
+        ansible_httpapi_port: "{{ zabbix_monitored_host_api_port }}"
+        ansible_httpapi_use_ssl: "{{ zabbix_monitored_host_api_use_ssl }}"
+        ansible_zabbix_url_path: "{{ zabbix_monitored_host_api_url_path }}"
+        ansible_user: "{{ zabbix_monitored_host_api_user }}"
+        ansible_httpapi_pass: "{{ zabbix_monitored_host_api_password }}"
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
     - name: Check host object and group membership
       ansible.builtin.assert:
