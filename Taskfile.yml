@@ -11,6 +11,15 @@ version: '3'
 
 vars:
   VENV: '{{.ROOT_DIR}}/.venv'
+  # molecule >= 25 no longer puts driver-bundled ansible modules on the
+  # module path, which breaks the vagrant driver's create/destroy playbooks
+  # ("couldn't resolve module/action 'vagrant'"). Export the driver's modules
+  # directory explicitly until this is fixed upstream:
+  # https://github.com/ansible-community/molecule-plugins/issues/301
+  MOLECULE_ENV: >-
+    PATH="{{.VENV}}/bin:$PATH"
+    ANSIBLE_LIBRARY="$('{{.VENV}}/bin/python' -c
+    'import molecule_plugins.vagrant.modules as m, os; print(os.path.dirname(m.__file__))')"
 
 tasks:
   default:
@@ -47,32 +56,32 @@ tasks:
     deps: [venv]
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - PATH="{{.VENV}}/bin:$PATH" molecule test --all
+      - '{{.MOLECULE_ENV}} molecule test --all'
 
   converge:
     desc: 'Run molecule converge (args after --: task converge -- -s upgrade)'
     deps: [venv]
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - PATH="{{.VENV}}/bin:$PATH" molecule converge {{.CLI_ARGS}}
+      - '{{.MOLECULE_ENV}} molecule converge {{.CLI_ARGS}}'
 
   verify:
     desc: Run molecule verify
     deps: [venv]
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - PATH="{{.VENV}}/bin:$PATH" molecule verify {{.CLI_ARGS}}
+      - '{{.MOLECULE_ENV}} molecule verify {{.CLI_ARGS}}'
 
   destroy:
     desc: Destroy molecule instances
     deps: [venv]
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - PATH="{{.VENV}}/bin:$PATH" molecule destroy {{.CLI_ARGS}}
+      - '{{.MOLECULE_ENV}} molecule destroy {{.CLI_ARGS}}'
 
   molecule:
     desc: 'Run an arbitrary molecule command: task molecule -- list'
     deps: [venv]
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - PATH="{{.VENV}}/bin:$PATH" molecule {{.CLI_ARGS}}
+      - '{{.MOLECULE_ENV}} molecule {{.CLI_ARGS}}'

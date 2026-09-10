@@ -1,0 +1,293 @@
+---
+
+- name: Verify
+  hosts: all
+  vars:
+    linux_verify_utils_packages:
+      - mc
+      - htop
+      - net-tools
+      - mtr-tiny
+      - ncdu
+      - wget
+      - git
+      - nano
+      - traceroute
+      - colordiff
+      - jq
+      - pv
+  tasks:
+    - name: Check host FQDN matches inventory name
+      ansible.builtin.assert:
+        that: inventory_hostname == ansible_fqdn
+
+    - name: Gather package facts
+      ansible.builtin.package_facts:
+      become: true
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+      become: true
+
+    # --- linux-utils ------------------------------------------------------------
+    - name: Check that utility packages are installed
+      ansible.builtin.assert:
+        that: item in ansible_facts.packages
+      loop: "{{ linux_verify_utils_packages }}"
+
+    - name: Check that a DNS utility package is installed
+      # Debian 13 dropped the transitional 'dnsutils' package; apt satisfies
+      # it with bind9-dnsutils there
+      ansible.builtin.assert:
+        that: >-
+          'dnsutils' in ansible_facts.packages
+          or 'bind9-dnsutils' in ansible_facts.packages
+
+    # --- linux-ca-certificates --------------------------------------------------
+    - name: Get CA certificate file info
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /usr/local/share/ca-certificates/molecule-test-ca.crt
+        # the .pem symlink is created by update-ca-certificates, so its
+        # presence means the handler actually ran
+        - /etc/ssl/certs/molecule-test-ca.pem
+      register: linux_verify_ca_files
+
+    - name: Check that the test CA is installed and picked up by update-ca-certificates
+      ansible.builtin.assert:
+        that: item.stat.exists
+      loop: "{{ linux_verify_ca_files.results }}"
+      loop_control:
+        label: "{{ item.stat.path }}"
+
+    # --- linux-dns --------------------------------------------------------------
+    - name: Check systemd-resolved stub is disabled
+      when:
+        - "'systemd-resolved.service' in ansible_facts.services"
+        - ansible_facts.services['systemd-resolved.service'].status == 'enabled'
+      block:
+        - name: Get resolved drop-in and resolv.conf info
+          ansible.builtin.stat:
+            path: "{{ item }}"
+          loop:
+            - /etc/systemd/resolved.conf.d/10-disable-dns-stub.conf
+            - /etc/resolv.conf
+          register: linux_verify_dns_files
+
+        - name: Check that the stub is disabled and resolv.conf does not point to it
+          ansible.builtin.assert:
+            that:
+              - linux_verify_dns_files.results[0].stat.exists
+              - >-
+                (not linux_verify_dns_files.results[1].stat.islnk)
+                or
+                (linux_verify_dns_files.results[1].stat.lnk_source
+                 == '/run/systemd/resolve/resolv.conf')
+
+        - name: Get listeners on the DNS stub address
+          ansible.builtin.command: ss -H -ltn src 127.0.0.53
+          become: true
+          changed_when: false
+          register: linux_verify_dns_stub_listener
+
+        - name: Check that nothing listens on the DNS stub address
+          ansible.builtin.assert:
+            that: linux_verify_dns_stub_listener.stdout | trim | length == 0
+
+    - name: Check that DNS resolution works
+      ansible.builtin.command: getent hosts deb.debian.org
+      changed_when: false
+
+    # --- linux-locale -----------------------------------------------------------
+    - name: Get list of generated locales
+      ansible.builtin.command: locale -a
+      changed_when: false
+      register: linux_verify_locales
+
+    - name: Check that locales are generated
+      ansible.builtin.assert:
+        that:
+          - "'en_US.utf8' in linux_verify_locales.stdout_lines"
+          - "'ru_RU.utf8' in linux_verify_locales.stdout_lines"
+
+    - name: Read locale config
+      ansible.builtin.slurp:
+        src: /etc/default/locale
+      register: linux_verify_locale_config
+
+    - name: Check default locale setting
+      ansible.builtin.assert:
+        that: >-
+          'LANG="en_US.UTF-8"' in (linux_verify_locale_config.content | b64decode)
+
+    # --- linux-timezone ---------------------------------------------------------
+    - name: Get system timezone
+      ansible.builtin.command: timedatectl show --property=Timezone --value
+      changed_when: false
+      register: linux_verify_timezone
+
+    - name: Check system timezone
+      ansible.builtin.assert:
+        that: linux_verify_timezone.stdout == 'Europe/Kaliningrad'
+
+    # --- linux-mta --------------------------------------------------------------
+    - name: Check that postfix is installed and sendmail is not
+      ansible.builtin.assert:
+        that:
+          - "'postfix' in ansible_facts.packages"
+          - "'sendmail' not in ansible_facts.packages"
+
+    - name: Check that postfix service is active
+      # systemd module can't query unit state without changing it
+      ansible.builtin.command: systemctl is-active postfix # noqa command-instead-of-module
+      changed_when: false
+
+    - name: Get postfix hostname setting
+      # /usr/sbin is not in the unprivileged PATH on Debian
+      ansible.builtin.command: postconf -h myhostname
+      become: true
+      changed_when: false
+      register: linux_verify_postfix_hostname
+
+    - name: Check that postfix config was applied
+      ansible.builtin.assert:
+        that: linux_verify_postfix_hostname.stdout == ansible_fqdn
+
+    - name: Read aliases table
+      ansible.builtin.slurp:
+        src: /etc/aliases
+      register: linux_verify_aliases
+
+    - name: Check root mail recipient and custom aliases
+      ansible.builtin.assert:
+        that:
+          - "'molecule-root@example.com' in (linux_verify_aliases.content | b64decode)"
+          - "'moleculealias: root' in (linux_verify_aliases.content | b64decode)"
+
+    # --- linux-unattended-upgrades ----------------------------------------------
+    - name: Get unattended upgrades config file info
+      ansible.builtin.stat:
+        path: /etc/apt/apt.conf.d/90-ansible-unattended-upgrades
+      register: linux_verify_unattended_config
+
+    - name: Check that unattended-upgrades is installed and configured
+      ansible.builtin.assert:
+        that:
+          - "'unattended-upgrades' in ansible_facts.packages"
+          - linux_verify_unattended_config.stat.exists
+
+    - name: Get effective unattended upgrades mail setting
+      # also proves the generated config parses cleanly
+      ansible.builtin.command: apt-config dump Unattended-Upgrade::Mail
+      changed_when: false
+      register: linux_verify_unattended_mail
+
+    - name: Check unattended upgrades mail setting
+      ansible.builtin.assert:
+        that: >-
+          '"root"' in linux_verify_unattended_mail.stdout
+
+    # --- smartmontools ----------------------------------------------------------
+    - name: Check that smartmontools is not installed (skipped on VMs)
+      ansible.builtin.assert:
+        that: "'smartmontools' not in ansible_facts.packages"
+
+    # --- linux-motd -------------------------------------------------------------
+    - name: Get MOTD file info
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /etc/update-motd.d/99-ansible-custom
+        - /etc/update-motd.d/ansible_custom_message.txt
+        - /etc/motd
+        - /etc/update-motd.d/99-bento
+      register: linux_verify_motd_files
+
+    - name: Check custom MOTD files exist and extra ones are removed
+      ansible.builtin.assert:
+        that:
+          - linux_verify_motd_files.results[0].stat.exists
+          - linux_verify_motd_files.results[0].stat.xusr
+          - linux_verify_motd_files.results[1].stat.exists
+          - not linux_verify_motd_files.results[2].stat.exists
+          - not linux_verify_motd_files.results[3].stat.exists
+
+    - name: Get disabled Ubuntu MOTD script info
+      ansible.builtin.stat:
+        path: "/etc/update-motd.d/{{ item }}"
+      loop:
+        - 10-help-text
+        - 50-motd-news
+      register: linux_verify_motd_disabled
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Check that unnecessary Ubuntu MOTD scripts are not executable
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - not item.stat.xusr
+          - not item.stat.xgrp
+          - not item.stat.xoth
+      loop: "{{ linux_verify_motd_disabled.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Run custom MOTD script
+      ansible.builtin.command: /etc/update-motd.d/99-ansible-custom
+      changed_when: false
+      register: linux_verify_motd_output
+
+    - name: Check custom MOTD message output
+      ansible.builtin.assert:
+        that: "'Provisioned by molecule' in linux_verify_motd_output.stdout"
+
+    # --- linux-users ------------------------------------------------------------
+    - name: Get test user info
+      ansible.builtin.getent:
+        database: passwd
+        key: moleculetest
+
+    - name: Check test user shell
+      ansible.builtin.assert:
+        that: ansible_facts.getent_passwd['moleculetest'][5] == '/bin/bash'
+
+    - name: Get test user groups
+      ansible.builtin.command: id -nG moleculetest
+      changed_when: false
+      register: linux_verify_user_groups
+
+    - name: Check test user is in sudo group
+      ansible.builtin.assert:
+        that: "'sudo' in linux_verify_user_groups.stdout.split()"
+
+    - name: Read test user authorized keys
+      ansible.builtin.slurp:
+        src: /home/moleculetest/.ssh/authorized_keys
+      become: true
+      register: linux_verify_authorized_keys
+
+    - name: Check test user SSH key
+      ansible.builtin.assert:
+        that: >-
+          'AAAAC3NzaC1lZDI1NTE5AAAAINzx8kFNe2ZJ3N+HxnXm92iPQvqLAAlkYGckutCjYnte'
+          in (linux_verify_authorized_keys.content | b64decode)
+
+    - name: Get passwordless sudo config file info
+      # /etc/sudoers.d is not readable by unprivileged users
+      ansible.builtin.stat:
+        path: /etc/sudoers.d/00_passwordless_sudo
+      become: true
+      register: linux_verify_sudoers
+
+    - name: Check passwordless sudo config file
+      ansible.builtin.assert:
+        that:
+          - linux_verify_sudoers.stat.exists
+          - linux_verify_sudoers.stat.mode == '0440'
+
+    - name: Check that passwordless sudo works for the test user
+      ansible.builtin.command: sudo -u moleculetest sudo -n true
+      become: true
+      changed_when: false

@@ -4,19 +4,26 @@
   hosts: all
   gather_facts: true
   vars:
-    # linux_provision_dns: false
-    # linux_provision_upgrade_packages: false
-    # linux_provision_locale: false
-    # # linux_locale_default_LC: ru_RU.UTF-8
-    # linux_provision_mta: false
-    # linux_provision_timezone: false
-    # linux_provision_unattended_upgrades: false
-    # # linux_provision_force_smartmontools: true
-    # linux_provision_smartmontools: false
-    # # linux_motd_custom_message: "[blue bold]there you go[/]"
-    # linux_provision_motd: false
-    # linux_provision_users: false
+    # Exercise the optional inputs of the included roles; the corresponding
+    # outcomes are checked in verify.yml. Defaults (locale, timezone, motd
+    # scripts, unattended upgrades, dns stub, package set) are left as is.
+    linux_ca_certificate_files:
+      - src: "{{ playbook_dir }}/files/molecule-test-ca.crt"
+        dst_file_name: molecule-test-ca.crt
+    linux_mta_root_mail_recipient: molecule-root@example.com
+    linux_mta_aliases:
+      - "moleculealias: root"
+    linux_motd_custom_message: "[bold green]Provisioned by molecule[/]"
+    linux_users_list:
+      - name: moleculetest
+        comment: Molecule test user
+        # mkpasswd -m sha512crypt 'molecule-test-password'
+        password: "$6$ZxEMxMuBsBBY6Q4y$EUXki4GfTzUm6ornVLVHqbpuHANHbRCAnP7e0kUVupVcuNuuPpfeDVJ3ZWFLQFGkuP8BkmyBcbrpRFXooW.1O."
+        shell: /bin/bash
+        groups: sudo
+        # throwaway keypair generated for this test, private key discarded
+        ssh_authorized_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINzx8kFNe2ZJ3N+HxnXm92iPQvqLAAlkYGckutCjYnte moleculetest"
   tasks:
     - name: Import linux-provision role
-      import_role:
+      ansible.builtin.import_role:
         name: linux-provision
