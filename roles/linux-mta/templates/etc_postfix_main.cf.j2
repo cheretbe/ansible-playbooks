@@ -5,7 +5,7 @@ alias_maps = hash:/etc/aliases
 append_dot_mydomain = no
 biff = no
 {# CentOS 7 has an old version of postfix, that doesn't support compatibility_level option #}
-{% if not ((ansible_os_family == "RedHat") and (ansible_distribution_major_version == "7")) %}
+{% if not ((ansible_facts['os_family'] == "RedHat") and (ansible_facts['distribution_major_version'] == "7")) %}
 compatibility_level = 2
 {% endif %}
 inet_interfaces = loopback-only
@@ -22,17 +22,17 @@ relay_transport = error
 {% endif %}
 
 {# Default is localdomain #}
-{% if ansible_domain %}
-mydomain = {{ ansible_domain }}
+{% if ansible_facts['domain'] %}
+mydomain = {{ ansible_facts['domain'] }}
 {% endif %}
 {# Default is non-FQDN result from gethostname() plus ".$mydomain" #}
-myhostname = {{ ansible_fqdn }}
+myhostname = {{ ansible_facts['fqdn'] }}
 {# Default is $myhostname, localhost.$mydomain, localhost #}
-mydestination = $myhostname, {{ ansible_hostname }}, localhost.$mydomain, localhost
+mydestination = $myhostname, {{ ansible_facts['hostname'] }}, localhost.$mydomain, localhost
 {# #}
 {# #}
 {# CentOS/RedHat specific settings #}
-{% if ansible_os_family == "RedHat" %}
+{% if ansible_facts['os_family'] == "RedHat" %}
 
 mailq_path = /usr/bin/mailq.postfix
 newaliases_path = /usr/bin/newaliases.postfix

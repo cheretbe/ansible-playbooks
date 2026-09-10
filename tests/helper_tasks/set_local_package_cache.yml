@@ -7,4 +7,4 @@
     mode: 0644
   when:
     - lookup('env', 'PACKAGE_CACHE_HOST') != ''  # noqa empty-string-compare
-    - ansible_os_family == "Debian"
+    - ansible_facts['os_family'] == "Debian"

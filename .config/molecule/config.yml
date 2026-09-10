@@ -58,6 +58,13 @@ provisioner:
     # Make the repo's roles/ directory resolvable from any role's scenario
     # (molecule no longer adds the role's parent directory implicitly).
     ANSIBLE_ROLES_PATH: "${MOLECULE_PROJECT_DIRECTORY}/.."
+    # ansible-core deprecated auto-injecting facts as top-level vars
+    # (ansible_distribution etc.); they stop being injected in 2.24. Roles read
+    # facts via ansible_facts[...] only, so turn the injection off: it silences
+    # the deprecation warning and turns a regression into an undefined-variable
+    # error instead of another warning. ansible-lint has no rule for this, so
+    # the runtime setting is the only thing that enforces it.
+    ANSIBLE_INJECT_FACT_VARS: "false"
 verifier:
   name: ansible
 scenario:

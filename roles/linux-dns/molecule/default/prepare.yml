@@ -17,11 +17,11 @@
         # 1 hour
         cache_valid_time: 3600
       become: yes
-      when: ansible_os_family == "Debian"
+      when: ansible_facts['os_family'] == "Debian"
 
     - name: Make sure 'net-tools' package is installed
       package:
         name: net-tools
         state: present
       become: yes
-      when: ansible_os_family == "RedHat"
+      when: ansible_facts['os_family'] == "RedHat"

@@ -7,21 +7,21 @@
     state: present
   become: yes
   loop: "{{ linux_locale_locales_to_generate }}"
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Make sure 'initscripts' package is installed on CentOS 7
   yum:
     name: initscripts
     state: present
   become: yes
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  when: ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "7"
 
 - name: Make sure 'glibc-locale-source' package is installed on CentOS 8
   yum:
     name: glibc-locale-source
     state: present
   become: yes
-  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "8"
+  when: ansible_facts['distribution'] == "CentOS" and ansible_facts['distribution_major_version'] == "8"
 
   # locale_gen module fails on CentOS:
   # https://github.com/ansible/ansible/issues/44708
@@ -31,11 +31,11 @@
   changed_when: false
   loop: "{{ linux_locale_locales_to_generate | flatten(1) }}"
   become: yes
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Set system locale config file location
   set_fact:
-    linux_locale_config_file: "{{ linux_locale_config_file_by_os[ansible_os_family] }}"
+    linux_locale_config_file: "{{ linux_locale_config_file_by_os[ansible_facts['os_family']] }}"
 
 - name: "Set system locale config"
   template:

@@ -35,7 +35,7 @@ zabbix_monitored_host_extra_templates: []
 
 # Agent interface created on the host object. Override the whole list to change
 # it, or set it to [] for a trapper-only host with no interface.
-zabbix_monitored_host_agent_dns: "{{ ansible_fqdn | default(inventory_hostname) }}"
+zabbix_monitored_host_agent_dns: "{{ ansible_facts['fqdn'] | default(inventory_hostname) }}"
 zabbix_monitored_host_interfaces:
   - type: agent
     main: 1

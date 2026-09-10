@@ -1,0 +1,19 @@
+---
+
+# Found from any subdirectory: ansible-lint walks up from its working directory
+# and stops at .git.
+#
+# Roles are linted one at a time as they are picked up ('task lint' inside a
+# role directory, also run by 'task test'), so a role that has not been cleaned
+# up yet is expected to fail. Fix the role rather than adding to skip_list.
+
+profile: production
+
+exclude_paths:
+  - temp/
+
+skip_list:
+  # Every role directory is hyphenated (linux-dns, zabbix-agent2, ...) while the
+  # rule wants ^[a-z][a-z0-9_]*$. Only triggers when a 'roles/<name>' path is
+  # linted, which is what running from the repo root does.
+  - role-name

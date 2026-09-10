@@ -21,14 +21,14 @@
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
     lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: true
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
 
 - name: Make sure EPEL repo is enabled
   yum:
     name: epel-release
     state: present
   become: true
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Install YUM packages
   yum:
@@ -48,4 +48,4 @@
       - pv
     state: present
   become: true
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"

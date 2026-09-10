@@ -4,7 +4,7 @@
 - name: Check if running on a physical machine
   fail:
     msg: "Will not install in a VM or a container. Use 'smartmontools_force_vm' parameter to override"
-  when: ansible_virtualization_role == "guest"
+  when: ansible_facts['virtualization_role'] == "guest"
   ignore_errors: "{{ smartmontools_force_vm | bool }}"
 
 # smartmontools package depends on postfix package. We use MTA installation

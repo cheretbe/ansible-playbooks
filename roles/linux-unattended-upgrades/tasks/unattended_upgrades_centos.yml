@@ -2,12 +2,12 @@
 - name: Set package names to install for CentOS 7
   set_fact:
     unanttended_upgrades_centos_packages: yum-cron, python3
-  when: ansible_distribution_major_version == "7"
+  when: ansible_facts['distribution_major_version'] == "7"
 
 - name: Set package names to install for CentOS 8
   set_fact:
     unanttended_upgrades_centos_packages: dnf-utils, dnf-automatic, python3
-  when: ansible_distribution_major_version == "8"
+  when: ansible_facts['distribution_major_version'] == "8"
 
 - name: "Install CentOS packages"
   package:
@@ -24,7 +24,7 @@
     value: "yes"
     backup: yes
   become: yes
-  when: ansible_distribution_major_version == "7"
+  when: ansible_facts['distribution_major_version'] == "7"
 
 - name: Set 'apply_updates' parameter in '/etc/dnf/automatic.conf' (CentOS 8)  # noqa risky-file-permissions
   ini_file:
@@ -34,7 +34,7 @@
     value: "yes"
     backup: yes
   become: yes
-  when: ansible_distribution_major_version == "8"
+  when: ansible_facts['distribution_major_version'] == "8"
 
 - name: Enable dnf-automatic timer (CentOS 8)
   systemd:
@@ -42,7 +42,7 @@
     state: started
     enabled: yes
   become: yes
-  when: ansible_distribution_major_version == "8"
+  when: ansible_facts['distribution_major_version'] == "8"
 
 - name: Make sure '/opt/ansible-scripts/unattended_upgrades' directory exists
   file:

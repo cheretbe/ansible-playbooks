@@ -1,0 +1,29 @@
+---
+
+# Loaded by ansible-lint's 'yaml' rule, extending its bundled defaults. Only
+# found when ansible-lint's working directory is the repo root: the config name
+# is resolved against the cwd with no walk up the tree, which is why 'task lint'
+# runs from the root and passes the role directory as an argument.
+#
+# The comments / braces / octal-values keys are hard-validated by ansible-lint;
+# changing them makes it reject the file and disable fix mode.
+# https://docs.ansible.com/projects/lint/rules/yaml/
+
+extends: default
+
+rules:
+  # long 'when:' expressions and repository URLs are not worth wrapping
+  line-length: disable
+  quoted-strings:
+    quote-type: double
+    required: false
+
+  # required by ansible-lint - do not change
+  comments:
+    min-spaces-from-content: 1
+  comments-indentation: false
+  braces:
+    max-spaces-inside: 1
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true

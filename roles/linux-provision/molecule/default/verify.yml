@@ -19,7 +19,7 @@
   tasks:
     - name: Check host FQDN matches inventory name
       ansible.builtin.assert:
-        that: inventory_hostname == ansible_fqdn
+        that: inventory_hostname == ansible_facts['fqdn']
 
     - name: Gather package facts
       ansible.builtin.package_facts:
@@ -152,7 +152,7 @@
 
     - name: Check that postfix config was applied
       ansible.builtin.assert:
-        that: linux_verify_postfix_hostname.stdout == ansible_fqdn
+        that: linux_verify_postfix_hostname.stdout == ansible_facts['fqdn']
 
     - name: Read aliases table
       ansible.builtin.slurp:
@@ -220,7 +220,7 @@
         - 10-help-text
         - 50-motd-news
       register: linux_verify_motd_disabled
-      when: ansible_distribution == "Ubuntu"
+      when: ansible_facts['distribution'] == "Ubuntu"
 
     - name: Check that unnecessary Ubuntu MOTD scripts are not executable
       ansible.builtin.assert:
@@ -232,7 +232,7 @@
       loop: "{{ linux_verify_motd_disabled.results }}"
       loop_control:
         label: "{{ item.item }}"
-      when: ansible_distribution == "Ubuntu"
+      when: ansible_facts['distribution'] == "Ubuntu"
 
     - name: Run custom MOTD script
       ansible.builtin.command: /etc/update-motd.d/99-ansible-custom

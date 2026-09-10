@@ -53,4 +53,4 @@
         systemd:
           daemon_reload: yes
         become: true
-    when: ansible_distribution == "Ubuntu" and ansible_distribution_release == "focal"
+    when: ansible_facts['distribution'] == "Ubuntu" and ansible_facts['distribution_release'] == "focal"

@@ -27,7 +27,7 @@
         lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
       become: true
 
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"
 
 - block:
     - name: Make sure yum 'sendmail' package is not installed
@@ -42,7 +42,7 @@
         state: present
       become: true
 
-  when: ansible_os_family == "RedHat"
+  when: ansible_facts['os_family'] == "RedHat"
 
 - name: Update postfix config file
   template:

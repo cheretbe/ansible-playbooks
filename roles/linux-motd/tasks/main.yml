@@ -11,7 +11,7 @@
   loop:
     - 10-help-text
     - 50-motd-news
-  when: ansible_distribution == "Ubuntu"
+  when: ansible_facts['distribution'] == "Ubuntu"
 
 - name: Remove extra MOTD files
   ansible.builtin.file:
@@ -43,7 +43,7 @@
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
     lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: true
-  when: ansible_distribution == "Ubuntu"
+  when: ansible_facts['distribution'] == "Ubuntu"
 
 - name: Add disable ESM marker file
   ansible.builtin.file:
@@ -54,7 +54,7 @@
     modification_time: preserve
   become: true
   register: __linux_motd_esm_marker_file
-  when: ansible_distribution == "Ubuntu"
+  when: ansible_facts['distribution'] == "Ubuntu"
 
 - name: Remove current updates message file # noqa no-handler
   ansible.builtin.file:

@@ -8,4 +8,4 @@
     update_cache: true
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
     lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
-  when: ansible_os_family == "Debian"
+  when: ansible_facts['os_family'] == "Debian"

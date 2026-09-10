@@ -8,5 +8,5 @@
   ansible.builtin.debug:
     msg: >-
       zabbix-monitored-host: host {{ inventory_hostname }}
-      (fqdn {{ ansible_fqdn | default('unknown') }}) — no Windows-specific
+      (fqdn {{ ansible_facts['fqdn'] | default('unknown') }}) — no Windows-specific
       configuration is managed by this role.

@@ -5,8 +5,8 @@
   assert:
     fail_msg: "Only Ubuntu 18.04 and 20.04 are supported"
     that:
-      - ansible_distribution == "Ubuntu"
-      - ansible_distribution_release in ["bionic", "focal"]
+      - ansible_facts['distribution'] == "Ubuntu"
+      - ansible_facts['distribution_release'] in ["bionic", "focal"]
 
 - name: Set common package names list
   set_fact:
@@ -21,7 +21,7 @@
   set_fact:
     zabbix_server_pip: pip
     zabbix_server_pip_package_name: python-pip
-  when: ansible_python.version_info[0] == "2"
+  when: ansible_facts['python'].version_info[0] == "2"
 
 - name: Set PIP package name
   set_fact:
@@ -44,7 +44,7 @@
 
 - name: Set timezone for PHP
   ini_file:
-    path: "{{ zabbix_server_apache2_php_ini_path[ansible_distribution_release] }}"
+    path: "{{ zabbix_server_apache2_php_ini_path[ansible_facts['distribution_release']] }}"
     section: Date
     option: date.timezone
     value: "{{ zabbix_server_timezone.stdout_lines[0] }}"
