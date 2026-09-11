@@ -4,6 +4,22 @@
 # AppRun expects APPDIR and sets PATH, LD_LIBRARY_PATH and PYTHONPATH from it;
 # seaf-cli refuses to do anything without seaf-daemon in PATH, so it must be
 # started this way rather than by calling usr/bin/seaf-cli directly.
+
+# 'seaf-cli start' daemonizes seaf-daemon outside systemd's control: the unit
+# then reports inactive while the daemon runs, and the next 'systemctl start'
+# fails because seaf-daemon cannot lock <data dir>/seaf-daemon.pid, which is
+# already held. Refuse both subcommands and point at systemctl instead; the
+# unit sets SEAFILE_CLI_DAEMON_CONTROL for its own ExecStartPre/ExecStop.
+case "${1:-}" in
+  start | stop)
+    if [ -z "${SEAFILE_CLI_DAEMON_CONTROL:-}" ]; then
+      echo "seaf-cli $1 would drive the daemon outside systemd; use:" >&2
+      echo "  sudo systemctl $1 {{ linux_seafile_cli_service_name }}" >&2
+      exit 1
+    fi
+    ;;
+esac
+
 APPDIR={{ _linux_seafile_cli_current }}
 export APPDIR
 exec "$APPDIR/AppRun" "$@"

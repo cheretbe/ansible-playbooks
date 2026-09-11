@@ -136,6 +136,67 @@
           - linux_seafile_cli_verify_stale.results[2].stat.exists
           - linux_seafile_cli_verify_stale.results[3].stat.exists
 
+    # --- systemd stays authoritative --------------------------------------------
+    # A daemon started by hand holds the lock on seaf-daemon.pid, which made
+    # 'systemctl start' fail (and retry forever) until it was shut down.
+    - name: Try to start the daemon outside systemd
+      ansible.builtin.command: >-
+        runuser --user {{ linux_seafile_cli_verify_user }} --
+        /usr/local/bin/seaf-cli start --confdir {{ linux_seafile_cli_verify_confdir }}
+      become: true
+      changed_when: false
+      failed_when: false
+      register: linux_seafile_cli_verify_guard
+
+    - name: Check that the wrapper refuses to bypass systemd
+      ansible.builtin.assert:
+        that:
+          - linux_seafile_cli_verify_guard.rc == 1
+          - "'systemctl start seafile-client' in linux_seafile_cli_verify_guard.stderr"
+
+    - name: Stop the service
+      ansible.builtin.systemd:
+        name: seafile-client
+        state: stopped
+      become: true
+
+    # SEAFILE_CLI_DAEMON_CONTROL is what the unit sets, so this reproduces a
+    # daemon left behind by the old upstream unit rather than a new bypass.
+    - name: Start a stray daemon the way the previous setup would have
+      ansible.builtin.command: >-
+        runuser --user {{ linux_seafile_cli_verify_user }} --
+        env SEAFILE_CLI_DAEMON_CONTROL=1
+        /usr/local/bin/seaf-cli start --confdir {{ linux_seafile_cli_verify_confdir }}
+      become: true
+      changed_when: false
+
+    - name: Start the service on top of the stray daemon
+      ansible.builtin.systemd:
+        name: seafile-client
+        state: started
+      become: true
+
+    - name: Get the reconciled main PID
+      ansible.builtin.command: systemctl show --property=MainPID --value seafile-client # noqa command-instead-of-module
+      become: true
+      changed_when: false
+      register: linux_seafile_cli_verify_reconciled_pid
+
+    - name: Count running daemons
+      ansible.builtin.command: pgrep -cx seaf-daemon
+      become: true
+      changed_when: false
+      register: linux_seafile_cli_verify_daemon_count
+
+    - name: Check that systemd took the daemon over
+      ansible.builtin.assert:
+        that:
+          - linux_seafile_cli_verify_reconciled_pid.stdout | trim | int > 0
+          - linux_seafile_cli_verify_daemon_count.stdout | trim | int == 1
+        fail_msg: >-
+          MainPID={{ linux_seafile_cli_verify_reconciled_pid.stdout | trim }},
+          daemons={{ linux_seafile_cli_verify_daemon_count.stdout | trim }}
+
     # --- no FUSE involved -------------------------------------------------------
     - name: Look for AppImage mounts
       ansible.builtin.shell:
