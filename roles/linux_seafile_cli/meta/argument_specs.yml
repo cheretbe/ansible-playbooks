@@ -3,16 +3,13 @@ argument_specs:
   main:
     short_description: Install the Seafile CLI client and run it under systemd
     description:
-      - Installs a pinned, checksum-verified Seafile CLI AppImage, extracts it
-        and supervises the bundled seaf-daemon with systemd.
+      - Installs a pinned Seafile CLI AppImage, extracts it and supervises the
+        bundled seaf-daemon with systemd.
       - Leaves the per-user state (config directory, seafile-data, worktree)
         alone apart from creating it once when it does not exist.
     options:
       linux_seafile_cli_version:
         description: Upstream release to install, without the leading 'v'.
-        type: str
-      linux_seafile_cli_sha256:
-        description: SHA256 checksum of Seafile-cli-x86_64.AppImage for that release.
         type: str
       linux_seafile_cli_url:
         description: Download URL of the CLI AppImage.

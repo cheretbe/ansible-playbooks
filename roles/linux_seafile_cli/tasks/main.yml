@@ -1,7 +1,7 @@
 ---
 # tasks file for linux_seafile_cli
 #
-# The AppImage is downloaded, checksum-verified and extracted; the bundled
+# The AppImage is downloaded and extracted; the bundled
 # seaf-daemon then runs in the foreground under systemd. Extracting instead of
 # running the AppImage itself keeps FUSE out of the picture entirely (no
 # libfuse/fusermount packages, no per-restart leftover /tmp mounts) and lets
@@ -14,11 +14,10 @@
       - linux_seafile_cli_data_dir | length > 0
       - linux_seafile_cli_data_dir is match('^/')
       - linux_seafile_cli_version | length > 0
-      - linux_seafile_cli_sha256 | length > 0
     fail_msg: >-
       Set linux_seafile_cli_user and linux_seafile_cli_data_dir (absolute path,
       the value recorded in seafile.ini), plus a pinned
-      linux_seafile_cli_version and its linux_seafile_cli_sha256.
+      linux_seafile_cli_version.
 
 - name: Check that the platform is supported
   ansible.builtin.assert:
@@ -85,7 +84,6 @@
   ansible.builtin.get_url:
     url: "{{ linux_seafile_cli_url }}"
     dest: "{{ _linux_seafile_cli_appimage }}"
-    checksum: "sha256:{{ linux_seafile_cli_sha256 }}"
     owner: root
     group: root
     mode: "0755"
