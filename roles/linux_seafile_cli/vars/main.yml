@@ -1,0 +1,28 @@
+---
+# vars file for linux_seafile_cli
+#
+# Values derived from the role's inputs; do not set them.
+
+# Home directory of the service account, from the getent task in tasks/main.yml.
+# A system unit's '%h' is /root regardless of User=, so paths are resolved here
+# instead.
+_linux_seafile_cli_home: "{{ ansible_facts.getent_passwd[linux_seafile_cli_user][4] }}"
+
+_linux_seafile_cli_config_dir: >-
+  {{ linux_seafile_cli_config_dir | default(_linux_seafile_cli_home ~ '/.ccnet', true) }}
+
+# 'seaf-cli init -d <parent>' creates <parent>/seafile-data, and seaf-cli always
+# derives the worktree as dirname(data_dir)/seafile.
+_linux_seafile_cli_parent_dir: "{{ linux_seafile_cli_data_dir | dirname }}"
+_linux_seafile_cli_worktree: "{{ _linux_seafile_cli_parent_dir }}/seafile"
+
+_linux_seafile_cli_appimage: >-
+  {{ linux_seafile_cli_install_dir }}/seaf-cli-{{ linux_seafile_cli_version }}.AppImage
+_linux_seafile_cli_version_dir: >-
+  {{ linux_seafile_cli_install_dir }}/seaf-cli-{{ linux_seafile_cli_version }}
+# Symlink the unit and the wrapper point at: swapping it plus a restart is the
+# whole update procedure.
+_linux_seafile_cli_current: "{{ linux_seafile_cli_install_dir }}/seaf-cli"
+
+_linux_seafile_cli_unit_file: >-
+  /etc/systemd/system/{{ linux_seafile_cli_service_name }}.service

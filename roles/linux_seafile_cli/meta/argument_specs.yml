@@ -1,0 +1,74 @@
+---
+argument_specs:
+  main:
+    short_description: Install the Seafile CLI client and run it under systemd
+    description:
+      - Installs a pinned, checksum-verified Seafile CLI AppImage, extracts it
+        and supervises the bundled seaf-daemon with systemd.
+      - Leaves the per-user state (config directory, seafile-data, worktree)
+        alone apart from creating it once when it does not exist.
+    options:
+      linux_seafile_cli_version:
+        description: Upstream release to install, without the leading 'v'.
+        type: str
+      linux_seafile_cli_sha256:
+        description: SHA256 checksum of Seafile-cli-x86_64.AppImage for that release.
+        type: str
+      linux_seafile_cli_url:
+        description: Download URL of the CLI AppImage.
+        type: str
+      linux_seafile_cli_user:
+        description:
+          - Account owning the config directory and the synced files.
+          - The service runs as this user, so an interactive seaf-cli run by the
+            same account talks to the same daemon.
+        type: str
+        required: true
+      linux_seafile_cli_group:
+        description: Group the service runs as. Defaults to the user's name.
+        type: str
+      linux_seafile_cli_data_dir:
+        description:
+          - Seafile data directory, exactly as recorded in seafile.ini.
+          - The worktree is not configurable; seaf-cli derives it as
+            dirname(data_dir)/seafile.
+        type: str
+        required: true
+      linux_seafile_cli_config_dir:
+        description: Seafile config directory. Defaults to <home>/.ccnet.
+        type: str
+      linux_seafile_cli_init:
+        description:
+          - Run 'seaf-cli init' when the config directory does not exist yet.
+          - Never touches an initialized one.
+        type: bool
+      linux_seafile_cli_install_dir:
+        description: Directory holding the versioned AppImages and extracted trees.
+        type: str
+      linux_seafile_cli_bin_path:
+        description: Path of the seaf-cli wrapper script.
+        type: str
+      linux_seafile_cli_service_name:
+        description: Name of the systemd service.
+        type: str
+      linux_seafile_cli_keep_versions:
+        description: Number of versions kept in the installation directory.
+        type: int
+      linux_seafile_cli_runtime_packages:
+        description: Packages providing the shared libraries the AppImage does not bundle.
+        type: list
+        elements: str
+      linux_seafile_cli_conflicting_packages:
+        description: Apt packages whose presence makes the role fail.
+        type: list
+        elements: str
+      linux_seafile_cli_check_update:
+        description:
+          - Compare the pinned version with the latest upstream release and
+            report a newer one as a changed task.
+          - Never applies anything.
+        type: bool
+      linux_seafile_cli_github_token:
+        description: GitHub token for the update check, raising the API rate limit.
+        type: str
+        no_log: true

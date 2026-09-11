@@ -1,0 +1,74 @@
+---
+
+- name: Prepare
+  hosts: all
+  tasks:
+    # Debian 11 LTS ended on 2026-08-31: the last bullseye-security Release
+    # file has expired permanently and the packages referenced by it are
+    # being removed from the pool (404). Drop the dead repository; main and
+    # bullseye-updates still work.
+    - name: Remove retired bullseye-security repository on Debian 11
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list
+        regexp: security\.debian\.org
+        state: absent
+      become: true
+      when:
+        - ansible_facts['distribution'] == "Debian"
+        - ansible_facts['distribution_major_version'] == "11"
+
+    # Remaining bullseye Release files are frozen and their Valid-Until
+    # dates will eventually pass as well
+    - name: Disable APT Release file validity check on Debian 11
+      ansible.builtin.copy:
+        content: |
+          Acquire::Check-Valid-Until "false";
+        dest: /etc/apt/apt.conf.d/99-molecule-no-check-valid-until
+        owner: root
+        group: root
+        mode: "0644"
+      become: true
+      when:
+        - ansible_facts['distribution'] == "Debian"
+        - ansible_facts['distribution_major_version'] == "11"
+
+    # The test images ship with emptied apt lists but fresh cache timestamps,
+    # so role tasks relying on cache_valid_time would see an empty index. Runs
+    # after the Debian 11 fixes above, which is what makes it succeed there.
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+      become: true
+
+    - name: Create the Seafile account
+      ansible.builtin.user:
+        name: seafiletest
+        comment: Molecule test user
+        shell: /bin/bash
+      become: true
+
+    # Two stale versions, so that pruning has something to both keep
+    # (keep_versions defaults to 2) and remove.
+    - name: Create stale version directories
+      ansible.builtin.file:
+        path: "/opt/seafile/seaf-cli-{{ item }}"
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      become: true
+      loop:
+        - "9.0.1"
+        - "9.0.2"
+
+    - name: Create stale version AppImages
+      ansible.builtin.copy:
+        content: "not a real AppImage\n"
+        dest: "/opt/seafile/seaf-cli-{{ item }}.AppImage"
+        owner: root
+        group: root
+        mode: "0755"
+      become: true
+      loop:
+        - "9.0.1"
+        - "9.0.2"

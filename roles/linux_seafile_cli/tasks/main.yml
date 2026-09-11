@@ -1,0 +1,279 @@
+---
+# tasks file for linux_seafile_cli
+#
+# The AppImage is downloaded, checksum-verified and extracted; the bundled
+# seaf-daemon then runs in the foreground under systemd. Extracting instead of
+# running the AppImage itself keeps FUSE out of the picture entirely (no
+# libfuse/fusermount packages, no per-restart leftover /tmp mounts) and lets
+# systemd own the daemon's PID, which is what makes Restart= work.
+
+- name: Check required settings
+  ansible.builtin.assert:
+    that:
+      - linux_seafile_cli_user | length > 0
+      - linux_seafile_cli_data_dir | length > 0
+      - linux_seafile_cli_data_dir is match('^/')
+      - linux_seafile_cli_version | length > 0
+      - linux_seafile_cli_sha256 | length > 0
+    fail_msg: >-
+      Set linux_seafile_cli_user and linux_seafile_cli_data_dir (absolute path,
+      the value recorded in seafile.ini), plus a pinned
+      linux_seafile_cli_version and its linux_seafile_cli_sha256.
+
+- name: Check that the platform is supported
+  ansible.builtin.assert:
+    that:
+      - ansible_facts['os_family'] == "Debian"
+      - ansible_facts['architecture'] == "x86_64"
+    fail_msg: >-
+      Upstream publishes the CLI AppImage for x86_64 only, and the role installs
+      its runtime dependency with apt.
+
+# 'seaf-cli init -d <parent>' can only ever create <parent>/seafile-data, so any
+# other name would leave init and the unit pointing at different directories.
+- name: Check that the data directory is one 'seaf-cli init' can create
+  ansible.builtin.assert:
+    that: linux_seafile_cli_data_dir | basename == "seafile-data"
+    fail_msg: >-
+      linux_seafile_cli_data_dir must end with '/seafile-data' while
+      linux_seafile_cli_init is enabled. Initialize the config directory
+      yourself and set linux_seafile_cli_init to false to use another layout.
+  when: linux_seafile_cli_init | bool
+
+- name: Gather package facts
+  ansible.builtin.package_facts:
+  become: true
+
+# An apt-installed client brings its own /usr/bin/seaf-cli and unit file and
+# would compete for the same config directory.
+- name: Check that no apt-installed Seafile client is present
+  ansible.builtin.assert:
+    that: >-
+      linux_seafile_cli_conflicting_packages
+      | select('in', ansible_facts.packages) | list | length == 0
+    fail_msg: |
+      seafile-cli is installed from apt; remove it first:
+        sudo systemctl disable --now seafile-client
+        sudo apt purge seafile-cli seafile-daemon libseafile0 python3-seafile
+        sudo rm -f /etc/apt/sources.list.d/seafile*.list && sudo apt update
+
+# Resolves the home directory used for the default config directory, and fails
+# outright when the account does not exist.
+- name: Get the service account
+  ansible.builtin.getent:
+    database: passwd
+    key: "{{ linux_seafile_cli_user }}"
+
+- name: Install runtime dependencies
+  ansible.builtin.apt:
+    name: "{{ linux_seafile_cli_runtime_packages }}"
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
+- name: Create the installation directory
+  ansible.builtin.file:
+    path: "{{ linux_seafile_cli_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Download the Seafile CLI AppImage
+  ansible.builtin.get_url:
+    url: "{{ linux_seafile_cli_url }}"
+    dest: "{{ _linux_seafile_cli_appimage }}"
+    checksum: "sha256:{{ linux_seafile_cli_sha256 }}"
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  notify: Restart seafile client
+
+# The AppImage runtime always extracts into ./squashfs-root, so unpack in a
+# scratch directory and move the result into place; '--appimage-extract' needs
+# no FUSE. The creates guard makes this a no-op on subsequent runs.
+- name: Extract the AppImage
+  ansible.builtin.shell:
+    cmd: |
+      set -e
+      rm -rf "{{ _linux_seafile_cli_version_dir }}.tmp"
+      mkdir "{{ _linux_seafile_cli_version_dir }}.tmp"
+      cd "{{ _linux_seafile_cli_version_dir }}.tmp"
+      "{{ _linux_seafile_cli_appimage }}" --appimage-extract > /dev/null
+      chown -R root:root squashfs-root
+      mv squashfs-root "{{ _linux_seafile_cli_version_dir }}"
+      cd /
+      rmdir "{{ _linux_seafile_cli_version_dir }}.tmp"
+    creates: "{{ _linux_seafile_cli_version_dir }}/AppRun"
+  become: true
+  notify: Restart seafile client
+
+# Swapping this symlink and restarting is the whole update procedure: the unit
+# and the wrapper only ever reference the symlink.
+- name: Link the current version
+  ansible.builtin.file:
+    src: "seaf-cli-{{ linux_seafile_cli_version }}"
+    dest: "{{ _linux_seafile_cli_current }}"
+    state: link
+  become: true
+  notify: Restart seafile client
+
+# seaf-cli checks for seaf-daemon in PATH on every invocation, so it has to be
+# started through AppRun, which sets PATH, LD_LIBRARY_PATH and PYTHONPATH.
+- name: Install the seaf-cli wrapper
+  ansible.builtin.template:
+    src: seaf-cli.j2
+    dest: "{{ linux_seafile_cli_bin_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Create the Seafile parent and worktree directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ linux_seafile_cli_user }}"
+    group: "{{ linux_seafile_cli_group }}"
+    mode: "0755"
+  become: true
+  loop:
+    - "{{ _linux_seafile_cli_parent_dir }}"
+    - "{{ _linux_seafile_cli_worktree }}"
+
+# 'seaf-cli init' exits 0 both when the config directory already exists and when
+# the parent directory does not, so the creates guard - not the return code - is
+# what keeps this idempotent and safe on hosts that are already set up.
+# runuser drops privileges without the unprivileged temporary directory handling
+# that become_user would need on the target.
+- name: Initialize the Seafile configuration directory
+  ansible.builtin.command:
+    argv:
+      - runuser
+      - --user
+      - "{{ linux_seafile_cli_user }}"
+      - --
+      - "{{ linux_seafile_cli_bin_path }}"
+      - init
+      - --confdir
+      - "{{ _linux_seafile_cli_config_dir }}"
+      - --dir
+      - "{{ _linux_seafile_cli_parent_dir }}"
+    creates: "{{ _linux_seafile_cli_config_dir }}/seafile.ini"
+  become: true
+  when:
+    - linux_seafile_cli_init | bool
+    - not ansible_check_mode
+
+- name: Get seafile.ini state
+  ansible.builtin.stat:
+    path: "{{ _linux_seafile_cli_config_dir }}/seafile.ini"
+  become: true
+  register: _linux_seafile_cli_ini_stat
+
+- name: Read seafile.ini
+  ansible.builtin.slurp:
+    src: "{{ _linux_seafile_cli_config_dir }}/seafile.ini"
+  become: true
+  register: _linux_seafile_cli_ini
+  when: _linux_seafile_cli_ini_stat.stat.exists
+
+# seafile.ini is what seaf-cli reads to find the RPC socket, while the unit
+# passes the data directory to seaf-daemon explicitly. If the two disagree, the
+# CLI talks to a socket the daemon never created.
+- name: Check that seafile.ini matches the configured data directory
+  ansible.builtin.assert:
+    that: >-
+      (_linux_seafile_cli_ini.content | b64decode | trim)
+      == linux_seafile_cli_data_dir
+    fail_msg: >-
+      {{ _linux_seafile_cli_config_dir }}/seafile.ini points at
+      '{{ _linux_seafile_cli_ini.content | b64decode | trim }}'. Set
+      linux_seafile_cli_data_dir to that value, or re-initialize the client.
+  when: _linux_seafile_cli_ini_stat.stat.exists
+
+# Replaces the upstream template unit (Type=oneshot + RemainAfterExit), which
+# left the daemon unsupervised.
+- name: Deploy the Seafile client unit
+  ansible.builtin.template:
+    src: seafile-client.service.j2
+    dest: "{{ _linux_seafile_cli_unit_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify:
+    - Reload systemd daemon
+    - Restart seafile client
+
+# Reload and restart before enabling, so that a freshly written unit is known to
+# systemd and the running daemon is already on the current version before the
+# old versions are pruned below.
+- name: Reload systemd and restart the client now
+  ansible.builtin.meta: flush_handlers
+
+- name: Get the unit file state
+  ansible.builtin.stat:
+    path: "{{ _linux_seafile_cli_unit_file }}"
+  become: true
+  register: _linux_seafile_cli_unit_stat
+  when: ansible_check_mode
+
+- name: Enable and start the Seafile client
+  ansible.builtin.systemd:
+    name: "{{ linux_seafile_cli_service_name }}"
+    enabled: true
+    state: started
+  become: true
+  # In check mode the template task above does not write the unit, and the
+  # systemd module still queries the real unit state.
+  when: not ansible_check_mode or _linux_seafile_cli_unit_stat.stat.exists
+
+- name: Find installed versions
+  ansible.builtin.find:
+    paths: "{{ linux_seafile_cli_install_dir }}"
+    patterns: "seaf-cli-*"
+    # a version is an AppImage file plus the directory it was extracted into
+    file_type: any
+  become: true
+  register: _linux_seafile_cli_installed
+
+- name: Select the versions to keep
+  ansible.builtin.set_fact:
+    _linux_seafile_cli_keep_list: >-
+      {{ ([linux_seafile_cli_version] + (_linux_seafile_cli_found_versions
+           | reject('equalto', linux_seafile_cli_version)
+           | community.general.version_sort | reverse | list))
+         [:[linux_seafile_cli_keep_versions | int, 1] | max] }}
+  vars:
+    _linux_seafile_cli_found_versions: >-
+      {{ _linux_seafile_cli_installed.files | map(attribute='path') | map('basename')
+         | select('match', '^seaf-cli-[0-9]+(\.[0-9]+)*(\.AppImage)?$')
+         | map('regex_replace', '^seaf-cli-', '')
+         | map('regex_replace', '\.AppImage$', '')
+         | unique | list }}
+
+# Anything not named after a kept version goes, which also clears the scratch
+# directory of an interrupted extraction.
+- name: Remove old versions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  become: true
+  loop: "{{ _linux_seafile_cli_installed.files | map(attribute='path') | list }}"
+  when: >-
+    (item | basename | regex_replace('^seaf-cli-', '') | regex_replace('\.AppImage$', ''))
+    not in _linux_seafile_cli_keep_list
+
+- name: Check for a newer upstream release
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/haiwen/seafile-client/releases/latest
+    headers: "{{ {'Authorization': 'Bearer ' ~ linux_seafile_cli_github_token} if linux_seafile_cli_github_token | length > 0 else {} }}"
+  register: _linux_seafile_cli_latest
+  check_mode: false
+  changed_when: >-
+    _linux_seafile_cli_latest.json.tag_name != 'v' ~ linux_seafile_cli_version
+  when: linux_seafile_cli_check_update | bool

@@ -1,0 +1,22 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Seafile client
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# seaf-daemon without --daemon stays in the foreground, so systemd owns its PID
+# and Restart= works. Paths go through the {{ _linux_seafile_cli_current }}
+# symlink, which is what makes swapping versions a restart away.
+Type=simple
+User={{ linux_seafile_cli_user }}
+Group={{ linux_seafile_cli_group }}
+Environment=LD_LIBRARY_PATH={{ _linux_seafile_cli_current }}/usr/lib
+ExecStart={{ _linux_seafile_cli_current }}/usr/bin/seaf-daemon -c {{ _linux_seafile_cli_config_dir }} -d {{ linux_seafile_cli_data_dir }} -w {{ _linux_seafile_cli_worktree }}
+# RPC shutdown; a plain SIGTERM stops the daemon mid-flight instead.
+ExecStop={{ linux_seafile_cli_bin_path }} stop --confdir {{ _linux_seafile_cli_config_dir }}
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

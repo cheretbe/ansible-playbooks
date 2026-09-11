@@ -1,0 +1,54 @@
+---
+# defaults file for linux_seafile_cli
+
+# Upstream ships the Linux CLI client only as an AppImage since 9.0.7; the old
+# deb repository (linux-clients.seafile.com) is gone and distro packages are too
+# old. Pin a version and its checksum here and bump both together.
+#
+# Not every tag carries CLI assets (9.0.20 does not). Asset list and sha256:
+# https://api.github.com/repos/haiwen/seafile-client/releases/tags/v<version>
+linux_seafile_cli_version: "9.0.21"
+linux_seafile_cli_sha256: "5dc112e99fd0daaafc06f284958ebf587613fecc15366c0017b9f0116b7a74af"
+# Seafile-x86_64.AppImage is the GUI build (192 MB, needs X) - do not use it.
+linux_seafile_cli_url: >-
+  https://github.com/haiwen/seafile-client/releases/download/v{{ linux_seafile_cli_version }}/Seafile-cli-x86_64.AppImage
+
+# --- account and state --------------------------------------------------------
+# Account owning ~/.ccnet and the synced files. The service runs as this user so
+# that 'seaf-cli' run interactively by the same account talks to the same daemon.
+linux_seafile_cli_user: ""
+linux_seafile_cli_group: "{{ linux_seafile_cli_user }}"
+# Seafile data directory, exactly as recorded in <config_dir>/seafile.ini (that
+# file is what seaf-cli itself reads, so the two must agree). Required: it can
+# live anywhere, so the role states it rather than guessing.
+# The worktree is not configurable - seaf-cli hardcodes <parent>/seafile.
+linux_seafile_cli_data_dir: ""
+# Defaults to <home>/.ccnet, which is what seaf-cli uses without '-c'.
+linux_seafile_cli_config_dir: ""
+# Run 'seaf-cli init' when the config directory does not exist yet. Never
+# touches an initialized one.
+linux_seafile_cli_init: true
+
+# --- installation -------------------------------------------------------------
+linux_seafile_cli_install_dir: /opt/seafile
+linux_seafile_cli_bin_path: /usr/local/bin/seaf-cli
+linux_seafile_cli_service_name: seafile-client
+# Versioned trees kept in the install directory, current one included.
+linux_seafile_cli_keep_versions: 2
+# The only shared library the AppImage needs but does not bundle.
+linux_seafile_cli_runtime_packages:
+  - libgpg-error0
+# An apt-installed client would fight over ~/.ccnet and /usr/bin/seaf-cli, so
+# the role refuses to run while any of these are present.
+linux_seafile_cli_conflicting_packages:
+  - seafile-cli
+  - seafile-daemon
+  - libseafile0
+  - python3-seafile
+
+# --- update check (report only) -----------------------------------------------
+# Compares the pinned version with the latest upstream release and reports it as
+# a changed task. Never applies anything. Off by default: it needs to reach
+# GitHub and the unauthenticated API allows 60 requests per hour per IP.
+linux_seafile_cli_check_update: false
+linux_seafile_cli_github_token: ""

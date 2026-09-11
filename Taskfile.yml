@@ -94,6 +94,18 @@ tasks:
     cmds:
       - '{{.MOLECULE_ENV}} molecule verify {{.CLI_ARGS}}'
 
+  login:
+    desc: 'Open a shell on a converged instance: task login -- -h debian-13'
+    deps: [venv]
+    dir: '{{.USER_WORKING_DIR}}'
+    # molecule login hands over a tty, which task captures unless told not to;
+    # without this the shell comes up unusable
+    interactive: true
+    cmds:
+      # the host is only optional while the scenario has a single instance;
+      # 'molecule login' lists the names when the choice is ambiguous
+      - '{{.MOLECULE_ENV}} molecule login {{.CLI_ARGS}}'
+
   destroy:
     desc: Destroy molecule instances
     deps: [venv]

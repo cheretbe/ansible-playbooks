@@ -1,0 +1,9 @@
+---
+
+- name: Install the Seafile CLI client
+  hosts: "{{ ansible_limit | default(omit) }}"
+
+  tasks:
+    - name: Import linux_seafile_cli role
+      ansible.builtin.import_role:
+        name: linux_seafile_cli

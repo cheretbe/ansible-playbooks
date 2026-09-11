@@ -1,0 +1,9 @@
+#!/bin/sh
+# {{ ansible_managed }}
+#
+# AppRun expects APPDIR and sets PATH, LD_LIBRARY_PATH and PYTHONPATH from it;
+# seaf-cli refuses to do anything without seaf-daemon in PATH, so it must be
+# started this way rather than by calling usr/bin/seaf-cli directly.
+APPDIR={{ _linux_seafile_cli_current }}
+export APPDIR
+exec "$APPDIR/AppRun" "$@"

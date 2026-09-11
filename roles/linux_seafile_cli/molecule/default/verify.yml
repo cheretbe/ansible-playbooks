@@ -1,0 +1,152 @@
+---
+
+- name: Verify
+  hosts: all
+  vars:
+    linux_seafile_cli_verify_version: "9.0.21"
+    linux_seafile_cli_verify_user: seafiletest
+    linux_seafile_cli_verify_confdir: /home/seafiletest/.ccnet
+    linux_seafile_cli_verify_data_dir: /home/seafiletest/seafile-client/seafile-data
+  tasks:
+    # --- installed layout -------------------------------------------------------
+    - name: Get installation path info
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /opt/seafile/seaf-cli
+        - "/opt/seafile/seaf-cli-{{ linux_seafile_cli_verify_version }}/usr/bin/seaf-daemon"
+        - "/opt/seafile/seaf-cli-{{ linux_seafile_cli_verify_version }}.AppImage"
+        - /usr/local/bin/seaf-cli
+      register: linux_seafile_cli_verify_paths
+
+    - name: Check that the current version is installed and linked
+      ansible.builtin.assert:
+        that:
+          - linux_seafile_cli_verify_paths.results[0].stat.islnk
+          - >-
+            linux_seafile_cli_verify_paths.results[0].stat.lnk_target
+            == 'seaf-cli-' ~ linux_seafile_cli_verify_version
+          - linux_seafile_cli_verify_paths.results[1].stat.exists
+          - linux_seafile_cli_verify_paths.results[2].stat.exists
+          - linux_seafile_cli_verify_paths.results[3].stat.exists
+          - linux_seafile_cli_verify_paths.results[3].stat.xusr
+
+    # Catches per-distribution gaps in what the AppImage bundles: libgpg-error
+    # is needed by seaf-daemon, libcurl, libgcrypt and libssh2 but not shipped.
+    - name: Look for missing shared libraries
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail;
+          LD_LIBRARY_PATH=/opt/seafile/seaf-cli/usr/lib
+          ldd /opt/seafile/seaf-cli/usr/bin/seaf-daemon /opt/seafile/seaf-cli/usr/lib/*.so*
+          | grep 'not found' || true
+        executable: /bin/bash
+      become: true
+      changed_when: false
+      register: linux_seafile_cli_verify_missing_libs
+
+    - name: Check that no shared library is missing
+      ansible.builtin.assert:
+        that: linux_seafile_cli_verify_missing_libs.stdout | trim | length == 0
+        fail_msg: "Unbundled libraries: {{ linux_seafile_cli_verify_missing_libs.stdout }}"
+
+    # --- service ----------------------------------------------------------------
+    - name: Get the service main PID
+      ansible.builtin.command: systemctl show --property=MainPID --value seafile-client # noqa command-instead-of-module
+      become: true
+      changed_when: false
+      register: linux_seafile_cli_verify_main_pid
+
+    - name: Get the main process name
+      ansible.builtin.command: "ps -p {{ linux_seafile_cli_verify_main_pid.stdout | trim }} -o comm="
+      become: true
+      changed_when: false
+      register: linux_seafile_cli_verify_main_comm
+
+    - name: Check that systemd supervises seaf-daemon itself
+      ansible.builtin.assert:
+        that:
+          - linux_seafile_cli_verify_main_pid.stdout | trim | int > 0
+          - linux_seafile_cli_verify_main_comm.stdout | trim == 'seaf-daemon'
+
+    - name: Check that the service is active and enabled
+      # systemd module can't query unit state without changing it
+      ansible.builtin.command: "systemctl {{ item }} seafile-client" # noqa command-instead-of-module
+      become: true
+      changed_when: false
+      loop:
+        - is-active
+        - is-enabled
+
+    # --- client state -----------------------------------------------------------
+    - name: Read seafile.ini
+      ansible.builtin.slurp:
+        src: "{{ linux_seafile_cli_verify_confdir }}/seafile.ini"
+      become: true
+      register: linux_seafile_cli_verify_ini
+
+    - name: Check that seafile.ini points at the configured data directory
+      ansible.builtin.assert:
+        that: >-
+          (linux_seafile_cli_verify_ini.content | b64decode | trim) == linux_seafile_cli_verify_data_dir
+
+    # Proves the wrapper, the RPC socket and the service account line up: the
+    # daemon only answers the account it runs as.
+    - name: Query the running daemon as the service account
+      ansible.builtin.command: >-
+        runuser --user {{ linux_seafile_cli_verify_user }} --
+        /usr/local/bin/seaf-cli status --confdir {{ linux_seafile_cli_verify_confdir }}
+      become: true
+      changed_when: false
+
+    - name: Get sync directory info
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      become: true
+      loop:
+        - "{{ linux_seafile_cli_verify_data_dir }}"
+        - /home/seafiletest/seafile-client/seafile
+      register: linux_seafile_cli_verify_dirs
+
+    - name: Check that the data directory and worktree belong to the service account
+      ansible.builtin.assert:
+        that:
+          - item.stat.isdir
+          - item.stat.pw_name == linux_seafile_cli_verify_user
+      loop: "{{ linux_seafile_cli_verify_dirs.results }}"
+      loop_control:
+        label: "{{ item.stat.path }}"
+
+    # --- pruning ----------------------------------------------------------------
+    - name: Get stale version info
+      ansible.builtin.stat:
+        path: "/opt/seafile/seaf-cli-{{ item }}"
+      loop:
+        - "9.0.1"
+        - "9.0.1.AppImage"
+        - "9.0.2"
+        - "9.0.2.AppImage"
+      register: linux_seafile_cli_verify_stale
+
+    - name: Check that only the newest kept version survived
+      ansible.builtin.assert:
+        that:
+          - not linux_seafile_cli_verify_stale.results[0].stat.exists
+          - not linux_seafile_cli_verify_stale.results[1].stat.exists
+          - linux_seafile_cli_verify_stale.results[2].stat.exists
+          - linux_seafile_cli_verify_stale.results[3].stat.exists
+
+    # --- no FUSE involved -------------------------------------------------------
+    - name: Look for AppImage mounts
+      ansible.builtin.shell:
+        cmd: >-
+          set -o pipefail;
+          { mount; ls -d /tmp/.mount_* 2>/dev/null; } | grep '\.mount_' || true
+        executable: /bin/bash
+      become: true
+      changed_when: false
+      register: linux_seafile_cli_verify_mounts
+
+    - name: Check that the AppImage is never mounted
+      ansible.builtin.assert:
+        that: linux_seafile_cli_verify_mounts.stdout | trim | length == 0

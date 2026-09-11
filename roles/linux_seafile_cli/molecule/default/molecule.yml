@@ -1,0 +1,9 @@
+---
+
+# Driver, platforms, provisioner and verifier all come from the shared base
+# config in .config/molecule/config.yml (all five supported distributions); the
+# role needs no FUSE and no privileged access beyond what that config gives, so
+# this scenario overrides nothing.
+
+driver:
+  name: docker

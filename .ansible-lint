@@ -11,9 +11,3 @@ profile: production
 
 exclude_paths:
   - temp/
-
-skip_list:
-  # Every role directory is hyphenated (linux-dns, zabbix-agent2, ...) while the
-  # rule wants ^[a-z][a-z0-9_]*$. Only triggers when a 'roles/<name>' path is
-  # linted, which is what running from the repo root does.
-  - role-name

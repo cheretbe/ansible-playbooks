@@ -1,0 +1,18 @@
+---
+# handlers file for linux_seafile_cli
+#
+# Handlers run in the order they are defined here, not in notification order,
+# so the reload has to come first.
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true
+
+# Mandatory after a version swap: the symlink the unit points at has changed,
+# but the running daemon still executes the old tree.
+- name: Restart seafile client
+  ansible.builtin.systemd:
+    name: "{{ linux_seafile_cli_service_name }}"
+    state: restarted
+  become: true

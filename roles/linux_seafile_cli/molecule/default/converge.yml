@@ -1,0 +1,37 @@
+---
+
+- name: Converge
+  hosts: all
+  gather_facts: true
+  vars:
+    linux_seafile_cli_user: seafiletest
+    linux_seafile_cli_data_dir: /home/seafiletest/seafile-client/seafile-data
+  roles:
+    - linux_seafile_cli
+
+# The precondition cannot be exercised with a real seafile-cli package (it is
+# not in the distribution repositories), so point the check at a package that
+# is certainly installed and assert that the role refuses to continue.
+- name: Verify the apt-installed client precondition
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Run the role with a conflicting package installed
+      block:
+        - name: Include linux_seafile_cli role
+          ansible.builtin.include_role:
+            name: linux_seafile_cli
+          vars:
+            linux_seafile_cli_user: seafiletest
+            linux_seafile_cli_data_dir: /home/seafiletest/seafile-client/seafile-data
+            linux_seafile_cli_conflicting_packages:
+              - bash
+
+        - name: Fail because the precondition did not trigger
+          ansible.builtin.fail:
+            msg: The role kept running while a conflicting package was installed
+
+      rescue:
+        - name: Check that the role stopped on the precondition
+          ansible.builtin.assert:
+            that: ansible_failed_result.msg is search('installed from apt')
