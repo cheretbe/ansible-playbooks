@@ -2,9 +2,5 @@
 # tasks file for linux-unattended-upgrades
 
 - name: Setup unattended upgrades (Ubuntu)
-  include_tasks: unattended_upgrades_ubuntu.yml
+  ansible.builtin.include_tasks: unattended_upgrades_ubuntu.yml
   when: ansible_facts['os_family'] == "Debian"
-
-- name: Setup unattended upgrades (CentOS)
-  include_tasks: unattended_upgrades_centos.yml
-  when: ansible_facts['os_family'] == "RedHat"

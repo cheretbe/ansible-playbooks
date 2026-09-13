@@ -1,6 +1,6 @@
 ---
 - name: Install apt 'unattended-upgrades' package
-  apt:
+  ansible.builtin.apt:
     name: unattended-upgrades
     update_cache: true
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
@@ -8,10 +8,10 @@
   become: true
 
 - name: Create custom unattended upgrades configuration file
-  template:
+  ansible.builtin.template:
     src: etc_apt_apt.conf.d_90-ansible-unattended-upgrades.j2
     dest: /etc/apt/apt.conf.d/90-ansible-unattended-upgrades
     owner: root
     group: root
-    mode: 0644
+    mode: "0644"
   become: true

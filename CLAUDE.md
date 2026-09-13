@@ -65,6 +65,11 @@ logic belongs in `roles/`. `run_role.yml` runs an arbitrary role via `-e role_na
 undefined-variable error rather than a deprecation warning. ansible-lint has no rule for
 this; the runtime setting is the only enforcement.
 
+**Debian/Ubuntu only.** `linux-provision` hard-fails on anything else and the molecule matrix
+matches, so the roles it includes carry no RedHat/CentOS branches — they were unreachable and
+have been deleted. Don't re-add `yum`/`dnf` paths or `os_family == "RedHat"` guards to that
+chain.
+
 **Custom code:** `library/` (modules) and `action_plugins/` (`display_warning`) are picked up
 implicitly by their directory names. `tools/` holds standalone operator scripts, unrelated to
 playbook runs.
@@ -79,10 +84,18 @@ playbook runs.
   therefore contain nothing but `driver: name: docker`.
 - **Vagrant only where containers can't test the behaviour** (systemd, hostname, DNS). The
   only vagrant consumer is `linux-provision`, which overrides driver *and* platforms inline.
-- **Do not propose lxd, pyinvoke or make.** The lxd driver was dropped. `tests/molecule/*.yml`
-  (the old base-config matrix, including `molecule_base_lxd_*.yml`), `tests/test_utils.py` and
-  the per-role `tasks.py` pyinvoke wrappers are dead leftovers awaiting deletion — don't
-  extend them or copy their patterns.
+- **Do not propose lxd, pyinvoke, testinfra or make.** The lxd driver was dropped, and
+  verification is `verifier: ansible` (a scenario `verify.yml`), not testinfra.
+  `tests/molecule/*.yml` (the old base-config matrix, including `molecule_base_lxd_*.yml`) and
+  `tests/test_utils.py` are dead leftovers awaiting deletion — don't extend them or copy their
+  patterns. `tests/helper_tasks/{add_test_user,set_local_package_cache}.yml` *are* live and
+  still included by several scenarios' `prepare.yml`.
+- **Six roles currently have no molecule coverage at all**: `linux-dns`, `linux-locale`,
+  `linux-timezone`, `linux-mta`, `linux-utils`, `linux-unattended-upgrades`. Their old
+  scenarios (a `lint:` key, testinfra verifier + `tests/*.py`, no `driver: docker`, some
+  importing since-removed helper stubs) were deleted rather than migrated. Write new ones
+  against the shared docker config when a role is next picked up; don't assume the absence
+  means the role is untestable.
 - If the geerlingguy images ever go unmaintained, the agreed fallback is building local
   systemd images (`pre_build_image: false` + `Dockerfile.j2`), not switching to vagrant. The
   platforms live in one place to make that a single edit.
@@ -121,6 +134,22 @@ in `.yamllint` must not be changed.
 The `production` profile is strict by design and roles are cleaned up **one at a time** as
 they are picked up, so a role that hasn't been touched yet is expected to fail lint. That is
 not a regression you introduced; fix the role or leave it, but don't widen `skip_list`.
+
+**ansible-lint does not follow `include_role`.** `task lint` inside `roles/linux-provision`
+lints that role only — the eleven roles it includes at runtime are never reached, and because
+its own `role-name` violation is fatal the run stops there anyway. To lint the whole chain,
+pass the roles explicitly from the repo root:
+
+```shell
+task lint -- roles/upgrade-packages roles/linux-utils roles/linux-ca-certificates \
+  roles/linux-dns roles/linux-locale roles/linux-timezone roles/linux-mta \
+  roles/linux-unattended-upgrades roles/smartmontools roles/linux-motd roles/linux-users
+```
+
+That set is clean apart from `role-name` and one accepted violation:
+`linux_locale_default_LC` in `roles/linux-locale/defaults/main.yml` trips
+`var-naming[pattern]`. It is a public input set by the out-of-repo inventory, so it is left
+as-is (no rename, no `noqa`) until that role is refactored.
 
 ## Conventions
 

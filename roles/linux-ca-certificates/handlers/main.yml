@@ -2,5 +2,7 @@
 
 - name: Update local machine TLS certificate list
   ansible.builtin.command: "update-ca-certificates --fresh"
+  # This is to silence linter warning. Handler is always called on change
+  changed_when: true
   listen: update-ca-certificates
   become: true

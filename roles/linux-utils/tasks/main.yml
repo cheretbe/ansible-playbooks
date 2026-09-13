@@ -2,7 +2,7 @@
 # tasks file for linux-utils
 
 - name: Install APT packages
-  apt:
+  ansible.builtin.apt:
     name:
       - mc
       - htop
@@ -22,30 +22,3 @@
     lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: true
   when: ansible_facts['os_family'] == "Debian"
-
-- name: Make sure EPEL repo is enabled
-  yum:
-    name: epel-release
-    state: present
-  become: true
-  when: ansible_facts['os_family'] == "RedHat"
-
-- name: Install YUM packages
-  yum:
-    name:
-      - mc
-      - htop
-      - net-tools
-      - bind-utils
-      - mtr
-      - ncdu
-      - wget
-      - git
-      - nano
-      - traceroute
-      - colordiff
-      - jq
-      - pv
-    state: present
-  become: true
-  when: ansible_facts['os_family'] == "RedHat"

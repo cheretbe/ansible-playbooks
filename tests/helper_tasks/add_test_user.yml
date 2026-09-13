@@ -1,15 +1,16 @@
+---
 - name: Make sure 'sudo' package is installed
-  package:
+  ansible.builtin.package:
     name: sudo
     state: present
   when: ansible_facts['os_family'] == "RedHat"
 
 - name: Add 'ansible-test' user
-  user:
+  ansible.builtin.user:
     name: ansible-test
 
 - name: Allow passwordless sudo for 'ansible-test' user
-  copy:
+  ansible.builtin.copy:
     dest: /etc/sudoers.d/ansible_test
     content: ansible-test ALL=(root) NOPASSWD:ALL
-    mode: 0640
+    mode: "0640"

@@ -2,7 +2,7 @@
 # tasks file for linux-timezone
 
 - name: Make sure 'dbus' package is installed
-  apt:
+  ansible.builtin.apt:
     name: dbus
     update_cache: true
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
@@ -10,8 +10,7 @@
   become: true
   when: ansible_facts['os_family'] == "Debian"
 
-
 - name: Set timezone to {{ linux_timezone_name }}
-  timezone:
+  community.general.timezone:
     name: "{{ linux_timezone_name }}"
   become: true

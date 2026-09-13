@@ -12,6 +12,8 @@
     state: restarted
   become: true
 
-- name: Update CA Trust # noqa: no-changed-when
+- name: Update CA Trust
   ansible.builtin.command: "update-ca-certificates --fresh"
+  # This is to silence linter warning. Handler is always called on change
+  changed_when: true
   become: true

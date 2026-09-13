@@ -1,4 +1,0 @@
----
-linux_locale_config_file_by_os:
-  Debian: /etc/default/locale
-  RedHat: /etc/locale.conf

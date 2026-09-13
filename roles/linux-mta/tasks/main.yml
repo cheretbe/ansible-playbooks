@@ -2,5 +2,5 @@
 # tasks file for linux-mta
 
 - name: Perform MTA setup
-  include_tasks: linux_mta_setup.yml
+  ansible.builtin.include_tasks: linux_mta_setup.yml
   when: not (linux_mta_no_config | bool)

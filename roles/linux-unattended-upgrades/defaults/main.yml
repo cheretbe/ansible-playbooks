@@ -1,33 +1,31 @@
 ---
-# Ubuntu: Unattended-Upgrade::Allowed-Origins
+# Unattended-Upgrade::Allowed-Origins
 unattended_allowed_origins:
-  - '"${distro_id}:${distro_codename}";'
-  - '"${distro_id}:${distro_codename}-security";'
-  - '"${distro_id}ESM:${distro_codename}";'
-  - '"${distro_id}:${distro_codename}-updates";'
+  - "\"${distro_id}:${distro_codename}\";"
+  - "\"${distro_id}:${distro_codename}-security\";"
+  - "\"${distro_id}ESM:${distro_codename}\";"
+  - "\"${distro_id}:${distro_codename}-updates\";"
 
 unattended_additional_allowed_origins: []
 
-# Ubuntu: Unattended-Upgrade::Automatic-Reboot
+# Unattended-Upgrade::Automatic-Reboot
 #  Automatically reboot *WITHOUT CONFIRMATION* if
 #  the file /var/run/reboot-required is found after the upgrade
-# CentOS: install a cron job to check if reboot is needed
 unattended_automatic_reboot: false
 
-# Ubuntu: Unattended-Upgrade::Automatic-Reboot-Time
+# Unattended-Upgrade::Automatic-Reboot-Time
 #  If automatic reboot is enabled and needed, reboot at the specific
 #  time instead of immediately
-# CentOS: Activation time for reboot cron job
 unattended_automatic_reboot_time: "02:00"
 
-# Ubuntu: Unattended-Upgrade::Mail
+# Unattended-Upgrade::Mail
 # Send email to this address for problems or packages upgrades
 # If empty or unset then no email is sent, make sure that you
 # have a working mail setup on your system. A package that provides
 # 'mailx' must be installed.
 unattended_mail: root
 
-# Ubuntu: Unattended-Upgrade::MailOnlyOnError
+# Unattended-Upgrade::MailOnlyOnError
 # Set this value to "true" to get emails only on errors. Default
 # is to always send a mail if Unattended-Upgrade::Mail is set
 unattended_mail_only_on_error: true

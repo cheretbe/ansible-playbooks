@@ -2,8 +2,8 @@
 # tasks file for upgrade-packages
 
 - name: Update and upgrade apt packages
-  become: yes
-  apt:
+  become: true
+  ansible.builtin.apt:
     upgrade: true
     update_cache: true
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
