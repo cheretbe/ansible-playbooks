@@ -5,10 +5,14 @@
 # after what it needs. Keep the order when editing.
 #
 # To run a single step, import the role with 'tasks_from' (see linux_motd.yml
-# and the other per-task playbooks) rather than reordering or conditioning
+# and the other per-step playbooks) rather than reordering or conditioning
 # anything here. Write it without the extension - 'tasks_from: motd', not
 # 'motd.yml' - because ansible looks up the meta/argument_specs.yml entry point
 # by that exact string.
+#
+# The linux_provision_<step>_enabled flags are applied here and, for the steps
+# that have one, in their own playbook - a 'tasks_from' import does not come
+# through this file, so both call sites have to check.
 
 - name: Check host
   ansible.builtin.import_tasks: check_host.yml
@@ -18,29 +22,40 @@
 
 - name: Install CA certificates
   ansible.builtin.import_tasks: ca_certificates.yml
+  when: linux_provision_ca_certificates_enabled | bool
 
 - name: Configure DNS
   ansible.builtin.import_tasks: dns.yml
+  when: linux_provision_dns_enabled | bool
 
 - name: Configure locales
   ansible.builtin.import_tasks: locale.yml
+  when: linux_provision_locale_enabled | bool
 
 - name: Configure timezone
   ansible.builtin.import_tasks: timezone.yml
+  when: linux_provision_timezone_enabled | bool
 
 # The smartmontools package depends on postfix, so the MTA has to be configured
 # before smartmontools.yml or the package manager pulls in an unconfigured one.
+# Note that linux_provision_mta_enabled: false does not disable smartmontools -
+# turn both off if the host is not to have postfix at all.
 - name: Configure MTA
   ansible.builtin.import_tasks: mta.yml
+  when: linux_provision_mta_enabled | bool
 
 - name: Configure unattended upgrades
   ansible.builtin.import_tasks: unattended_upgrades.yml
+  when: linux_provision_unattended_upgrades_enabled | bool
 
 - name: Configure smartmontools
   ansible.builtin.import_tasks: smartmontools.yml
+  when: linux_provision_smartmontools_enabled | bool
 
 - name: Configure MOTD
   ansible.builtin.import_tasks: motd.yml
+  when: linux_provision_motd_enabled | bool
 
 - name: Create users
   ansible.builtin.import_tasks: users.yml
+  when: linux_provision_users_enabled | bool

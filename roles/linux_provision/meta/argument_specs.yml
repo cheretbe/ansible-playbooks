@@ -12,7 +12,53 @@ argument_specs:
         C(linux_motd.yml) and the other per-task playbooks. This entry point
         covers the whole role only; a C(tasks_from) import matches no entry point
         here and is therefore not validated.
+      - Set C(linux_provision_<step>_enabled) to false to leave a step out
+        entirely. The per-step playbooks honour the same flags.
     options:
+      linux_provision_ca_certificates_enabled:
+        description: Run the CA certificates step. False leaves the system trust store alone.
+        type: bool
+      linux_provision_dns_enabled:
+        description:
+          - Run the DNS step. False leaves /etc/resolv.conf and the
+            systemd-resolved stub alone.
+        type: bool
+      linux_provision_locale_enabled:
+        description:
+          - Run the locale step. False leaves the generated locales and
+            /etc/default/locale alone.
+        type: bool
+      linux_provision_timezone_enabled:
+        description: Run the timezone step. False leaves the system timezone alone.
+        type: bool
+      linux_provision_mta_enabled:
+        description:
+          - Run the MTA step. False leaves postfix and /etc/aliases alone.
+          - Does not disable the smartmontools step, which pulls postfix in as a
+            dependency and would then leave it unconfigured.
+        type: bool
+      linux_provision_unattended_upgrades_enabled:
+        description:
+          - Run the unattended upgrades step. False leaves the
+            unattended-upgrades configuration alone.
+        type: bool
+      linux_provision_smartmontools_enabled:
+        description:
+          - Run the smartmontools step. False leaves smartmontools uninstalled
+            and /etc/smartd.conf alone.
+          - The step is skipped on VMs and containers regardless, unless
+            C(linux_provision_smartmontools_force_vm) is set.
+        type: bool
+      linux_provision_motd_enabled:
+        description:
+          - Run the MOTD step. False leaves every file under /etc/update-motd.d
+            and /etc/motd alone.
+        type: bool
+      linux_provision_users_enabled:
+        description:
+          - Run the users step. False creates no accounts and leaves
+            /etc/sudoers.d alone.
+        type: bool
       linux_provision_skip_fqdn_check:
         description:
           - Do not require the inventory name to match the host's FQDN.

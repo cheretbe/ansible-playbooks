@@ -28,12 +28,23 @@ linux_provision_packages_utils:
 
 # --- ca_certificates --------------------------------------------------------
 
+# Disabling this leaves the system trust store alone
+linux_provision_ca_certificates_enabled: true
+
 # linux_provision_ca_certificate_files: [
 #   {src: "/path/to/cert/file", dst_file_name: "my_ca.crt"}
 # ]
 linux_provision_ca_certificate_files: []
 
+# --- dns --------------------------------------------------------------------
+
+# Disabling this leaves /etc/resolv.conf and the systemd-resolved stub alone
+linux_provision_dns_enabled: true
+
 # --- locale -----------------------------------------------------------------
+
+# Disabling this leaves the generated locales and /etc/default/locale alone
+linux_provision_locale_enabled: true
 
 linux_provision_locale_locales_to_generate:
   - {language_country: "en_US", encoding: "UTF-8"}
@@ -47,10 +58,18 @@ linux_provision_locale_default_lc: en_US.UTF-8
 
 # --- timezone ---------------------------------------------------------------
 
+# Disabling this leaves the system timezone alone
+linux_provision_timezone_enabled: true
+
 # Use 'timedatectl list-timezones' to list timezones known to system
 linux_provision_timezone_name: "Europe/Kaliningrad"
 
 # --- mta --------------------------------------------------------------------
+
+# Disabling this leaves postfix and /etc/aliases alone. Note it does not
+# disable the smartmontools task, which pulls postfix in as a dependency and
+# would then leave it unconfigured.
+linux_provision_mta_enabled: true
 
 # Change to a host's FQDN to set postfix configuration type to "Internet with
 # smarthost" and use this host as a relay
@@ -67,6 +86,9 @@ linux_provision_mta_root_mail_recipient: false
 linux_provision_mta_aliases: []
 
 # --- unattended_upgrades ----------------------------------------------------
+
+# Disabling this leaves the unattended-upgrades configuration alone
+linux_provision_unattended_upgrades_enabled: true
 
 # Unattended-Upgrade::Allowed-Origins
 linux_provision_unattended_allowed_origins:
@@ -101,16 +123,25 @@ linux_provision_unattended_mail_only_on_error: true
 
 # --- smartmontools ----------------------------------------------------------
 
+# Disabling this leaves smartmontools uninstalled and /etc/smartd.conf alone
+linux_provision_smartmontools_enabled: true
+
 # smartmontools is skipped on VMs and containers, where there are no SMART
 # capable drives to monitor. Set to true to install it anyway.
 linux_provision_smartmontools_force_vm: false
 
 # --- motd -------------------------------------------------------------------
 
+# Disabling this leaves every file under /etc/update-motd.d and /etc/motd alone
+linux_provision_motd_enabled: true
+
 # Rich markup is supported, e.g. "[bold green]Production[/]"
 linux_provision_motd_custom_message: ""
 
 # --- users ------------------------------------------------------------------
+
+# Disabling this creates no accounts and leaves /etc/sudoers.d alone
+linux_provision_users_enabled: true
 
 # Every variable whose name starts with 'linux_provision_users_list' is merged
 # into a single list, so the inventory can add users at several levels

@@ -11,7 +11,10 @@
         name: linux_provision
         tasks_from: check_host
 
+    # and so does the step's enable flag, which tasks/main.yml applies for the
+    # full run
     - name: Configure MOTD
       ansible.builtin.import_role:
         name: linux_provision
         tasks_from: motd
+      when: linux_provision_motd_enabled | bool

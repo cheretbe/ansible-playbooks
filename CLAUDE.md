@@ -159,8 +159,13 @@ Consequences to keep in mind when adding a task file:
   entry point, argument validation is **silently skipped** — no warning. `linux_provision`
   declares only `main`, so the per-task playbooks are deliberately unvalidated; adding entry
   points named after the task files is purely additive if that ever matters.
-- **A guard belongs in the task file, not on the import in `main.yml`**, or `tasks_from`
-  bypasses it — e.g. the "skip on a VM" condition wraps the body of `smartmontools.yml`.
+- **A condition has to hold at every entry point**, and there are two ways to get that:
+  - an **environment guard** that must apply however the file is entered goes *inside* the
+    task file — e.g. the "skip on a VM" condition wraps the body of `smartmontools.yml`;
+  - a **policy flag** (`linux_provision_<step>_enabled`, set per host by the inventory) goes
+    on the import at *each* call site — `tasks/main.yml` **and** the step's own playbook.
+    Putting it only in `main.yml` would let `ansible-playbook linux_dns.yml` reconfigure a
+    host whose inventory has the step turned off.
 - Importing the same role twice with different `tasks_from` is safe: `from_files` is part of
   the role's hash, so the two are not de-duplicated.
 - Everything else still loads under `tasks_from` — `defaults/`, `vars/` and
