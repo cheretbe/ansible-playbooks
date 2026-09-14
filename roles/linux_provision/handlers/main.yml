@@ -1,0 +1,25 @@
+---
+
+# Handlers are role-wide, so every task file can notify them. This is what
+# replaces the nested include_role the smartmontools role used to do to get at
+# the MTA handlers.
+
+- name: Update local machine TLS certificate list
+  ansible.builtin.command: "update-ca-certificates --fresh"
+  # This is to silence linter warning. Handler is always called on change
+  changed_when: true
+  listen: update-ca-certificates
+  become: true
+
+- name: Restart 'postfix' service
+  ansible.builtin.service:
+    name: postfix
+    state: restarted
+    enabled: true
+  become: true
+
+- name: Re-initialize aliases database
+  ansible.builtin.command: /usr/bin/newaliases
+  # This is to silence linter warning. Handler is always called on change
+  changed_when: true
+  become: true

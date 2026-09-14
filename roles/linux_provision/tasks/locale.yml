@@ -1,0 +1,18 @@
+---
+
+- name: Generate locales using locale_gen
+  community.general.locale_gen:
+    name: "{{ _linux_provision_locale_to_generate.language_country }}.{{ _linux_provision_locale_to_generate.encoding }}"
+    state: present
+  become: true
+  loop: "{{ linux_provision_locale_locales_to_generate }}"
+  loop_control:
+    loop_var: _linux_provision_locale_to_generate
+
+- name: "Set system locale config"
+  ansible.builtin.template:
+    src: "locale.conf.j2"
+    dest: /etc/default/locale
+    mode: "0644"
+    backup: true
+  become: true

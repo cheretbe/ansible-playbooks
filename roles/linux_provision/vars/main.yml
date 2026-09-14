@@ -1,0 +1,8 @@
+---
+
+# Starting values for facts the task files set with set_fact along the way
+# (set_fact takes precedence over role vars, so these are only the fallbacks
+# for the branches that never run)
+_linux_provision_supported_dist: false
+_linux_provision_dns_has_resolved: false
+_linux_provision_dns_disable_stub: false

@@ -1,7 +1,13 @@
 ---
 
-- hosts: "{{ ansible_limit | default(omit) }}"
+# Runs every task file of the role, in the order fixed by tasks/main.yml.
+# To run a single step use the per-task playbooks (linux_dns.yml,
+# linux_motd.yml, ...), which import the role with 'tasks_from'.
+
+- name: Provision a Linux host
+  hosts: "{{ ansible_limit | default(omit) }}"
+
   tasks:
-    - name: Import linux-provision role
-      import_role:
-        name: linux-provision
+    - name: Import linux_provision role
+      ansible.builtin.import_role:
+        name: linux_provision

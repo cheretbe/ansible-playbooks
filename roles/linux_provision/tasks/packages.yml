@@ -1,0 +1,18 @@
+---
+
+- name: Update and upgrade apt packages
+  ansible.builtin.apt:
+    upgrade: true
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+  when: linux_provision_packages_upgrade | bool
+
+- name: Install utility packages
+  ansible.builtin.apt:
+    name: "{{ linux_provision_packages_utils }}"
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true

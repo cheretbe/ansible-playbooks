@@ -53,9 +53,12 @@
       when: "(lookup('vars', 'ansible_' + item | replace('-', '_')).ipv4.address) == router_wan_if_ip_addr"
   when: router_wan_if_ip_addr is defined
 
-- name: Make sure systemd-resolved DNS stub is disabled
-  include_role: name="{{ role_path }}/../linux-dns"
-  when: router_dns_forwarder|bool
+# linux-dns was absorbed into roles/linux_provision. Reaching sideways into a
+# sibling role was a bad idea to begin with - replace this role with a dedicated
+# playbook and run linux_dns.yml against these hosts instead.
+# - name: Make sure systemd-resolved DNS stub is disabled
+#   include_role: name="{{ role_path }}/../linux-dns"
+#   when: router_dns_forwarder|bool
 
 - name: Set apt package names
   set_fact:

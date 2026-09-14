@@ -1,0 +1,46 @@
+---
+
+# The order below is the role's dependency contract. Every task file is
+# standalone - it never pulls in another one, it relies on having been placed
+# after what it needs. Keep the order when editing.
+#
+# To run a single step, import the role with 'tasks_from' (see linux_motd.yml
+# and the other per-task playbooks) rather than reordering or conditioning
+# anything here. Write it without the extension - 'tasks_from: motd', not
+# 'motd.yml' - because ansible looks up the meta/argument_specs.yml entry point
+# by that exact string.
+
+- name: Check host
+  ansible.builtin.import_tasks: check_host.yml
+
+- name: Install and upgrade packages
+  ansible.builtin.import_tasks: packages.yml
+
+- name: Install CA certificates
+  ansible.builtin.import_tasks: ca_certificates.yml
+
+- name: Configure DNS
+  ansible.builtin.import_tasks: dns.yml
+
+- name: Configure locales
+  ansible.builtin.import_tasks: locale.yml
+
+- name: Configure timezone
+  ansible.builtin.import_tasks: timezone.yml
+
+# The smartmontools package depends on postfix, so the MTA has to be configured
+# before smartmontools.yml or the package manager pulls in an unconfigured one.
+- name: Configure MTA
+  ansible.builtin.import_tasks: mta.yml
+
+- name: Configure unattended upgrades
+  ansible.builtin.import_tasks: unattended_upgrades.yml
+
+- name: Configure smartmontools
+  ansible.builtin.import_tasks: smartmontools.yml
+
+- name: Configure MOTD
+  ansible.builtin.import_tasks: motd.yml
+
+- name: Create users
+  ansible.builtin.import_tasks: users.yml

@@ -1,0 +1,129 @@
+---
+
+# The role expects the inventory name to be the host's FQDN: the postfix and
+# MOTD configuration is generated from it
+linux_provision_skip_fqdn_check: false
+linux_provision_skip_dist_check: false
+
+# --- packages ---------------------------------------------------------------
+
+# Full 'apt upgrade' before anything else is installed. Turning it off still
+# installs linux_provision_packages_utils.
+linux_provision_packages_upgrade: true
+
+linux_provision_packages_utils:
+  - mc
+  - htop
+  - net-tools
+  - dnsutils
+  - mtr-tiny
+  - ncdu
+  - wget
+  - git
+  - nano
+  - traceroute
+  - colordiff
+  - jq
+  - pv
+
+# --- ca_certificates --------------------------------------------------------
+
+# linux_provision_ca_certificate_files: [
+#   {src: "/path/to/cert/file", dst_file_name: "my_ca.crt"}
+# ]
+linux_provision_ca_certificate_files: []
+
+# --- locale -----------------------------------------------------------------
+
+linux_provision_locale_locales_to_generate:
+  - {language_country: "en_US", encoding: "UTF-8"}
+  - {language_country: "ru_RU", encoding: "UTF-8"}
+
+linux_provision_locale_default_lang: en_US.UTF-8
+# linux_provision_locale_default_language: "en:ru:es"
+
+# Applied to every LC_* category except LC_ALL
+linux_provision_locale_default_lc: en_US.UTF-8
+
+# --- timezone ---------------------------------------------------------------
+
+# Use 'timedatectl list-timezones' to list timezones known to system
+linux_provision_timezone_name: "Europe/Kaliningrad"
+
+# --- mta --------------------------------------------------------------------
+
+# Change to a host's FQDN to set postfix configuration type to "Internet with
+# smarthost" and use this host as a relay
+# By default sets postfix to "Local only" configuration
+linux_provision_mta_postfix_relayhost: false
+
+# Change to an external or local email address(es) to redirect root's mail to it
+linux_provision_mta_root_mail_recipient: false
+
+# Additional /etc/aliases file entries
+# linux_provision_mta_aliases:
+#   - "user1: user3"
+#   - "user2: user3"
+linux_provision_mta_aliases: []
+
+# --- unattended_upgrades ----------------------------------------------------
+
+# Unattended-Upgrade::Allowed-Origins
+linux_provision_unattended_allowed_origins:
+  - "\"${distro_id}:${distro_codename}\";"
+  - "\"${distro_id}:${distro_codename}-security\";"
+  - "\"${distro_id}ESM:${distro_codename}\";"
+  - "\"${distro_id}:${distro_codename}-updates\";"
+
+linux_provision_unattended_additional_allowed_origins: []
+
+# Unattended-Upgrade::Automatic-Reboot
+#  Automatically reboot *WITHOUT CONFIRMATION* if
+#  the file /var/run/reboot-required is found after the upgrade
+linux_provision_unattended_automatic_reboot: false
+
+# Unattended-Upgrade::Automatic-Reboot-Time
+#  If automatic reboot is enabled and needed, reboot at the specific
+#  time instead of immediately
+linux_provision_unattended_automatic_reboot_time: "02:00"
+
+# Unattended-Upgrade::Mail
+# Send email to this address for problems or packages upgrades
+# If empty or unset then no email is sent, make sure that you
+# have a working mail setup on your system. A package that provides
+# 'mailx' must be installed.
+linux_provision_unattended_mail: root
+
+# Unattended-Upgrade::MailOnlyOnError
+# Set this value to "true" to get emails only on errors. Default
+# is to always send a mail if Unattended-Upgrade::Mail is set
+linux_provision_unattended_mail_only_on_error: true
+
+# --- smartmontools ----------------------------------------------------------
+
+# smartmontools is skipped on VMs and containers, where there are no SMART
+# capable drives to monitor. Set to true to install it anyway.
+linux_provision_smartmontools_force_vm: false
+
+# --- motd -------------------------------------------------------------------
+
+# Rich markup is supported, e.g. "[bold green]Production[/]"
+linux_provision_motd_custom_message: ""
+
+# --- users ------------------------------------------------------------------
+
+# Every variable whose name starts with 'linux_provision_users_list' is merged
+# into a single list, so the inventory can add users at several levels
+# (linux_provision_users_list_admins, ..._dbas and so on).
+#
+# linux_provision_users_list:
+#   - name: username
+#     comment: description
+#     # mkpasswd -m sha512crypt
+#     password: $6$eGkreiwVFWkjdwsn$0kcDTvSXv5gHG8GpvJRGbW1eptemcHcHTWTNQKrXa2SOhI1i/KqTqXP4qylr0FrAyR9NfUE86y9MKkwiVm412/
+#     shell: /bin/bash
+#     # By default, the user is removed from all other groups. Configure append to modify this.
+#     groups: sudo,docker
+#     append: false
+#     ssh_authorized_key: "ssh-ed25519 00000000000 username"
+linux_provision_users_list: []

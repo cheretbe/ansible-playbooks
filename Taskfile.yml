@@ -68,8 +68,26 @@ tasks:
     # 'roles/<name>' paths are recognised as roles; the directory to lint is
     # passed as an argument instead. Run from the root to lint everything.
     dir: '{{.ROOT_DIR}}'
+    # TARGET lets a calling task lint the role directory without inheriting that
+    # task's own CLI_ARGS (which are meant for molecule, not for ansible-lint)
+    vars:
+      TARGET: '{{.TARGET | default (.CLI_ARGS | default .USER_WORKING_DIR)}}'
     cmds:
-      - '{{.ANSIBLE_ENV}} ansible-lint {{.CLI_ARGS | default .USER_WORKING_DIR}}'
+      - '{{.ANSIBLE_ENV}} ansible-lint {{.TARGET}}'
+
+  test:one:
+    desc: 'Lint, then run the molecule sequence on ONE platform (default debian-13): task test:one -- debian-13.local.test'
+    deps: [venv]
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - task: lint
+        vars: {TARGET: '{{.USER_WORKING_DIR}}'}
+      # 'molecule test' is the only subcommand that takes --platform-name, and
+      # it filters the platform list itself, so create/prepare/destroy touch
+      # that instance only. Run this before 'task test': five VM boots at once
+      # can starve a guest's own boot (blocked tasks, RCU stalls) on a loaded
+      # host, which then looks like a role failure.
+      - '{{.MOLECULE_ENV}} molecule test --all --platform-name {{.CLI_ARGS | default "debian-13"}}'
 
   test:
     desc: Lint, then run all molecule scenarios for the role in the current directory
@@ -78,7 +96,8 @@ tasks:
     cmds:
       # lint first: it is seconds, while a failed converge costs a VM boot
       - task: lint
-      - '{{.MOLECULE_ENV}} molecule test --all'
+        vars: {TARGET: '{{.USER_WORKING_DIR}}'}
+      - '{{.MOLECULE_ENV}} molecule test --all {{.CLI_ARGS}}'
 
   converge:
     desc: 'Run molecule converge (args after --: task converge -- -s upgrade)'

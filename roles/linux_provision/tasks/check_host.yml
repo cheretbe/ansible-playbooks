@@ -1,0 +1,32 @@
+---
+
+# Imported first by tasks/main.yml, and separately by every per-task playbook
+# (tasks_from: check_host) - importing a single task file bypasses main.yml, so
+# the checks have to be asked for explicitly there.
+
+- name: Check host FQDN
+  ansible.builtin.assert:
+    that: inventory_hostname == ansible_facts['fqdn']
+  when: not linux_provision_skip_fqdn_check
+
+- name: Check if distribution is supported
+  ansible.builtin.set_fact:
+    _linux_provision_supported_dist: true
+  when:
+    - _linux_provision_dist_check_info.matched
+  loop:
+    - {name: "Debian 11 (bullseye)", matched: "{{ ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '11' }}"}
+    - {name: "Debian 12 (bookworm)", matched: "{{ ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '12' }}"}
+    - {name: "Debian 13 (trixie)", matched: "{{ ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '13' }}"}
+    - {name: "Ubuntu 22.04 (jammy)", matched: "{{ ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] == '22.04' }}"}
+    - {name: "Ubuntu 24.04 (noble)", matched: "{{ ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] == '24.04' }}"}
+  loop_control:
+    loop_var: _linux_provision_dist_check_info
+    label: "{{ _linux_provision_dist_check_info.name }}"
+
+- name: Fail is distribution is not supported
+  ansible.builtin.fail:
+    msg: >-
+      {{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }} is not supported.
+      Use 'linux_provision_skip_dist_check' setting to skip the check
+  when: not (_linux_provision_supported_dist or (linux_provision_skip_dist_check | bool))

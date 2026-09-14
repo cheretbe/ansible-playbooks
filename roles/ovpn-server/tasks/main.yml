@@ -106,8 +106,11 @@
 
 - name: Configure bind9
   block:
-    - name: Make sure systemd-resolved DNS stub is disabled
-      include_role: name="{{ role_path }}/../linux-dns"
+    # linux-dns was absorbed into roles/linux_provision. Reaching sideways into
+    # a sibling role was a bad idea to begin with - replace this role with a
+    # dedicated playbook and run linux_dns.yml against these hosts instead.
+    # - name: Make sure systemd-resolved DNS stub is disabled
+    #   include_role: name="{{ role_path }}/../linux-dns"
 
     - name: Create bind9 options file
       ansible.builtin.template:

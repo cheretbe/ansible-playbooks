@@ -1,0 +1,31 @@
+---
+
+# The package depends on postfix, so mta.yml has to have run first: tasks/main.yml
+# places it before this file. A standalone playbook has to do the same, in order:
+#   - import_role: {name: linux_provision, tasks_from: mta}
+#   - import_role: {name: linux_provision, tasks_from: smartmontools}
+
+- name: Configure smartmontools
+  # nothing to monitor in a VM or a container. The guard lives here rather than
+  # on the import in main.yml so it also applies to 'tasks_from: smartmontools'.
+  when: >-
+    (ansible_facts['virtualization_role'] != "guest")
+    or (linux_provision_smartmontools_force_vm | bool)
+  block:
+    - name: Install smartmontools package
+      ansible.builtin.apt:
+        name: "smartmontools"
+        update_cache: true
+        cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+        lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+      become: true
+
+    - name: "Write custom smartd config"
+      ansible.builtin.template:
+        src: etc_smartd.conf.j2
+        dest: /etc/smartd.conf
+        owner: root
+        group: root
+        mode: "0644"
+        backup: true
+      become: true

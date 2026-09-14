@@ -1,0 +1,157 @@
+---
+argument_specs:
+  main:
+    short_description: Provision a Debian or Ubuntu server
+    description:
+      - Brings a freshly installed Debian/Ubuntu host to a common baseline -
+        packages, CA certificates, DNS, locale, timezone, MTA, unattended
+        upgrades, smartmontools, MOTD and users.
+      - Each of those is one task file, imported by C(tasks/main.yml) in a fixed
+        dependency order; they never call each other.
+      - To run a single one, import the role with C(tasks_from) - see
+        C(linux_motd.yml) and the other per-task playbooks. This entry point
+        covers the whole role only; a C(tasks_from) import matches no entry point
+        here and is therefore not validated.
+    options:
+      linux_provision_skip_fqdn_check:
+        description:
+          - Do not require the inventory name to match the host's FQDN.
+          - The postfix and MOTD configuration is generated from the FQDN, so a
+            mismatch normally means the inventory is wrong.
+        type: bool
+      linux_provision_skip_dist_check:
+        description: Run on a distribution the role does not claim to support.
+        type: bool
+      linux_provision_packages_upgrade:
+        description:
+          - Run a full C(apt upgrade) before anything else is installed.
+          - Turning this off still installs C(linux_provision_packages_utils).
+        type: bool
+      linux_provision_packages_utils:
+        description: Utility packages installed on every host.
+        type: list
+        elements: str
+      linux_provision_ca_certificate_files:
+        description:
+          - CA certificates to add to the system trust store.
+          - Each entry is a dict of C(src) (path on the controller) and
+            C(dst_file_name) (name under /usr/local/share/ca-certificates).
+        type: list
+        elements: dict
+        options:
+          src:
+            description: Path of the certificate file on the controller.
+            type: str
+            required: true
+          dst_file_name:
+            description: File name to install it under. Must end in C(.crt).
+            type: str
+            required: true
+      linux_provision_locale_locales_to_generate:
+        description: Locales to generate, as C(language_country) + C(encoding) pairs.
+        type: list
+        elements: dict
+        options:
+          language_country:
+            description: Language and country part, e.g. C(en_US).
+            type: str
+            required: true
+          encoding:
+            description: Encoding part, e.g. C(UTF-8).
+            type: str
+            required: true
+      linux_provision_locale_default_lang:
+        description: Value of LANG in /etc/default/locale.
+        type: str
+      linux_provision_locale_default_language:
+        description:
+          - Value of LANGUAGE in /etc/default/locale, e.g. C(en:ru:es).
+          - Left out of the file when undefined.
+        type: str
+      linux_provision_locale_default_lc:
+        description: Value applied to every LC_* category except LC_ALL.
+        type: str
+      linux_provision_timezone_name:
+        description: System timezone. C(timedatectl list-timezones) lists the valid names.
+        type: str
+      linux_provision_mta_postfix_relayhost:
+        description:
+          - FQDN of a smarthost to relay through ("Internet with smarthost").
+          - C(false) configures postfix as local only.
+        type: raw
+      linux_provision_mta_root_mail_recipient:
+        description:
+          - Address(es) root's mail is redirected to.
+          - C(false) leaves root's mail local.
+        type: raw
+      linux_provision_mta_aliases:
+        description: >-
+          Additional /etc/aliases entries, one C("name: target") string each.
+        type: list
+        elements: str
+      linux_provision_unattended_allowed_origins:
+        description: Unattended-Upgrade::Allowed-Origins entries, replacing the defaults.
+        type: list
+        elements: str
+      linux_provision_unattended_additional_allowed_origins:
+        description: Unattended-Upgrade::Allowed-Origins entries appended to the defaults.
+        type: list
+        elements: str
+      linux_provision_unattended_automatic_reboot:
+        description: Reboot *without confirmation* when an upgrade leaves /var/run/reboot-required.
+        type: bool
+      linux_provision_unattended_automatic_reboot_time:
+        description: Time of day to reboot at instead of immediately.
+        type: str
+      linux_provision_unattended_mail:
+        description:
+          - Address problem and upgrade reports are sent to.
+          - Needs a working MTA, which the C(mta) task provides.
+        type: str
+      linux_provision_unattended_mail_only_on_error:
+        description: Only send mail on errors instead of after every run.
+        type: bool
+      linux_provision_smartmontools_force_vm:
+        description:
+          - Install smartmontools even on a VM or in a container, where there is
+            normally no SMART capable drive to monitor.
+        type: bool
+      linux_provision_motd_custom_message:
+        description:
+          - Message printed by the custom MOTD script. Rich markup is supported,
+            e.g. C([bold green]Production[/]).
+          - An empty string leaves the message file alone.
+        type: str
+      linux_provision_users_list:
+        description:
+          - Users to create.
+          - Every variable whose name starts with C(linux_provision_users_list)
+            is merged into one list, so the inventory can add users at several
+            levels.
+        type: list
+        elements: dict
+        options:
+          name:
+            description: Account name.
+            type: str
+            required: true
+          comment:
+            description: GECOS field.
+            type: str
+          password:
+            description: Hashed password, e.g. from C(mkpasswd -m sha512crypt).
+            type: str
+            no_log: true
+          shell:
+            description: Login shell.
+            type: str
+          groups:
+            description: Supplementary groups.
+            type: raw
+          append:
+            description:
+              - Add to C(groups) instead of replacing the user's current set.
+            type: bool
+          ssh_authorized_key:
+            description: Public key added to the account's authorized_keys.
+            type: str

@@ -1,8 +1,17 @@
 ---
 
-- hosts: "{{ ansible_limit | default(omit) }}"
-  tasks:
+- name: Install CA certificates
+  hosts: "{{ ansible_limit | default(omit) }}"
 
-    - name: Import linux-ca-certificates role
-      import_role:
-        name: linux-ca-certificates
+  tasks:
+    # importing a single task file bypasses the role's tasks/main.yml, so the
+    # FQDN and distribution checks have to be asked for explicitly
+    - name: Check host
+      ansible.builtin.import_role:
+        name: linux_provision
+        tasks_from: check_host
+
+    - name: Install CA certificates
+      ansible.builtin.import_role:
+        name: linux_provision
+        tasks_from: ca_certificates

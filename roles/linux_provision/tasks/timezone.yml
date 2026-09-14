@@ -1,0 +1,14 @@
+---
+
+- name: Make sure 'dbus' package is installed
+  ansible.builtin.apt:
+    name: dbus
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
+- name: Set timezone to {{ linux_provision_timezone_name }}
+  community.general.timezone:
+    name: "{{ linux_provision_timezone_name }}"
+  become: true

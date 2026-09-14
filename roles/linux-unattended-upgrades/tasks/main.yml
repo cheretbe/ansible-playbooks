@@ -1,6 +1,0 @@
----
-# tasks file for linux-unattended-upgrades
-
-- name: Setup unattended upgrades (Ubuntu)
-  ansible.builtin.include_tasks: unattended_upgrades_ubuntu.yml
-  when: ansible_facts['os_family'] == "Debian"
