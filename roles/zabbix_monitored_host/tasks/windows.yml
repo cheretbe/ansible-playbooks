@@ -7,6 +7,6 @@
 - name: (Windows) Report the host this role was applied to
   ansible.builtin.debug:
     msg: >-
-      zabbix-monitored-host: host {{ inventory_hostname }}
+      zabbix_monitored_host: host {{ inventory_hostname }}
       (fqdn {{ ansible_facts['fqdn'] | default('unknown') }}) — no Windows-specific
       configuration is managed by this role.

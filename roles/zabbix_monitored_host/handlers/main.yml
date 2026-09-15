@@ -1,5 +1,5 @@
 ---
-# handlers file for zabbix-monitored-host
+# handlers file for zabbix_monitored_host
 
 - name: Reload systemd daemon
   ansible.builtin.systemd:

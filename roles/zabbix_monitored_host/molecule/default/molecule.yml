@@ -119,6 +119,6 @@ provisioner:
         zabbix_monitored_host_api_server: 127.0.0.1
         zabbix_monitored_host_api_port: 18080
         zabbix_monitored_host_api_use_ssl: false
-        zabbix_monitored_host_api_url_path: ''
+        zabbix_monitored_host_api_url_path: ""
         zabbix_monitored_host_api_user: Admin
         zabbix_monitored_host_api_password: zabbix

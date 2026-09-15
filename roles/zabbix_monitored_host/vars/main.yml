@@ -1,5 +1,5 @@
 ---
-# vars file for zabbix-monitored-host
+# vars file for zabbix_monitored_host
 #
 # The lists the role actually sends to Zabbix: base + extra. Defined here rather
 # than in defaults/ so they always reflect both variables; do not set them.

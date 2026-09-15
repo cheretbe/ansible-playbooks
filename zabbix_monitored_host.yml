@@ -1,5 +1,6 @@
 ---
 
-- hosts: "{{ ansible_limit | default(omit) }}"
+- name: Configure host monitoring in Zabbix
+  hosts: "{{ ansible_limit | default(omit) }}"
   roles:
-    - zabbix-monitored-host
+    - zabbix_monitored_host

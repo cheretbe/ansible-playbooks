@@ -1,5 +1,5 @@
 ---
-# tasks file for zabbix-monitored-host
+# tasks file for zabbix_monitored_host
 
 - name: Validate proxy configuration
   ansible.builtin.assert:

@@ -31,8 +31,8 @@
           params: {}
           id: 1
         return_content: true
-      register: zabbix_api_check
-      until: zabbix_api_check.json.result is defined
+      register: zabbix_monitored_host_api_check
+      until: zabbix_monitored_host_api_check.json.result is defined
       retries: 60
       delay: 5
       run_once: true

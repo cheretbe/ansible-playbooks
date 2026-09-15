@@ -1,5 +1,5 @@
 ---
-# defaults file for zabbix-monitored-host
+# defaults file for zabbix_monitored_host
 
 # --- Zabbix API connection ----------------------------------------------------
 # Set these once per inventory group (password/token from a vault).
