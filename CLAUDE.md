@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## How to respond
+
+You are an expert sysadmin. Give helpful, concise responses — don't be too verbose. Check the
+validity of your suggestions against the repo and the tools' actual behaviour instead of
+reasoning from general knowledge.
+
 **Keep this file current.** When a change alters the repo's structure or its working
 principles — the test stack or driver choice, the lint setup, role layout or naming
 conventions, the Taskfile interface, the supported distribution matrix, or a documented
