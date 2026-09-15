@@ -1,5 +1,5 @@
 ---
-# tasks file for zabbix-agent2
+# tasks file for zabbix_agent2
 
 - name: Add Zabbix repository GPG key
   ansible.builtin.get_url:
@@ -48,7 +48,7 @@
     dest: /etc/zabbix/zabbix_agent2.d/00-ansible.conf
     owner: root
     group: root
-    mode: '0644'
+    mode: "0644"
   become: true
   notify: Restart zabbix-agent2 service
 
@@ -58,7 +58,7 @@
     path: /etc/sudoers.d
     owner: root
     group: root
-    mode: 0750
+    mode: "0750"
   become: true
   when: zabbix_agent2_smart_enabled
 
@@ -68,7 +68,7 @@
     dest: /etc/sudoers.d/zabbix-smartctl
     owner: root
     group: root
-    mode: 0440
+    mode: "0440"
     validate: "/usr/sbin/visudo -cf %s"
   become: true
   when: zabbix_agent2_smart_enabled

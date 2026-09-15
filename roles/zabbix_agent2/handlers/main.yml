@@ -1,5 +1,5 @@
 ---
-# handlers file for zabbix-agent2
+# handlers file for zabbix_agent2
 
 - name: Restart zabbix-agent2 service
   ansible.builtin.systemd:

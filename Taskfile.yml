@@ -1,7 +1,7 @@
 ---
 
 # Molecule test runner. Run from inside a role directory:
-#   cd roles/zabbix-agent2 && task test
+#   cd roles/zabbix_agent2 && task test
 # The python venv with molecule is created automatically on first use;
 # 'task venv:rebuild' recreates it from scratch. Shared molecule defaults
 # live in .config/molecule/config.yml (auto-discovered by molecule via the

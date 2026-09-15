@@ -1,5 +1,6 @@
 ---
 
-- hosts: "{{ ansible_limit | default(omit) }}"
+- name: Install and configure Zabbix Agent 2
+  hosts: "{{ ansible_limit | default(omit) }}"
   roles:
-    - zabbix-agent2
+    - zabbix_agent2

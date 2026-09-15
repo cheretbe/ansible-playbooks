@@ -106,7 +106,7 @@ logic belongs in `roles/`. `run_role.yml` runs an arbitrary role via `-e role_na
 - `vars/main.yml` — values *derived* from the inputs, prefixed `_<role_name>_`, not meant to
   be set by the caller.
 - `meta/argument_specs.yml` — present on newer roles (`linux_provision`,
-  `linux_seafile_cli`, `zabbix-agent2`, `zabbix-monitored-host`); add one when touching or
+  `linux_seafile_cli`, `zabbix_agent2`, `zabbix-monitored-host`); add one when touching or
   adding a role.
 - Roles added from 2025 on use **underscores** (`linux_provision`, `linux_seafile_cli`);
   older ones are hyphenated (`docker-ce`). `.ansible-lint` has **no** `skip_list`, so a
@@ -212,7 +212,7 @@ playbook runs.
   scenario for the apt/template-only task files would be a reasonable addition.
 - **Most roles still have no molecule coverage** — only `linux_provision`,
   `linux_seafile_cli`, `docker-ce`, `backuppc-client`, `backuppc-client-rsync`,
-  `zabbix-agent2`, `zabbix-monitored-host` and `zabbix-server` have a `molecule/` directory.
+  `zabbix_agent2`, `zabbix-monitored-host` and `zabbix-server` have a `molecule/` directory.
   Where a role once had one, its old scenario (a `lint:` key, testinfra
   verifier + `tests/*.py`, no `driver: docker`, some importing since-removed helper stubs)
   was deleted rather than migrated. Write a new one against the shared docker config when a

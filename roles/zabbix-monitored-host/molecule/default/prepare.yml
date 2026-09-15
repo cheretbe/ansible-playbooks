@@ -18,7 +18,7 @@
     # needs it) and mirrors how production monitored hosts actually look.
     - name: Install Zabbix agent
       ansible.builtin.include_role:
-        name: zabbix-agent2
+        name: zabbix_agent2
 
     - name: Wait for the Zabbix API to come up
       ansible.builtin.uri:
