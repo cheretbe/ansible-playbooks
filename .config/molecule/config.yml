@@ -12,14 +12,6 @@ platforms:
   # Systemd-capable test images. If these ever go unmaintained, switch to
   # locally built images (pre_build_image: false + a Dockerfile.j2 installing
   # systemd + python3 + sudo on stock distro images).
-  - name: debian-11
-    image: docker.io/geerlingguy/docker-debian11-ansible:latest
-    pre_build_image: true
-    command: /lib/systemd/systemd
-    cgroupns_mode: host
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
-    privileged: true
   - name: debian-12
     image: docker.io/geerlingguy/docker-debian12-ansible:latest
     pre_build_image: true

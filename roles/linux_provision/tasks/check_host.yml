@@ -15,7 +15,6 @@
   when:
     - _linux_provision_dist_check_info.matched
   loop:
-    - {name: "Debian 11 (bullseye)", matched: "{{ ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '11' }}"}
     - {name: "Debian 12 (bookworm)", matched: "{{ ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '12' }}"}
     - {name: "Debian 13 (trixie)", matched: "{{ ansible_facts['distribution'] == 'Debian' and ansible_facts['distribution_major_version'] == '13' }}"}
     - {name: "Ubuntu 22.04 (jammy)", matched: "{{ ansible_facts['distribution'] == 'Ubuntu' and ansible_facts['distribution_version'] == '22.04' }}"}

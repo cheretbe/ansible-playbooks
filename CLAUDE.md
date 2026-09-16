@@ -198,7 +198,7 @@ playbook runs.
 
 - **Docker is the default driver.** `.config/molecule/config.yml` is the shared base config,
   auto-discovered via the VCS root from any role directory; it defines the whole platform
-  matrix (debian 11/12/13, ubuntu 22.04/24.04 on `geerlingguy/docker-*-ansible`), the
+  matrix (debian 12/13, ubuntu 22.04/24.04 on `geerlingguy/docker-*-ansible`), the
   provisioner env and the test sequence. A scenario `molecule.yml` overrides per key — dicts
   merge recursively, **lists (e.g. `platforms`) are replaced wholesale**. Most scenarios
   therefore contain nothing but `driver: name: docker`.
@@ -228,15 +228,6 @@ playbook runs.
   platforms live in one place to make that a single edit.
 - `temp/old/` archives retired roles (`awx-server`, `backuppc-server`, `nagios-client`,
   `terraform-apply`); it is excluded from linting.
-
-### Debian 11 in the test matrix
-
-Debian 11 LTS ended 2026-08-31 and bullseye-security broke shortly after, so
-`roles/linux_provision/molecule/default/prepare.yml` strips the `security.debian.org` line
-from `sources.list` and disables `Acquire::Check-Valid-Until` on Debian 11 instances. Keep
-that in mind before debugging apt failures on bullseye as if they were new — and re-check the
-current upstream state before assuming the workaround is still required, as it has been
-moving.
 
 ## Linting
 

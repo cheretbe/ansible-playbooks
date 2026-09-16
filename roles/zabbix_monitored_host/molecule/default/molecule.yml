@@ -1,23 +1,11 @@
 ---
 
-# Platforms override the shared base config wholesale: five monitored
+# Platforms override the shared base config wholesale: four monitored
 # instances plus a disposable Zabbix stack (db + server + web) that the
 # role's API tasks require. All containers share one docker network and
 # reach each other by container name.
 
 platforms:
-  - name: mon-debian-11
-    image: docker.io/geerlingguy/docker-debian11-ansible:latest
-    pre_build_image: true
-    command: /lib/systemd/systemd
-    cgroupns_mode: host
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
-    privileged: true
-    networks:
-      - name: molecule-zbx-monitored
-    groups:
-      - monitored
   - name: mon-debian-12
     image: docker.io/geerlingguy/docker-debian12-ansible:latest
     pre_build_image: true
