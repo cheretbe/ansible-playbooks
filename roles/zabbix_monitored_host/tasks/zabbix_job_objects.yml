@@ -8,17 +8,21 @@
 
 - name: Manage Zabbix objects for monitored jobs
   delegate_to: "{{ zabbix_monitored_host_api_delegate }}"
+  # The ansible_* connection vars resolve in the DELEGATE's scope, which sees
+  # this role's defaults but NOT this host's inventory (group/host) vars; read
+  # each from hostvars (inventory overrides) and fall back to the bare default
+  # (see main.yml and defaults/main.yml for the same pattern).
   vars:
     ansible_connection: httpapi
     ansible_network_os: community.zabbix.zabbix
-    ansible_host: "{{ zabbix_monitored_host_api_server }}"
-    ansible_httpapi_port: "{{ zabbix_monitored_host_api_port }}"
-    ansible_httpapi_use_ssl: "{{ zabbix_monitored_host_api_use_ssl }}"
-    ansible_httpapi_validate_certs: "{{ zabbix_monitored_host_api_validate_certs }}"
-    ansible_zabbix_url_path: "{{ zabbix_monitored_host_api_url_path }}"
-    ansible_zabbix_auth_key: "{{ zabbix_monitored_host_api_token }}"
-    ansible_user: "{{ zabbix_monitored_host_api_user }}"
-    ansible_httpapi_pass: "{{ zabbix_monitored_host_api_password }}"
+    ansible_host: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_server | default(zabbix_monitored_host_api_server) }}"
+    ansible_httpapi_port: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_port | default(zabbix_monitored_host_api_port) }}"
+    ansible_httpapi_use_ssl: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_use_ssl | default(zabbix_monitored_host_api_use_ssl) }}"
+    ansible_httpapi_validate_certs: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_validate_certs | default(zabbix_monitored_host_api_validate_certs) }}"
+    ansible_zabbix_url_path: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_url_path | default(zabbix_monitored_host_api_url_path) }}"
+    ansible_zabbix_auth_key: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_token | default(zabbix_monitored_host_api_token) }}"
+    ansible_user: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_user | default(zabbix_monitored_host_api_user) }}"
+    ansible_httpapi_pass: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_password | default(zabbix_monitored_host_api_password) }}"
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
   block:
     # Items first: present items must exist before their trigger expressions

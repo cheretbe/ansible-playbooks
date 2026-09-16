@@ -47,18 +47,23 @@
     interfaces: "{{ zabbix_monitored_host_interfaces }}"
     state: present
   delegate_to: "{{ zabbix_monitored_host_api_delegate }}"
+  # A network connection (ansible_network_os) delegated elsewhere resolves its
+  # ansible_* connection vars in the DELEGATE's scope, which sees this role's
+  # defaults but NOT this host's inventory (group/host) vars. Read each value
+  # from hostvars (inventory overrides) and fall back to the bare default, the
+  # same way defaults/main.yml reaches this host's vars for the trapper hosts.
   vars:
     ansible_connection: httpapi
     ansible_network_os: community.zabbix.zabbix
-    ansible_host: "{{ zabbix_monitored_host_api_server }}"
-    ansible_httpapi_port: "{{ zabbix_monitored_host_api_port }}"
-    ansible_httpapi_use_ssl: "{{ zabbix_monitored_host_api_use_ssl }}"
-    ansible_httpapi_validate_certs: "{{ zabbix_monitored_host_api_validate_certs }}"
-    ansible_zabbix_url_path: "{{ zabbix_monitored_host_api_url_path }}"
+    ansible_host: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_server | default(zabbix_monitored_host_api_server) }}"
+    ansible_httpapi_port: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_port | default(zabbix_monitored_host_api_port) }}"
+    ansible_httpapi_use_ssl: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_use_ssl | default(zabbix_monitored_host_api_use_ssl) }}"
+    ansible_httpapi_validate_certs: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_validate_certs | default(zabbix_monitored_host_api_validate_certs) }}"
+    ansible_zabbix_url_path: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_url_path | default(zabbix_monitored_host_api_url_path) }}"
     # Empty key -> the connection plugin logs in with user/password instead.
-    ansible_zabbix_auth_key: "{{ zabbix_monitored_host_api_token }}"
-    ansible_user: "{{ zabbix_monitored_host_api_user }}"
-    ansible_httpapi_pass: "{{ zabbix_monitored_host_api_password }}"
+    ansible_zabbix_auth_key: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_token | default(zabbix_monitored_host_api_token) }}"
+    ansible_user: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_user | default(zabbix_monitored_host_api_user) }}"
+    ansible_httpapi_pass: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_password | default(zabbix_monitored_host_api_password) }}"
     # httpapi modules always execute on the control node, so use the same
     # interpreter as ansible-playbook, where community.zabbix is installed.
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
