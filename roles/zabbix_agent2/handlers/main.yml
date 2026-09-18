@@ -1,6 +1,13 @@
 ---
 # handlers file for zabbix_agent2
 
+# No cache_valid_time: this only fires when the repo task reports changed, so it
+# never refreshes the cache needlessly.
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+
 - name: Restart zabbix-agent2 service
   ansible.builtin.systemd:
     name: zabbix-agent2

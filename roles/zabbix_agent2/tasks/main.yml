@@ -4,26 +4,60 @@
 - name: Add Zabbix repository GPG key
   ansible.builtin.get_url:
     url: "https://repo.zabbix.com/zabbix-official-repo.key"
-    dest: /etc/apt/trusted.gpg.d/zabbix-keyring.asc
+    dest: /etc/apt/keyrings/zabbix.asc
     mode: "0644"
   become: true
 
-# apt_repository refuses to work without a gpg binary on Debian 13+, where
-# apt-key is gone and gnupg is no longer part of the base system
-- name: Install gnupg
+# deb822_repository needs python3-debian on the target or it errors out. gnupg is
+# NOT needed: apt verifies a Signed-By keyring with gpgv (base) / sqv (trixie),
+# never the full gnupg suite - that was only required by the old apt-key flow.
+- name: Install python3-debian
   ansible.builtin.apt:
-    name: ["gnupg"]
+    name: ["python3-debian"]
     update_cache: true
     cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
     lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
   become: true
 
-- name: Add Zabbix APT repository
-  ansible.builtin.apt_repository:
-    repo: "deb [signed-by=/etc/apt/trusted.gpg.d/zabbix-keyring.asc] https://repo.zabbix.com/zabbix/{{ zabbix_agent2_version }}/stable/{{ ansible_facts['distribution'] | lower }} {{ ansible_facts['distribution_release'] }} main"
-    state: present
-    update_cache: true
+# Migration cleanup: drop the globally-trusted key earlier versions of this role
+# placed into /etc/apt/trusted.gpg.d (superseded by the scoped keyring above).
+- name: Remove legacy globally-trusted Zabbix key
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d/zabbix-keyring.asc
+    state: absent
   become: true
+
+- name: Find legacy one-line Zabbix apt sources
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d
+    patterns: "repo_zabbix_com_zabbix_*.list"
+  register: __zabbix_agent2_legacy_lists
+  become: true
+
+- name: Delete legacy one-line Zabbix apt sources
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ __zabbix_agent2_legacy_lists.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  become: true
+
+- name: Add Zabbix APT repository
+  ansible.builtin.deb822_repository:
+    name: zabbix
+    types: [deb]
+    uris: "https://repo.zabbix.com/zabbix/{{ zabbix_agent2_version }}/stable/{{ ansible_facts['distribution'] | lower }}"
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: [main]
+    signed_by: /etc/apt/keyrings/zabbix.asc
+    state: present
+  become: true
+  notify: Update apt cache
+
+# deb822_repository deliberately has no update_cache option
+- name: Index the new repository before installing
+  ansible.builtin.meta: flush_handlers
 
 - name: Install zabbix-agent2 apt package
   ansible.builtin.apt:
