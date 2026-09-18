@@ -13,10 +13,10 @@
     # --- on-host artifacts ----------------------------------------------------
     - name: Stat job unit files
       ansible.builtin.stat:
-        path: "/etc/systemd/system/zbxjob-{{ item.0.key }}.{{ item.1 }}"
+        path: "/etc/systemd/system/{{ item.0.key }}.{{ item.1 }}"
       loop: "{{ zabbix_monitored_host_verify_jobs | product(['service', 'timer']) | list }}"
       loop_control:
-        label: "zbxjob-{{ item.0.key }}.{{ item.1 }}"
+        label: "{{ item.0.key }}.{{ item.1 }}"
       register: zabbix_monitored_host_verify_units
 
     - name: Check that unit files exist
@@ -29,13 +29,13 @@
     - name: Check that timers are enabled and active
       # service_facts can't verify timers: its systemd collector runs
       # `systemctl list-units --type service`, so .timer units never appear
-      ansible.builtin.command: "systemctl is-{{ item.1 }} zbxjob-{{ item.0.key }}.timer"  # noqa: command-instead-of-module
+      ansible.builtin.command: "systemctl is-{{ item.1 }} {{ item.0.key }}.timer"  # noqa: command-instead-of-module
       changed_when: false
       register: zabbix_monitored_host_verify_timers
       failed_when: zabbix_monitored_host_verify_timers.stdout not in ['enabled', 'active']
       loop: "{{ zabbix_monitored_host_verify_jobs | product(['enabled', 'active']) | list }}"
       loop_control:
-        label: "zbxjob-{{ item.0.key }}.timer is-{{ item.1 }}"
+        label: "{{ item.0.key }}.timer is-{{ item.1 }}"
 
     # --- Zabbix host object ----------------------------------------------------
     - name: Get Zabbix host object
@@ -68,14 +68,14 @@
     # --- end to end: run the jobs, expect exit values in Zabbix ----------------
     - name: Run monitored jobs now
       ansible.builtin.systemd:
-        name: "zbxjob-{{ item.key }}.service"
+        name: "{{ item.key }}.service"
         state: started
       become: true
       # the failing job's unit is supposed to end up in a failed state
       failed_when: false
       loop: "{{ zabbix_monitored_host_verify_jobs }}"
       loop_control:
-        label: "zbxjob-{{ item.key }}.service"
+        label: "{{ item.key }}.service"
 
     - name: Log in to the Zabbix API
       ansible.builtin.uri:

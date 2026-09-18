@@ -160,9 +160,6 @@ argument_specs:
       zabbix_monitored_host_default_no_run_severity:
         description: Default severity for "job did not run" triggers.
         type: str
-      zabbix_monitored_host_unit_prefix:
-        description: Prefix for generated systemd unit names.
-        type: str
       zabbix_monitored_host_sender_bin:
         description: Path to zabbix_sender on Linux.
         type: str

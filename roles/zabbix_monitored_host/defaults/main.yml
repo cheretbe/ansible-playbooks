@@ -79,6 +79,5 @@ zabbix_monitored_host_default_failed_severity: high
 zabbix_monitored_host_default_no_run_severity: warning
 
 # --- Linux specifics ----------------------------------------------------------
-zabbix_monitored_host_unit_prefix: "zbxjob-"
 zabbix_monitored_host_sender_bin: /usr/bin/zabbix_sender
 zabbix_monitored_host_install_sender: true
