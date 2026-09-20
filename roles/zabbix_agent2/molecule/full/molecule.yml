@@ -1,0 +1,19 @@
+---
+
+# Driver, platforms and test sequence come from the shared base config
+# (.config/molecule/config.yml at the repo root). This scenario enables every
+# optional feature at once, on every platform, so all conditional branches and
+# their combination are exercised across the whole distro matrix (the 'default'
+# scenario covers the features-off baseline). converge.yml and verify.yml are
+# symlinks to the 'default' scenario - the flags come from group_vars below and
+# verify.yml's asserts are biconditional, so one file validates both states.
+
+driver:
+  name: docker
+
+provisioner:
+  inventory:
+    group_vars:
+      all:
+        zabbix_agent2_docker_enabled: true
+        zabbix_agent2_smart_enabled: true

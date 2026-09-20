@@ -10,3 +10,11 @@
       ansible.builtin.apt:
         update_cache: true
       become: true
+
+    # docker_enabled is on for every host here; the role only needs the 'docker'
+    # group to exist (docker itself is not installed in the test container).
+    - name: Create docker group
+      ansible.builtin.group:
+        name: docker
+        state: present
+      become: true

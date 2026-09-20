@@ -216,6 +216,21 @@ playbook runs.
   `ansible-playbook linux_motd.yml --list-tasks` (it must show `check_host` plus that file
   only). A docker
   scenario for the apt/template-only task files would be a reasonable addition.
+- **Testing a role's optional feature flags: a baseline `default` scenario plus one
+  all-options scenario, not one flag per platform.** `zabbix_agent2` is the reference:
+  `molecule/default` runs the role with its defaults (every optional feature off) across the
+  matrix, and `molecule/full` sets all feature flags on (via `group_vars: all`) so every
+  conditional branch *and* their combination run on every distro. `task test`
+  (`molecule test --all`) picks up both automatically; no Taskfile change. Keep `verify.yml`
+  assertions **biconditional** (`<flag> == (<artifact> present)`) so a single file validates
+  both the off and on states — `full` symlinks `converge.yml`/`verify.yml` back to `default`,
+  and only its `molecule.yml` (the flags) and `prepare.yml` (extra setup the enabled features
+  need, e.g. creating the `docker` group) differ. This replaced the older "enable one feature
+  per platform in `default`'s `host_vars`" trick, which gave no combination coverage and
+  pinned each feature to a single distro. Reach for a *separate-infrastructure* scenario (like
+  `zabbix_monitored_host`, which needs a live Zabbix stack) only when the setup differs, not
+  merely the variables; `shared_state` is for sharing instances across component scenarios, not
+  for isolating one role's variable sets.
 - **Most roles still have no molecule coverage** — only `linux_provision`,
   `linux_seafile_cli`, `docker-ce`, `backuppc-client`, `backuppc-client-rsync`,
   `zabbix_agent2`, `zabbix_monitored_host` and `zabbix-server` have a `molecule/` directory.
