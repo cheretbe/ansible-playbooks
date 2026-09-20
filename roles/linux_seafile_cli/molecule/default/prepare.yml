@@ -17,6 +17,18 @@
         shell: /bin/bash
       become: true
 
+    # Stands in for the account the zabbix-agent2 package creates, so the
+    # sudoers rule can be exercised without installing the agent.
+    - name: Create the zabbix account
+      ansible.builtin.user:
+        name: zabbix
+        comment: Zabbix Monitoring System
+        system: true
+        shell: /usr/sbin/nologin
+        home: /var/lib/zabbix
+        create_home: false
+      become: true
+
     # Two stale versions, so that pruning has something to both keep
     # (keep_versions defaults to 2) and remove.
     - name: Create stale version directories

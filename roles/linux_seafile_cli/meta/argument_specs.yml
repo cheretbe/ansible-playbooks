@@ -7,6 +7,12 @@ argument_specs:
         bundled seaf-daemon with systemd.
       - Leaves the per-user state (config directory, seafile-data, worktree)
         alone apart from creating it once when it does not exist.
+      - Ships a Zabbix agent 2 UserParameter 'seafile.status' returning the
+        output of 'seaf-cli status --json', i.e. {"repos":[{"id","name","state",
+        ...}],"sync_errors":[...]} with state one of synchronized, committing,
+        initializing, downloading, merging, uploading, error, canceled, cancel
+        pending, waiting for sync, auto sync disabled. Server-side items and
+        triggers are not managed here.
     options:
       linux_seafile_cli_version:
         description: Upstream release to install, without the leading 'v'.
@@ -69,3 +75,13 @@ argument_specs:
         description: GitHub token for the update check, raising the API rate limit.
         type: str
         no_log: true
+      linux_seafile_cli_zabbix_enabled:
+        description:
+          - Deploy the 'seafile.status' UserParameter drop-in and the sudoers rule
+            letting the zabbix user run 'seaf-cli status --json' as the service
+            account.
+          - Does not require zabbix-agent2 to be installed; false removes both files.
+        type: bool
+      linux_seafile_cli_zabbix_conf_dir:
+        description: Zabbix agent 2 include directory the drop-in is written to.
+        type: str

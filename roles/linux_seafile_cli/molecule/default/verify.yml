@@ -7,6 +7,11 @@
     linux_seafile_cli_verify_user: seafiletest
     linux_seafile_cli_verify_confdir: /home/seafiletest/.ccnet
     linux_seafile_cli_verify_data_dir: /home/seafiletest/seafile-client/seafile-data
+    # Mirrors the role flag so a scenario that turns the check off via
+    # group_vars is validated by the same biconditional asserts.
+    linux_seafile_cli_verify_zabbix_enabled: "{{ linux_seafile_cli_zabbix_enabled | default(true) }}"
+    linux_seafile_cli_verify_zabbix_conf: /etc/zabbix/zabbix_agent2.d/seafile.conf
+    linux_seafile_cli_verify_zabbix_sudoers: /etc/sudoers.d/zabbix-seafile
   tasks:
     # --- installed layout -------------------------------------------------------
     - name: Get installation path info
@@ -116,6 +121,65 @@
       loop: "{{ linux_seafile_cli_verify_dirs.results }}"
       loop_control:
         label: "{{ item.stat.path }}"
+
+    # --- Zabbix agent 2 check ---------------------------------------------------
+    - name: Get Zabbix check file info
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      become: true
+      loop:
+        - "{{ linux_seafile_cli_verify_zabbix_conf }}"
+        - "{{ linux_seafile_cli_verify_zabbix_sudoers }}"
+      register: linux_seafile_cli_verify_zabbix_files
+
+    - name: Check that the Zabbix check files follow the flag
+      ansible.builtin.assert:
+        that:
+          - linux_seafile_cli_verify_zabbix_enabled | bool == item.stat.exists
+        fail_msg: "{{ item.item }} present={{ item.stat.exists }}, flag={{ linux_seafile_cli_verify_zabbix_enabled }}"
+      loop: "{{ linux_seafile_cli_verify_zabbix_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read the user parameter drop-in
+      ansible.builtin.slurp:
+        src: "{{ linux_seafile_cli_verify_zabbix_conf }}"
+      become: true
+      register: linux_seafile_cli_verify_zabbix_userparam
+      when: linux_seafile_cli_verify_zabbix_enabled | bool
+
+    - name: Check the user parameter command line
+      ansible.builtin.assert:
+        that: >-
+          'UserParameter=seafile.status,sudo -n -H -u ' ~ linux_seafile_cli_verify_user
+          ~ ' /usr/local/bin/seaf-cli status --json --confdir ' ~ linux_seafile_cli_verify_confdir
+          in (linux_seafile_cli_verify_zabbix_userparam.content | b64decode)
+      when: linux_seafile_cli_verify_zabbix_enabled | bool
+
+    - name: Validate the sudoers rule
+      ansible.builtin.command: "visudo -cf {{ linux_seafile_cli_verify_zabbix_sudoers }}"
+      become: true
+      changed_when: false
+      when: linux_seafile_cli_verify_zabbix_enabled | bool
+
+    # Runs the exact command line the agent would, as the zabbix account: proves
+    # the sudoers rule, the wrapper and the JSON output line up end to end.
+    - name: Query the daemon the way the agent would
+      ansible.builtin.command: >-
+        runuser -u zabbix --
+        sudo -n -H -u {{ linux_seafile_cli_verify_user }}
+        /usr/local/bin/seaf-cli status --json --confdir {{ linux_seafile_cli_verify_confdir }}
+      become: true
+      changed_when: false
+      register: linux_seafile_cli_verify_zabbix_status
+      when: linux_seafile_cli_verify_zabbix_enabled | bool
+
+    - name: Check that the agent gets the library list as JSON
+      ansible.builtin.assert:
+        that:
+          - "'repos' in (linux_seafile_cli_verify_zabbix_status.stdout | from_json)"
+        fail_msg: "{{ linux_seafile_cli_verify_zabbix_status.stdout }}"
+      when: linux_seafile_cli_verify_zabbix_enabled | bool
 
     # --- pruning ----------------------------------------------------------------
     - name: Get stale version info

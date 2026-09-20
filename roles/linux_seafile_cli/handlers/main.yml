@@ -16,3 +16,11 @@
     name: "{{ linux_seafile_cli_service_name }}"
     state: restarted
   become: true
+
+# Re-reads the UserParameter drop-ins without a restart. Only meaningful while
+# the agent runs: '-R' connects to the live process and fails otherwise.
+- name: Reload zabbix-agent2 user parameters
+  ansible.builtin.command: /usr/sbin/zabbix_agent2 -R userparameter_reload
+  become: true
+  changed_when: true
+  when: _linux_seafile_cli_agent2_active.rc == 0

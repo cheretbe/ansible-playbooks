@@ -230,6 +230,68 @@
   # systemd module still queries the real unit state.
   when: not ansible_check_mode or _linux_seafile_cli_unit_stat.stat.exists
 
+# --- Zabbix agent 2 check -----------------------------------------------------
+# The reload handler talks to the running agent over its control socket, so it
+# has to be skipped when the agent is stopped or not installed at all (is-active
+# is non-zero for both). An agent started later reads the drop-in by itself.
+- name: Check whether zabbix-agent2 is running
+  ansible.builtin.command: systemctl is-active --quiet zabbix-agent2 # noqa command-instead-of-module
+  become: true
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  register: _linux_seafile_cli_agent2_active
+
+# May pre-date the zabbix-agent2 package; dpkg keeps an existing directory and
+# the packaged config includes every *.conf in it.
+- name: Create the agent include directory
+  ansible.builtin.file:
+    path: "{{ linux_seafile_cli_zabbix_conf_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  when: linux_seafile_cli_zabbix_enabled | bool
+
+- name: Deploy the Zabbix user parameter
+  ansible.builtin.template:
+    src: zabbix_agent2_seafile.conf.j2
+    dest: "{{ _linux_seafile_cli_zabbix_conf }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when: linux_seafile_cli_zabbix_enabled | bool
+  notify: Reload zabbix-agent2 user parameters
+
+- name: Allow the agent to query the client as the service account
+  ansible.builtin.template:
+    src: sudoers_zabbix_seafile.j2
+    dest: "{{ _linux_seafile_cli_zabbix_sudoers }}"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+  become: true
+  when: linux_seafile_cli_zabbix_enabled | bool
+
+# Turning the flag off takes the check away again rather than leaving it behind.
+- name: Remove the Zabbix user parameter
+  ansible.builtin.file:
+    path: "{{ _linux_seafile_cli_zabbix_conf }}"
+    state: absent
+  become: true
+  when: not linux_seafile_cli_zabbix_enabled | bool
+  notify: Reload zabbix-agent2 user parameters
+
+- name: Remove the agent's sudoers rule
+  ansible.builtin.file:
+    path: "{{ _linux_seafile_cli_zabbix_sudoers }}"
+    state: absent
+  become: true
+  when: not linux_seafile_cli_zabbix_enabled | bool
+
 - name: Find installed versions
   ansible.builtin.find:
     paths: "{{ linux_seafile_cli_install_dir }}"

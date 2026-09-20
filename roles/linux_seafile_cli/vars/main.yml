@@ -26,3 +26,10 @@ _linux_seafile_cli_current: "{{ linux_seafile_cli_install_dir }}/seaf-cli"
 
 _linux_seafile_cli_unit_file: >-
   /etc/systemd/system/{{ linux_seafile_cli_service_name }}.service
+
+# The UserParameter and the sudoers rule must carry the identical command line:
+# sudoers matches the full argument list, so one source for both.
+_linux_seafile_cli_zabbix_status_cmd: >-
+  {{ linux_seafile_cli_bin_path }} status --json --confdir {{ _linux_seafile_cli_config_dir }}
+_linux_seafile_cli_zabbix_conf: "{{ linux_seafile_cli_zabbix_conf_dir }}/seafile.conf"
+_linux_seafile_cli_zabbix_sudoers: /etc/sudoers.d/zabbix-seafile

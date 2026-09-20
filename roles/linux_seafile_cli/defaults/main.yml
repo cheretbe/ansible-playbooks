@@ -51,3 +51,13 @@ linux_seafile_cli_conflicting_packages:
 # GitHub and the unauthenticated API allows 60 requests per hour per IP.
 linux_seafile_cli_check_update: false
 linux_seafile_cli_github_token: ""
+
+# --- Zabbix agent 2 check -----------------------------------------------------
+# Ships a 'seafile.status' UserParameter plus the sudoers rule that lets the
+# agent run 'seaf-cli status --json' as the service account (the daemon only
+# answers that account). A UserParameter is inert until a Zabbix item with that
+# key asks for it, so this is on by default and does not require the agent to
+# be installed: the drop-in is picked up whenever the agent starts.
+linux_seafile_cli_zabbix_enabled: true
+# The zabbix-agent2 package's own Include= directory.
+linux_seafile_cli_zabbix_conf_dir: /etc/zabbix/zabbix_agent2.d
