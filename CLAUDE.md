@@ -288,6 +288,21 @@ eleven roles it pulled in at runtime; absorbing them into `roles/linux_provision
 files fixed it, and `task lint -- roles/linux_provision` now covers the whole chain. Keep it
 that way — a role that includes another role is a role that cannot be linted.
 
+**ansible-lint does not flag runtime module/plugin deprecations** — the kind a collection
+declares in its own `meta/runtime.yml` (`deprecation:`/`redirect:`, e.g.
+`community.general.proxmox_kvm` → `community.proxmox.proxmox_kvm`). Its `deprecated-module`
+rule only knows a bundled hardcoded list, so a role can pass `task lint` clean and still be
+using a module slated for removal. These warnings are emitted by ansible-core's plugin loader
+at *module-load time* — run `ansible-playbook <playbook> --syntax-check` after edits (or
+`ansible-playbook run_role.yml -e role_name=<role> --syntax-check` for a role with no
+dedicated playbook) and read stderr for `DEPRECATION WARNING`. ansible still exits 0, so
+nothing fails and the line is easy to miss — look for it deliberately. Only *static* includes
+are expanded by syntax-check (`roles:`, `import_role`, `import_tasks`); dynamic
+`include_role`/`include_tasks` bodies are not traversed, but the repo's preference for
+`import_tasks` and its no-role-calls-role rule keep most module usage reachable. Fix by
+switching the FQCN to the `redirect:` target named in the emitting collection's
+`meta/runtime.yml`; arguments are unchanged across such a split.
+
 Playbooks are not linted by any role path, so pass them explicitly when you touch one:
 
 ```shell

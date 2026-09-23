@@ -1,9 +1,10 @@
 ---
 
-- hosts: "{{ ansible_limit | default(omit) }}"
+- name: Create Proxmox VM(s)
+  hosts: "{{ ansible_limit | default(omit) }}"
   # Facts gathering will fail since the VM doesn't exist so far
   gather_facts: false
   tasks:
-    - name: Import proxmox-vm role
-      import_role:
-        name: proxmox-vm
+    - name: Import proxmox_vm role
+      ansible.builtin.import_role:
+        name: proxmox_vm

@@ -8,8 +8,8 @@
       - proxmox_vm_api_token_id is defined
       - proxmox_vm_api_token_secret is defined
       - proxmox_vm_api_host is defined
-      - proxmox_vm_config.storage
-      - proxmox_vm_config.cloud_image_url
+      - proxmox_vm_config.storage | length > 0
+      - proxmox_vm_config.cloud_image_url | length > 0
     quiet: true
 
 - name: Get cloud image size
@@ -25,22 +25,22 @@
     "
   changed_when: false
   delegate_to: localhost
-  register: __pvm_cloud_image_size
+  register: __proxmox_vm_cloud_image_size
 
-# 'community.general.proxmox_storage_info' doesn't return needed 'avail' field
+# 'community.proxmox.proxmox_storage_info' doesn't return needed 'avail' field
 - name: Get download storage status
   ansible.builtin.uri:
     url: "https://{{ proxmox_vm_api_host }}:8006/api2/json/nodes/{{ proxmox_vm_node }}/storage/{{ proxmox_vm_image_download_location }}/status"
     headers:
       Authorization: "PVEAPIToken={{ proxmox_vm_api_user }}!{{ proxmox_vm_api_token_id }}={{ proxmox_vm_api_token_secret }}"
   delegate_to: localhost
-  register: __pvm_download_storage_status
+  register: __proxmox_vm_download_storage_status
 
 - name: Check that download storage can hold VM disk image
   ansible.builtin.assert:
     that:
-      - "'images' in (__pvm_download_storage_status.json.data.content | split(','))"
-      - __pvm_download_storage_status.json.data.avail > (__pvm_cloud_image_size.stdout_lines[0] | int)
+      - "'images' in (__proxmox_vm_download_storage_status.json.data.content | split(','))"
+      - __proxmox_vm_download_storage_status.json.data.avail > (__proxmox_vm_cloud_image_size.stdout_lines[0] | int)
 
 - name: Get download storage info
   ansible.builtin.uri:
@@ -48,23 +48,23 @@
     headers:
       Authorization: "PVEAPIToken={{ proxmox_vm_api_user }}!{{ proxmox_vm_api_token_id }}={{ proxmox_vm_api_token_secret }}"
   delegate_to: localhost
-  register: __pvm_download_storage_info
+  register: __proxmox_vm_download_storage_info
 
 # https://github.com/cheretbe/notes/blob/master/linux/proxmox.md#vm-creation-gotchas
 #   option 3 - using non-existing VM ID (9999)
 - name: Set cloud image directory fact
   ansible.builtin.set_fact:
-    _pvm_cloud_image_dir: "{{ __pvm_download_storage_info.json.data.path }}/images/9999"
+    _proxmox_vm_cloud_image_dir: "{{ __proxmox_vm_download_storage_info.json.data.path }}/images/9999"
 
 - name: Set cloud image filename fact
   ansible.builtin.set_fact:
     # Force qcow2 extension otherwise the file will not show up in the UI
-    _pvm_cloud_image_filename: "{{ (proxmox_vm_config.cloud_image_url | basename | splitext)[0] }}.qcow2"
+    _proxmox_vm_cloud_image_filename: "{{ (proxmox_vm_config.cloud_image_url | basename | splitext)[0] }}.qcow2"
 
 - name: Make sure download directory exists
   ansible.builtin.file:
     state: directory
-    path: "{{ _pvm_cloud_image_dir }}"
+    path: "{{ _proxmox_vm_cloud_image_dir }}"
     owner: root
     group: root
     mode: "0740"
@@ -74,13 +74,13 @@
 - name: Download cloud image
   ansible.builtin.get_url:
     url: "{{ proxmox_vm_config.cloud_image_url }}"
-    dest: "{{ _pvm_cloud_image_dir }}/{{ _pvm_cloud_image_filename }}"
+    dest: "{{ _proxmox_vm_cloud_image_dir }}/{{ _proxmox_vm_cloud_image_filename }}"
     mode: "0644"
   become: true
   delegate_to: "{{ proxmox_vm_api_host }}"
 
 - name: Create Proxmox VM
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     node: "{{ proxmox_vm_node }}"
     name: "{{ proxmox_vm_config.name | default(inventory_hostname) }}"
     api_user: "{{ proxmox_vm_api_user }}"
@@ -103,7 +103,7 @@
       serial0: socket
     scsihw: virtio-scsi-single
     virtio:
-      virtio0: "ssd-1:0,import-from={{ proxmox_vm_image_download_location }}:9999/{{ _pvm_cloud_image_filename }}"
+      virtio0: "ssd-1:0,import-from={{ proxmox_vm_image_download_location }}:9999/{{ _proxmox_vm_cloud_image_filename }}"
       # This fails with "Only root can pass arbitrary filesystem paths" error:
       #   virtio0: "ssd-1:0,import-from=/var/lib/vz/template/iso/debian-12-generic-amd64.img"
     net:
@@ -130,46 +130,46 @@
     onboot: "{{ proxmox_vm_config.onboot | default(true) }}"
     ostype: "{{ proxmox_vm_config.ostype | default('l26') }}" # l26: Linux 2.6/3.X Kernel
   delegate_to: localhost
-  register: __pvm_vm_data
+  register: __proxmox_vm_vm_data
 
 - name: Resize system disk
-  community.general.proxmox_disk:
+  community.proxmox.proxmox_disk:
     api_user: "{{ proxmox_vm_api_user }}"
     api_token_id: "{{ proxmox_vm_api_token_id }}"
     api_token_secret: "{{ proxmox_vm_api_token_secret }}"
     api_host: "{{ proxmox_vm_api_host }}"
-    vmid: "{{ __pvm_vm_data.vmid }}"
+    vmid: "{{ __proxmox_vm_vm_data.vmid }}"
     disk: virtio0
     size: "{{ proxmox_vm_config.system_disk_size | default('10G') }}"
     state: resized
   delegate_to: localhost
 
 - name: Create additional disk(s)
-  community.general.proxmox_disk:
+  community.proxmox.proxmox_disk:
     api_user: "{{ proxmox_vm_api_user }}"
     api_token_id: "{{ proxmox_vm_api_token_id }}"
     api_token_secret: "{{ proxmox_vm_api_token_secret }}"
     api_host: "{{ proxmox_vm_api_host }}"
-    vmid: "{{ __pvm_vm_data.vmid }}"
+    vmid: "{{ __proxmox_vm_vm_data.vmid }}"
     disk: "virtio{{ ansible_loop.index }}"
-    format: "{{ _pvm_extra_disk.format }}"
-    storage: "{{ _pvm_extra_disk.storage }}"
-    size: "{{ _pvm_extra_disk.size }}"
+    format: "{{ _proxmox_vm_extra_disk.format }}"
+    storage: "{{ _proxmox_vm_extra_disk.storage }}"
+    size: "{{ _proxmox_vm_extra_disk.size }}"
     state: present
   loop: "{{ proxmox_vm_config.extra_disks | default([]) }}"
   loop_control:
     extended: true
-    loop_var: _pvm_extra_disk
+    loop_var: _proxmox_vm_extra_disk
   delegate_to: localhost
 
 - name: Start created VM
-  community.general.proxmox_kvm:
+  community.proxmox.proxmox_kvm:
     node: "{{ proxmox_vm_node }}"
     api_user: "{{ proxmox_vm_api_user }}"
     api_token_id: "{{ proxmox_vm_api_token_id }}"
     api_token_secret: "{{ proxmox_vm_api_token_secret }}"
     api_host: "{{ proxmox_vm_api_host }}"
-    vmid: "{{ __pvm_vm_data.vmid }}"
+    vmid: "{{ __proxmox_vm_vm_data.vmid }}"
     state: started
   delegate_to: localhost
 
@@ -189,7 +189,7 @@
   ansible.builtin.known_hosts:
     name: "{{ inventory_hostname }}"
     state: absent
-  when: __pvm_vm_data.changed # noqa: no-handler
+  when: __proxmox_vm_vm_data.changed # noqa: no-handler
   delegate_to: localhost
 
 - name: Wait for Ansible connection to become available

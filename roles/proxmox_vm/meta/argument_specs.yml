@@ -1,0 +1,138 @@
+---
+argument_specs:
+  main:
+    short_description: Create a Proxmox KVM VM from a cloud image
+    options:
+      proxmox_vm_node:
+        description: Proxmox node the VM is created on
+        required: true
+        type: str
+      proxmox_vm_api_host:
+        description: Proxmox host the API is reached on (port 8006)
+        required: true
+        type: str
+      proxmox_vm_api_user:
+        description: API user (e.g. root@pam)
+        required: true
+        type: str
+      proxmox_vm_api_token_id:
+        description: API token ID
+        required: true
+        type: str
+      proxmox_vm_api_token_secret:
+        description: API token secret
+        required: true
+        type: str
+      proxmox_vm_image_download_location:
+        description: Storage the cloud image is downloaded to
+        required: false
+        type: str
+        default: local
+      proxmox_vm_config:
+        description: VM configuration
+        required: true
+        type: dict
+        options:
+          storage:
+            description: Storage for the VM system disk
+            required: true
+            type: str
+          cloud_image_url:
+            description: URL of the cloud image to import
+            required: true
+            type: str
+          name:
+            description: VM name (defaults to inventory_hostname)
+            required: false
+            type: str
+          cpu:
+            description: CPU type
+            required: false
+            type: str
+            default: host
+          cores:
+            description: Number of cores per socket
+            required: false
+            type: int
+            default: 1
+          sockets:
+            description: Number of CPU sockets
+            required: false
+            type: int
+            default: 1
+          memory:
+            description: Memory size in MB
+            required: false
+            type: int
+            default: 1024
+          ciuser:
+            description: cloud-init default user
+            required: false
+            type: str
+          cipassword:
+            description: cloud-init password for the default user
+            required: false
+            type: str
+          sshkeys:
+            description: Public SSH keys for the default user
+            required: false
+            type: str
+          searchdomains:
+            description: cloud-init DNS search domains
+            required: false
+            type: str
+          nameservers:
+            description: cloud-init DNS nameservers
+            required: false
+            type: str
+          dhcp:
+            description: Use DHCP for net0 (static config from DNS lookup otherwise)
+            required: false
+            type: bool
+            default: true
+          net_bridge:
+            description: Bridge net0 is attached to
+            required: false
+            type: str
+          net_cidr:
+            description: Network prefix length for the static IP
+            required: false
+            type: str
+            default: "24"
+          net_gw:
+            description: Default gateway for the static IP (required when dhcp is false)
+            required: false
+            type: str
+          onboot:
+            description: Start the VM on host boot
+            required: false
+            type: bool
+            default: true
+          ostype:
+            description: Guest OS type (l26 = Linux 2.6/3.x kernel)
+            required: false
+            type: str
+            default: l26
+          system_disk_size:
+            description: Size the system disk is resized to
+            required: false
+            type: str
+            default: 10G
+          extra_disks:
+            description: Additional disks to create
+            required: false
+            type: list
+            elements: dict
+            options:
+              format:
+                description: Disk format
+                required: true
+                type: str
+              storage:
+                description: Storage for the disk
+                required: true
+                type: str
+              size:
+                description: Disk size
+                required: true
+                type: str
