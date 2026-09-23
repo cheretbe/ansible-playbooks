@@ -13,16 +13,11 @@
     quiet: true
 
 - name: Get cloud image size
-  # Using get() with stream=True instead of requests.head('url').headers['Content-length'] just in case
-  # https://stackoverflow.com/questions/14270698/get-file-size-using-python-requests-while-only-getting-the-header/44299915#44299915
-  ansible.builtin.command: |
-    python3 -c
-    "
-    import requests
-    with requests.get('{{ proxmox_vm_config.cloud_image_url }}', stream=True) as get_res:
-        get_res.raise_for_status()
-        print(get_res.headers['Content-length'])
-    "
+  # HEAD fetches only headers; content_length is used below to check the download
+  # storage has room before pulling the (multi-hundred-MB) image
+  ansible.builtin.uri:
+    url: "{{ proxmox_vm_config.cloud_image_url }}"
+    method: HEAD
   changed_when: false
   delegate_to: localhost
   register: __proxmox_vm_cloud_image_size
@@ -40,7 +35,7 @@
   ansible.builtin.assert:
     that:
       - "'images' in (__proxmox_vm_download_storage_status.json.data.content | split(','))"
-      - __proxmox_vm_download_storage_status.json.data.avail > (__proxmox_vm_cloud_image_size.stdout_lines[0] | int)
+      - __proxmox_vm_download_storage_status.json.data.avail > (__proxmox_vm_cloud_image_size.content_length | int)
 
 - name: Get download storage info
   ansible.builtin.uri:

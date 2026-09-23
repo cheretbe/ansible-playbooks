@@ -1,16 +1,4 @@
-ansible
 ansible-lint
-apacheconfig
-colorama
-dnspython
-humanfriendly
-invoke
-jinja2
-jmespath
 molecule
 molecule-plugins[docker,vagrant]
-proxmoxer
-pylint
 pytest
-pytest-testinfra
-pywinrm
