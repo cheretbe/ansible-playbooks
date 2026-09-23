@@ -1,0 +1,9 @@
+---
+
+- name: Set up additional filesystems
+  hosts: "{{ ansible_limit | default(omit) }}"
+
+  tasks:
+    - name: Import linux_additional_filesystems role
+      ansible.builtin.import_role:
+        name: linux_additional_filesystems

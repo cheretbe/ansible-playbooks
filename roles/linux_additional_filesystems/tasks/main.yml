@@ -1,0 +1,72 @@
+---
+# tasks file for linux_additional_filesystems
+#
+# Each disk gets one GPT partition spanning it, a filesystem on that partition
+# and an fstab mount by UUID. Mounting by UUID rather than by device path keeps
+# the mount stable when the kernel renames the disk across reboots.
+
+- name: Check that the platform is supported
+  ansible.builtin.assert:
+    that: ansible_facts['os_family'] == "Debian"
+    fail_msg: The role installs parted with apt and targets Debian/Ubuntu only.
+
+# The kernel inserts a 'p' before partition number when the disk name ends in a
+# digit. Partition 1 of /dev/vdb is /dev/vdb1, but for /dev/nvme0n1 (or /dev/loop0)
+# it becomes /dev/nvme0n1p1 (/dev/loop0p1).
+# Resolve it once here so the tasks below can just use item.part.
+- name: Resolve the partition device for each disk
+  ansible.builtin.set_fact:
+    _linux_additional_filesystems_disks: >-
+      {{ _linux_additional_filesystems_disks | default([]) + [item | combine({
+           'part': item.dev ~ ('p1' if item.dev is match('.*[0-9]$') else '1'),
+         })] }}
+  loop: "{{ linux_additional_filesystems_devices }}"
+  loop_control:
+    label: "{{ item.dev }}"
+
+- name: Install parted
+  ansible.builtin.apt:
+    name: parted
+    update_cache: true
+    cache_valid_time: "{{ '1d' | community.general.to_seconds | int }}"
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+  when: linux_additional_filesystems_devices | length > 0
+
+- name: Create the first partition
+  community.general.parted:
+    label: gpt
+    device: "{{ item.dev }}"
+    number: 1
+    state: present
+    fs_type: "{{ item.fstype }}"
+  become: true
+  loop: "{{ _linux_additional_filesystems_disks | default([]) }}"
+  loop_control:
+    label: "{{ item.dev }}"
+
+- name: Create the filesystem
+  community.general.filesystem:
+    fstype: "{{ item.fstype }}"
+    dev: "{{ item.part }}"
+  become: true
+  loop: "{{ _linux_additional_filesystems_disks | default([]) }}"
+  loop_control:
+    label: "{{ item.part }}"
+
+# Re-gather so the new partitions' UUIDs are available under ansible_facts.devices.
+- name: Refresh device facts for filesystem UUIDs
+  ansible.builtin.setup:
+    gather_subset: hardware
+  when: linux_additional_filesystems_devices | length > 0
+
+- name: Mount the filesystem by UUID
+  ansible.posix.mount:
+    path: "{{ item.mount_point }}"
+    src: "UUID={{ ansible_facts.devices[item.dev | basename].partitions[item.part | basename].uuid }}"
+    fstype: "{{ item.fstype }}"
+    state: mounted
+  become: true
+  loop: "{{ _linux_additional_filesystems_disks | default([]) }}"
+  loop_control:
+    label: "{{ item.mount_point }}"

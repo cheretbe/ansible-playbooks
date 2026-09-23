@@ -1,0 +1,49 @@
+---
+
+# A real spare block device is needed to exercise partition/mkfs/mount, which a
+# container cannot provide, so this role uses the vagrant driver (like
+# linux_provision). Each VM gets a second disk that shows up as /dev/sdb; the
+# role partitions, formats and mounts it.
+#
+# memory/cpus are set explicitly: the molecule vagrant driver defaults every
+# instance to 512MB/2vCPU, which wedges Ubuntu mid-boot. 1 vCPU each avoids
+# oversubscribing the host (these VMs are IO-bound on apt).
+
+driver:
+  name: vagrant
+platforms:
+  # Vagrant-managed second disk (instance_raw_config_args): attaches as /dev/sdb
+  # on the VirtualBox SATA controller, created on 'up' and removed on 'destroy'.
+  - name: debian-12.local.test
+    box: debian/bookworm64
+    memory: 1024
+    cpus: 1
+    config_options:
+      vm.boot_timeout: 900
+    instance_raw_config_args:
+      - "vm.disk :disk, name: \"extra\", size: \"50MB\""
+  # Debian publishes trixie boxes for libvirt only, so debian 13 uses a bento box
+  - name: debian-13.local.test
+    box: bento/debian-13
+    memory: 1024
+    cpus: 1
+    config_options:
+      vm.boot_timeout: 900
+    instance_raw_config_args:
+      - "vm.disk :disk, name: \"extra\", size: \"50MB\""
+  - name: ubuntu-22.04.local.test
+    box: ubuntu/jammy64
+    memory: 2048
+    cpus: 1
+    config_options:
+      vm.boot_timeout: 900
+    instance_raw_config_args:
+      - "vm.disk :disk, name: \"extra\", size: \"50MB\""
+  - name: ubuntu-24.04.local.test
+    box: bento/ubuntu-24.04
+    memory: 2048
+    cpus: 1
+    config_options:
+      vm.boot_timeout: 900
+    instance_raw_config_args:
+      - "vm.disk :disk, name: \"extra\", size: \"50MB\""

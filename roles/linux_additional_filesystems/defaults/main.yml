@@ -1,0 +1,12 @@
+---
+# defaults file for linux_additional_filesystems
+
+# Whole disks to partition, format and mount. Empty by default, so the role is a
+# no-op until the inventory sets it. Each item:
+#   dev:         whole-disk device, e.g. /dev/vdb (NOT a partition like /dev/vdb1)
+#   fstype:      filesystem to create, e.g. ext4
+#   mount_point: absolute path partition 1 is mounted at
+# The role always creates a single GPT partition (#1) spanning the disk and
+# mounts it by UUID, so a device name that changes across reboots does not break
+# the fstab entry.
+linux_additional_filesystems_devices: []

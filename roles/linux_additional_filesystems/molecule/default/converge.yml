@@ -1,0 +1,27 @@
+---
+
+- name: Converge
+  hosts: all
+  gather_facts: true
+  tasks:
+    # The loop device number is assigned at attach time, so read it off the
+    # target rather than hard-coding it.
+    - name: Read the prepared loop device
+      ansible.builtin.slurp:
+        src: /root/loopdev
+      become: true
+      register: linux_additional_filesystems_converge_loopdev
+
+    - name: Set up the additional filesystems
+      ansible.builtin.include_role:
+        name: linux_additional_filesystems
+      vars:
+        linux_additional_filesystems_devices:
+          # /dev/sdb -> sdb1 (name ends in a letter)
+          - dev: /dev/sdb
+            fstype: ext4
+            mount_point: /mnt/data
+          # /dev/loopN -> loopNp1 (name ends in a digit)
+          - dev: "{{ linux_additional_filesystems_converge_loopdev.content | b64decode | trim }}"
+            fstype: ext4
+            mount_point: /mnt/loopdata

@@ -1,0 +1,40 @@
+---
+
+- name: Verify
+  hosts: all
+  vars:
+    linux_additional_filesystems_verify_mounts:
+      - {mount: /mnt/data, fstype: ext4}
+      - {mount: /mnt/loopdata, fstype: ext4}
+  tasks:
+    - name: Read fstab
+      ansible.builtin.slurp:
+        src: /etc/fstab
+      become: true
+      register: linux_additional_filesystems_verify_fstab
+
+    - name: Check that each filesystem is mounted with the requested type
+      ansible.builtin.assert:
+        that: >-
+          ansible_facts.mounts
+          | selectattr('mount', 'equalto', item.mount)
+          | selectattr('fstype', 'equalto', item.fstype)
+          | list | length == 1
+        fail_msg: "{{ item.mount }} is not mounted as {{ item.fstype }}"
+      loop: "{{ linux_additional_filesystems_verify_mounts }}"
+      loop_control:
+        label: "{{ item.mount }}"
+
+    # The role must persist the mount by UUID, not by device path, so the entry
+    # survives the disk being renamed across reboots.
+    - name: Check that each mount is persisted by UUID
+      ansible.builtin.assert:
+        that: >-
+          (linux_additional_filesystems_verify_fstab.content | b64decode).split('\n')
+          | select('search', '\\s' ~ item.mount ~ '\\s')
+          | select('match', '^UUID=')
+          | list | length == 1
+        fail_msg: "No 'UUID=... {{ item.mount }}' line in /etc/fstab"
+      loop: "{{ linux_additional_filesystems_verify_mounts }}"
+      loop_control:
+        label: "{{ item.mount }}"

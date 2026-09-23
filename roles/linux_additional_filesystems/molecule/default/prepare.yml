@@ -1,0 +1,27 @@
+---
+
+- name: Prepare
+  hosts: all
+  become: true
+  tasks:
+    # A loopback device gives the suite a disk whose name ends in a digit
+    # (/dev/loop0), so the '<disk>p1' partition-naming branch is exercised
+    # alongside /dev/sdb's plain '<disk>1'.
+    - name: Create the backing file
+      ansible.builtin.command:
+        cmd: truncate --size 50M /root/loopfs.img
+        creates: /root/loopfs.img
+
+    # --partscan makes the kernel expose /dev/loopNp1 once the role partitions it.
+    - name: Attach the backing file as a loop device
+      ansible.builtin.command:
+        cmd: losetup --find --show --partscan /root/loopfs.img
+      register: linux_additional_filesystems_prepare_loopdev
+      changed_when: true
+
+    # converge.yml reads this back off the target (the loop number is dynamic).
+    - name: Record the loop device path
+      ansible.builtin.copy:
+        content: "{{ linux_additional_filesystems_prepare_loopdev.stdout | trim }}"
+        dest: /root/loopdev
+        mode: "0644"

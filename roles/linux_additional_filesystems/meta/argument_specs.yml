@@ -1,0 +1,30 @@
+---
+argument_specs:
+  main:
+    short_description: Partition, format and mount additional disks
+    description:
+      - Given a list of whole disks, creates a single GPT partition spanning each
+        disk, makes the requested filesystem on it and mounts it by UUID.
+      - A no-op when the list is empty. Idempotent - existing partitions and
+        filesystems are left as they are.
+    options:
+      linux_additional_filesystems_devices:
+        description:
+          - Whole disks to set up. The role never touches an existing partition
+            table or filesystem, so it will not reformat a disk that already
+            carries data.
+        type: list
+        elements: dict
+        options:
+          dev:
+            description: Whole-disk device, e.g. /dev/vdb (not a partition).
+            type: str
+            required: true
+          fstype:
+            description: Filesystem to create on partition 1, e.g. ext4.
+            type: str
+            required: true
+          mount_point:
+            description: Absolute path partition 1 is mounted at.
+            type: str
+            required: true
