@@ -1,3 +1,10 @@
 ---
 
 proxmox_vm_image_download_location: local
+
+# CA bundle used to verify the Proxmox API cert. The proxmox_* modules reach the
+# API through proxmoxer -> requests, which verifies against certifi's own bundle
+# (inside .venv/) and ignores the system trust store - so a self-signed cert added
+# with update-ca-certificates is trusted by ansible.builtin.uri but not by these
+# modules. Point them at the merged system bundle, which does contain it.
+proxmox_vm_ca_path: /etc/ssl/certs/ca-certificates.crt

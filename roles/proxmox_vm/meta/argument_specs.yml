@@ -28,6 +28,14 @@ argument_specs:
         required: false
         type: str
         default: local
+      proxmox_vm_ca_path:
+        description: >-
+          CA bundle used by the proxmox_* modules to verify the API cert. Defaults
+          to the system bundle because proxmoxer/requests ignores the system trust
+          store and verifies against certifi's own bundle otherwise.
+        required: false
+        type: str
+        default: /etc/ssl/certs/ca-certificates.crt
       proxmox_vm_config:
         description: VM configuration
         required: true

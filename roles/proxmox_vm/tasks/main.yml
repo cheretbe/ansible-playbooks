@@ -82,6 +82,7 @@
     api_token_id: "{{ proxmox_vm_api_token_id }}"
     api_token_secret: "{{ proxmox_vm_api_token_secret }}"
     api_host: "{{ proxmox_vm_api_host }}"
+    ca_path: "{{ proxmox_vm_ca_path }}"
     storage: "{{ proxmox_vm_config.storage }}"
     timeout: 90
     cpu: "{{ proxmox_vm_config.cpu | default('host') }}"
@@ -133,6 +134,7 @@
     api_token_id: "{{ proxmox_vm_api_token_id }}"
     api_token_secret: "{{ proxmox_vm_api_token_secret }}"
     api_host: "{{ proxmox_vm_api_host }}"
+    ca_path: "{{ proxmox_vm_ca_path }}"
     vmid: "{{ __proxmox_vm_vm_data.vmid }}"
     disk: virtio0
     size: "{{ proxmox_vm_config.system_disk_size | default('10G') }}"
@@ -145,6 +147,7 @@
     api_token_id: "{{ proxmox_vm_api_token_id }}"
     api_token_secret: "{{ proxmox_vm_api_token_secret }}"
     api_host: "{{ proxmox_vm_api_host }}"
+    ca_path: "{{ proxmox_vm_ca_path }}"
     vmid: "{{ __proxmox_vm_vm_data.vmid }}"
     disk: "virtio{{ ansible_loop.index }}"
     format: "{{ _proxmox_vm_extra_disk.format }}"
@@ -164,6 +167,7 @@
     api_token_id: "{{ proxmox_vm_api_token_id }}"
     api_token_secret: "{{ proxmox_vm_api_token_secret }}"
     api_host: "{{ proxmox_vm_api_host }}"
+    ca_path: "{{ proxmox_vm_ca_path }}"
     vmid: "{{ __proxmox_vm_vm_data.vmid }}"
     state: started
   delegate_to: localhost
