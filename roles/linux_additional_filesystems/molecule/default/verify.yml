@@ -5,6 +5,7 @@
   vars:
     linux_additional_filesystems_verify_mounts:
       - {mount: /mnt/data, fstype: ext4}
+      - {mount: /mnt/other, fstype: ext4}
       - {mount: /mnt/loopdata, fstype: ext4}
   tasks:
     - name: Read fstab

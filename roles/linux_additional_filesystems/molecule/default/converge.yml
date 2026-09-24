@@ -4,24 +4,19 @@
   hosts: all
   gather_facts: true
   tasks:
-    # The loop device number is assigned at attach time, so read it off the
-    # target rather than hard-coding it.
-    - name: Read the prepared loop device
-      ansible.builtin.slurp:
-        src: /root/loopdev
-      become: true
-      register: linux_additional_filesystems_converge_loopdev
-
     - name: Set up the additional filesystems
       ansible.builtin.include_role:
         name: linux_additional_filesystems
       vars:
         linux_additional_filesystems_devices:
-          # /dev/sdb -> sdb1 (name ends in a letter)
-          - dev: /dev/sdb
+          # Numeric GB -> matched against ansible_facts.devices size "1.00 GB" / "2.00 GB"
+          - disk_size: 1
             fstype: ext4
             mount_point: /mnt/data
-          # /dev/loopN -> loopNp1 (name ends in a digit)
-          - dev: "{{ linux_additional_filesystems_converge_loopdev.content | b64decode | trim }}"
+          - disk_size: 2
+            fstype: ext4
+            mount_point: /mnt/other
+          # Explicit MB string -> the loop device (/dev/loopN -> loopNp1 branch)
+          - disk_size: "50.00 MB"
             fstype: ext4
             mount_point: /mnt/loopdata

@@ -4,24 +4,25 @@
   hosts: all
   become: true
   tasks:
-    # A loopback device gives the suite a disk whose name ends in a digit
-    # (/dev/loop0), so the '<disk>p1' partition-naming branch is exercised
-    # alongside /dev/sdb's plain '<disk>1'.
-    - name: Create the backing file
+    # The two vagrant SATA disks (sdb, sdc) end in a letter, exercising the '<disk>1'
+    # partition-naming branch. A loopback device gives a disk whose name ends in a
+    # digit (/dev/loopN), exercising the '<disk>p1' branch too. Its 50M size also
+    # lets converge match it by an explicit "50.00 MB" string (the non-GB path),
+    # distinct from the 1G/2G SATA disks matched by numeric GB.
+    - name: Create the loopback backing file
       ansible.builtin.command:
         cmd: truncate --size 50M /root/loopfs.img
         creates: /root/loopfs.img
 
+    - name: Check whether the backing file is already attached
+      ansible.builtin.command:
+        cmd: losetup --associated /root/loopfs.img --noheadings --output NAME
+      register: linux_additional_filesystems_prepare_existing_loop
+      changed_when: false
+
     # --partscan makes the kernel expose /dev/loopNp1 once the role partitions it.
     - name: Attach the backing file as a loop device
       ansible.builtin.command:
-        cmd: losetup --find --show --partscan /root/loopfs.img
-      register: linux_additional_filesystems_prepare_loopdev
+        cmd: losetup --find --partscan /root/loopfs.img
       changed_when: true
-
-    # converge.yml reads this back off the target (the loop number is dynamic).
-    - name: Record the loop device path
-      ansible.builtin.copy:
-        content: "{{ linux_additional_filesystems_prepare_loopdev.stdout | trim }}"
-        dest: /root/loopdev
-        mode: "0644"
+      when: linux_additional_filesystems_prepare_existing_loop.stdout | trim | length == 0

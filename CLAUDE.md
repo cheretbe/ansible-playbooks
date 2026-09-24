@@ -202,9 +202,14 @@ matches, so it carries no RedHat/CentOS branches — they were unreachable and h
 deleted. Don't re-add `yum`/`dnf` paths, `os_family == "RedHat"` guards or
 `when: os_family == "Debian"` no-ops to it.
 
-**Custom code:** `library/` (modules) and `action_plugins/` (`display_warning`) are picked up
-implicitly by their directory names. `tools/` holds standalone operator scripts, unrelated to
-playbook runs.
+**Custom code:** repo-root `library/` (modules) and `action_plugins/` (`display_warning`) are
+picked up implicitly by their directory names. A role can also carry its own `library/` and
+`action_plugins/` (Ansible adds a role's adjacent plugin dirs to the loader when the role runs),
+which keeps a role that needs a custom module self-contained — `roles/linux_additional_filesystems`
+does this with `find_filesystem_devices` (a module + its action plugin that injects
+`ansible_facts.devices`/`.mounts`; it reads from `ansible_facts` first because
+`ANSIBLE_INJECT_FACT_VARS: "false"` hides the top-level `ansible_*` vars). `tools/` holds
+standalone operator scripts, unrelated to playbook runs.
 
 ## Testing (molecule)
 
@@ -222,6 +227,14 @@ playbook runs.
   `tests/test_utils.py` are dead leftovers awaiting deletion — don't extend them or copy their
   patterns. `tests/helper_tasks/{add_test_user,set_local_package_cache}.yml` *are* live and
   still included by several scenarios' `prepare.yml`.
+- **A custom module gets Python unit tests, not testinfra.** This is the one place plain
+  `unittest` belongs: a role that ships its own module tests the module's pure logic directly.
+  `roles/linux_additional_filesystems/tests/test_find_filesystem_devices.py` stubs `ansible.*`
+  with `MagicMock` (so no Ansible install is needed) and imports `library.` / `action_plugins.`
+  as implicit namespace packages — run it with `python -m unittest discover -s tests -v` from
+  the role dir. Molecule still covers the end-to-end integration and idempotence; the unit tests
+  cover the resolver algorithm (size matching, root exclusion, existing-mount/fstab
+  reconciliation, conflict detection) that molecule can only exercise indirectly.
 - `linux_provision` has a single vagrant scenario covering all ten of its task files. The
   per-task playbooks are *not* exercised by it — when changing `tasks/main.yml` or a task
   file, check one by hand with

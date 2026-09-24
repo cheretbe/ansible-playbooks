@@ -2,8 +2,13 @@
 
 # A real spare block device is needed to exercise partition/mkfs/mount, which a
 # container cannot provide, so this role uses the vagrant driver (like
-# linux_provision). Each VM gets a second disk that shows up as /dev/sdb; the
-# role partitions, formats and mounts it.
+# linux_provision). Each VM gets two extra disks of distinct sizes (1GB, 2GB); the
+# role resolves them by size, then partitions, formats and mounts them.
+#
+# The role matches disks by their gathered size, which is reported in GB, so the
+# extra disks are sized in whole GB (a 50MB disk would show as "50.00 MB" and never
+# match a numeric GB disk_size). Distinct sizes also make the size->device mapping
+# unambiguous.
 #
 # memory/cpus are set explicitly: the molecule vagrant driver defaults every
 # instance to 512MB/2vCPU, which wedges Ubuntu mid-boot. 1 vCPU each avoids
@@ -12,8 +17,9 @@
 driver:
   name: vagrant
 platforms:
-  # Vagrant-managed second disk (instance_raw_config_args): attaches as /dev/sdb
-  # on the VirtualBox SATA controller, created on 'up' and removed on 'destroy'.
+  # Two vagrant-managed extra disks (instance_raw_config_args): attach as /dev/sdb
+  # and /dev/sdc on the VirtualBox SATA controller, created on 'up' and removed on
+  # 'destroy'.
   - name: debian-12.local.test
     box: debian/bookworm64
     memory: 1024
@@ -21,7 +27,8 @@ platforms:
     config_options:
       vm.boot_timeout: 900
     instance_raw_config_args:
-      - "vm.disk :disk, name: \"extra\", size: \"50MB\""
+      - "vm.disk :disk, name: \"extra1\", size: \"1GB\""
+      - "vm.disk :disk, name: \"extra2\", size: \"2GB\""
   # Debian publishes trixie boxes for libvirt only, so debian 13 uses a bento box
   - name: debian-13.local.test
     box: bento/debian-13
@@ -30,7 +37,8 @@ platforms:
     config_options:
       vm.boot_timeout: 900
     instance_raw_config_args:
-      - "vm.disk :disk, name: \"extra\", size: \"50MB\""
+      - "vm.disk :disk, name: \"extra1\", size: \"1GB\""
+      - "vm.disk :disk, name: \"extra2\", size: \"2GB\""
   - name: ubuntu-22.04.local.test
     box: ubuntu/jammy64
     memory: 2048
@@ -38,7 +46,8 @@ platforms:
     config_options:
       vm.boot_timeout: 900
     instance_raw_config_args:
-      - "vm.disk :disk, name: \"extra\", size: \"50MB\""
+      - "vm.disk :disk, name: \"extra1\", size: \"1GB\""
+      - "vm.disk :disk, name: \"extra2\", size: \"2GB\""
   - name: ubuntu-24.04.local.test
     box: bento/ubuntu-24.04
     memory: 2048
@@ -46,4 +55,5 @@ platforms:
     config_options:
       vm.boot_timeout: 900
     instance_raw_config_args:
-      - "vm.disk :disk, name: \"extra\", size: \"50MB\""
+      - "vm.disk :disk, name: \"extra1\", size: \"1GB\""
+      - "vm.disk :disk, name: \"extra2\", size: \"2GB\""

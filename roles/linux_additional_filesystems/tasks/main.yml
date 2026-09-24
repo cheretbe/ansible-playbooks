@@ -1,28 +1,63 @@
 ---
 # tasks file for linux_additional_filesystems
 #
-# Each disk gets one GPT partition spanning it, a filesystem on that partition
-# and an fstab mount by UUID. Mounting by UUID rather than by device path keeps
-# the mount stable when the kernel renames the disk across reboots.
+# The caller declares each disk by its expected size, not by a /dev name: kernel
+# names (sdb vs sdc, virtio vs SCSI vs NVMe) are not stable across reboots, so a
+# hard-coded name can point at the wrong disk on a re-run and get it formatted.
+# find_filesystem_devices resolves the real device each run by matching the size
+# against facts, skipping the root disk and reusing any device already mounted or
+# in fstab. Each disk then gets one GPT partition spanning it, a filesystem and an
+# fstab mount by UUID (stable when the kernel renames the disk).
 
 - name: Check that the platform is supported
   ansible.builtin.assert:
     that: ansible_facts['os_family'] == "Debian"
     fail_msg: The role installs parted with apt and targets Debian/Ubuntu only.
 
-# The kernel inserts a 'p' before partition number when the disk name ends in a
-# digit. Partition 1 of /dev/vdb is /dev/vdb1, but for /dev/nvme0n1 (or /dev/loop0)
-# it becomes /dev/nvme0n1p1 (/dev/loop0p1).
-# Resolve it once here so the tasks below can just use item.part.
-- name: Resolve the partition device for each disk
+# The resolver needs the block-device inventory (ansible_facts.devices) and the
+# current mount table (ansible_facts.mounts); gather them in case the caller ran
+# with a reduced subset.
+- name: Gather hardware facts for device resolution
+  ansible.builtin.setup:
+    gather_subset: hardware
+  when: linux_additional_filesystems_devices | length > 0
+
+# The module keys mount points as 'mount_path'; map the role's public 'mount_point'
+# onto it (keeping mount_point so it rides through to the mount task below).
+- name: Build the resolver request
   ansible.builtin.set_fact:
-    _linux_additional_filesystems_disks: >-
-      {{ _linux_additional_filesystems_disks | default([]) + [item | combine({
-           'part': item.dev ~ ('p1' if item.dev is match('.*[0-9]$') else '1'),
-         })] }}
+    _linux_additional_filesystems_request: >-
+      {{ _linux_additional_filesystems_request | default([])
+         + [item | combine({'mount_path': item.mount_point})] }}
   loop: "{{ linux_additional_filesystems_devices }}"
   loop_control:
-    label: "{{ item.dev }}"
+    label: "{{ item.mount_point }}"
+
+# Resolve the abstract 'disk_size' spec to a concrete whole-disk device. The
+# paired action plugin injects ansible_facts.devices/mounts; the module returns
+# each item with a 'device' key added.
+- name: Resolve devices by expected disk size
+  find_filesystem_devices:
+    filesystem_list: "{{ _linux_additional_filesystems_request | default([]) }}"
+  register: __linux_additional_filesystems_resolved
+  when: linux_additional_filesystems_devices | length > 0
+
+# The kernel inserts a 'p' before the partition number when the disk name ends in
+# a digit. Partition 1 of /dev/vdb is /dev/vdb1, but for /dev/nvme0n1 (or
+# /dev/loop0) it becomes /dev/nvme0n1p1 (/dev/loop0p1). Resolve it once here,
+# alongside the device the module picked, so the tasks below can just use item.
+- name: Build the per-disk work list
+  ansible.builtin.set_fact:
+    _linux_additional_filesystems_disks: >-
+      {{ _linux_additional_filesystems_disks | default([]) + [{
+           'dev': item.device,
+           'part': item.device ~ ('p1' if item.device is match('.*[0-9]$') else '1'),
+           'fstype': item.fstype,
+           'mount_point': item.mount_point,
+         }] }}
+  loop: "{{ __linux_additional_filesystems_resolved.filesystems | default([]) }}"
+  loop_control:
+    label: "{{ item.mount_point }} -> {{ item.device }}"
 
 - name: Install parted
   ansible.builtin.apt:

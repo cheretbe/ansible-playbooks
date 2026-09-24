@@ -1,12 +1,17 @@
 ---
 # defaults file for linux_additional_filesystems
 
-# Whole disks to partition, format and mount. Empty by default, so the role is a
+# Disks to partition, format and mount, identified by expected SIZE rather than by
+# /dev name - the kernel can reassign names across reboots, so a hard-coded name
+# risks formatting the wrong disk on a re-run. Empty by default, so the role is a
 # no-op until the inventory sets it. Each item:
-#   dev:         whole-disk device, e.g. /dev/vdb (NOT a partition like /dev/vdb1)
+#   disk_size:   expected whole-disk size. A number is gibibytes formatted as
+#                "<n>.00 GB" to match ansible_facts.devices[*].size; pass an exact
+#                string like "500.00 GB" or "50.00 MB" for other units.
 #   fstype:      filesystem to create, e.g. ext4
 #   mount_point: absolute path partition 1 is mounted at
-# The role always creates a single GPT partition (#1) spanning the disk and
-# mounts it by UUID, so a device name that changes across reboots does not break
-# the fstab entry.
+# The role resolves each size to a real device (skipping the root disk and reusing
+# any disk already mounted or in fstab), creates a single GPT partition (#1)
+# spanning it and mounts by UUID, so a device rename across reboots does not break
+# the fstab entry or reshuffle disks on the next run.
 linux_additional_filesystems_devices: []

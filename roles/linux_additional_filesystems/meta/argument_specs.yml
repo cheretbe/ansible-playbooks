@@ -3,22 +3,27 @@ argument_specs:
   main:
     short_description: Partition, format and mount additional disks
     description:
-      - Given a list of whole disks, creates a single GPT partition spanning each
-        disk, makes the requested filesystem on it and mounts it by UUID.
+      - Given a list of disks identified by expected size, resolves each to a real
+        block device (skipping the root disk and reusing any disk already mounted or
+        listed in fstab), creates a single GPT partition spanning it, makes the
+        requested filesystem on it and mounts it by UUID.
       - A no-op when the list is empty. Idempotent - existing partitions and
-        filesystems are left as they are.
+        filesystems are left as they are and disks are not reshuffled across runs.
     options:
       linux_additional_filesystems_devices:
         description:
-          - Whole disks to set up. The role never touches an existing partition
-            table or filesystem, so it will not reformat a disk that already
-            carries data.
+          - Disks to set up, identified by size rather than by /dev name. The role
+            never touches an existing partition table or filesystem, so it will not
+            reformat a disk that already carries data.
         type: list
         elements: dict
         options:
-          dev:
-            description: Whole-disk device, e.g. /dev/vdb (not a partition).
-            type: str
+          disk_size:
+            description:
+              - Expected whole-disk size. A number is gibibytes formatted as
+                C(<n>.00 GB) to match C(ansible_facts.devices[*].size); pass an
+                exact string such as C(500.00 GB) or C(50.00 MB) for other units.
+            type: raw
             required: true
           fstype:
             description: Filesystem to create on partition 1, e.g. ext4.
