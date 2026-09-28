@@ -210,3 +210,67 @@
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers
+
+# cloud-init grows the root partition and filesystem only at boot, but "Resize system disk"
+# can grow the disk of an already running VM. Separate task, so that installing growpart
+# doesn't trigger the guest agent reboot handler
+- name: Install cloud-guest-utils package (growpart)
+  ansible.builtin.apt:
+    name: ["cloud-guest-utils"]
+    lock_timeout: "{{ '15m' | community.general.to_seconds | int }}"
+  become: true
+
+- name: Get root filesystem device and type
+  ansible.builtin.command: findmnt --noheadings --output SOURCE,FSTYPE /
+  changed_when: false
+  register: __proxmox_vm_root_fs
+
+- name: Set root filesystem facts
+  ansible.builtin.set_fact:
+    _proxmox_vm_root_dev: "{{ (__proxmox_vm_root_fs.stdout | split)[0] }}"
+    _proxmox_vm_root_fstype: "{{ (__proxmox_vm_root_fs.stdout | split)[1] }}"
+
+- name: Get root partition parent disk
+  ansible.builtin.command: lsblk --noheadings --nodeps --output PKNAME {{ _proxmox_vm_root_dev }}
+  changed_when: false
+  register: __proxmox_vm_root_disk
+
+# Root on LVM/LUKS would need pvresize/cryptsetup resize, which the role doesn't do
+# https://github.com/kubernetes-sigs/kubespray/issues/9747
+- name: Check that root filesystem is on a plain partition
+  ansible.builtin.assert:
+    that:
+      - not _proxmox_vm_root_dev.startswith('/dev/mapper/')
+      - __proxmox_vm_root_disk.stdout | trim | length > 0
+    fail_msg: "Root filesystem {{ _proxmox_vm_root_dev }} is not a plain disk partition, growing it is not supported"
+    quiet: true
+
+# Partition number, not position: Debian/Ubuntu cloud images have root as partition 1
+# placed last on the disk (after 14 bios_grub and 15 ESP) so that it can be grown
+- name: Get root partition number
+  ansible.builtin.command: cat /sys/class/block/{{ _proxmox_vm_root_dev | basename }}/partition
+  changed_when: false
+  register: __proxmox_vm_root_partnum
+
+# rc 0: grown, rc 1 + NOCHANGE: nothing to do, anything else is an error
+# Also moves GPT backup header to the end of the enlarged disk
+- name: Grow root partition
+  ansible.builtin.command: >-
+    growpart /dev/{{ __proxmox_vm_root_disk.stdout | trim }} {{ __proxmox_vm_root_partnum.stdout | trim }}
+  register: __proxmox_vm_growpart
+  changed_when: __proxmox_vm_growpart.rc == 0
+  failed_when: >-
+    __proxmox_vm_growpart.rc not in [0, 1] or
+    (__proxmox_vm_growpart.rc == 1 and 'NOCHANGE' not in __proxmox_vm_growpart.stdout)
+  become: true
+
+# Only after growpart: the module compares ext4 size with partition size without any slack
+# and reports changed on every run when the partition size is not a multiple of fs block size
+# (resize2fs does nothing then). cloud-init resizefs also runs on every boot
+- name: Grow root filesystem
+  community.general.filesystem:
+    dev: "{{ _proxmox_vm_root_dev }}"
+    fstype: "{{ _proxmox_vm_root_fstype }}"
+    resizefs: true
+  when: __proxmox_vm_growpart is changed # noqa: no-handler
+  become: true
