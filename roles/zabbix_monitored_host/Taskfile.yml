@@ -1,0 +1,18 @@
+---
+# Root tasks, minus test:one: --platform-name also filters out the zbx-*
+# containers the scenario depends on, so a single-platform run cannot work.
+version: "3"
+
+includes:
+  root:
+    taskfile: ../../Taskfile.yml
+    flatten: true
+    excludes: [test:one]
+
+tasks:
+  # no desc, so 'task --list' does not show it
+  test:one:
+    cmds:
+      - echo "test:one does not work here (the scenario needs the zbx-* containers); use 'task test'" >&2
+      - exit 1
+    silent: true

@@ -75,6 +75,13 @@ argument_specs:
           - Added to zabbix_monitored_host_templates rather than replacing it.
         type: list
         elements: str
+      zabbix_monitored_host_allow_template_deletion:
+        description:
+          - Allow unlinking templates that are linked to an existing host object
+            but missing from the combined template list.
+          - Unlinking clears the template's items, triggers and their history
+            from the host; without this flag the role fails instead.
+        type: bool
       zabbix_monitored_host_interfaces:
         description: Host interfaces (as accepted by community.zabbix.zabbix_host).
         type: list

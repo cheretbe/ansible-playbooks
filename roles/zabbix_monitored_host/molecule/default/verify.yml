@@ -46,7 +46,7 @@
       # Delegated network connection resolves its ansible_* vars in localhost's
       # scope, where the monitored group_vars are invisible; reach them via
       # hostvars (see prepare.yml and defaults/main.yml for the same pattern).
-      vars:
+      vars: &zabbix_monitored_host_verify_api_vars
         ansible_connection: httpapi
         ansible_network_os: community.zabbix.zabbix
         ansible_host: "{{ hostvars[inventory_hostname].zabbix_monitored_host_api_server }}"
@@ -141,3 +141,54 @@
         that: >-
           zabbix_monitored_host_verify_triggers.json.result | default([]) | length
           == (zabbix_monitored_host_verify_jobs | length) * 2
+
+    # --- template safeguard ----------------------------------------------------
+    # Last in verify: it relinks templates on the host object.
+    - name: Link an extra template by hand
+      community.zabbix.zabbix_host:
+        host_name: "{{ inventory_hostname }}"
+        link_templates:
+          - ICMP Ping
+        # merge with the existing templates instead of replacing them
+        force: false
+      delegate_to: localhost
+      vars: *zabbix_monitored_host_verify_api_vars
+
+    - name: Run the role against a host with an unlisted template
+      block:
+        - name: Apply zabbix_monitored_host
+          ansible.builtin.include_role:
+            name: zabbix_monitored_host
+            # ansible_failed_result carries the role's unrendered delegated
+            # connection vars, which fall back to role defaults; keep those
+            # defined for the rescue
+            public: true
+
+        - name: Fail if the role did not refuse to unlink the template
+          ansible.builtin.fail:
+            msg: zabbix_monitored_host unlinked a template it was not told about
+      rescue:
+        - name: Check that the role failed on the template safeguard
+          ansible.builtin.assert:
+            that:
+              - "'ICMP Ping' in ansible_failed_result.msg"
+              - "'zabbix_monitored_host_allow_template_deletion' in ansible_failed_result.msg"
+
+    - name: Apply zabbix_monitored_host with template deletion allowed
+      ansible.builtin.include_role:
+        name: zabbix_monitored_host
+      vars:
+        zabbix_monitored_host_allow_template_deletion: true
+
+    - name: Get Zabbix host object after template deletion
+      community.zabbix.zabbix_host_info:
+        host_name: "{{ inventory_hostname }}"
+        exact_match: true
+      delegate_to: localhost
+      register: zabbix_monitored_host_verify_host_after
+      vars: *zabbix_monitored_host_verify_api_vars
+
+    - name: Check that the extra template was unlinked
+      ansible.builtin.assert:
+        that:
+          - zabbix_monitored_host_verify_host_after.hosts[0].parentTemplates | length == 0

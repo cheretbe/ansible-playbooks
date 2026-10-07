@@ -26,9 +26,14 @@ outside it, so nothing here is runnable end-to-end without one.
 ## Commands
 
 Everything goes through [go-task](https://taskfile.dev/) (`Taskfile.yml` at the root). The
-python venv in `.venv/` is created automatically on first use from `requirements.txt` +
-`dev_requirements.txt`; `task venv:rebuild` recreates it. Needs
-`python3-venv build-essential python3-dev` on the host (checked as a precondition).
+python venv in `~/.cache/ansible-playbooks-molecule-venv` is created automatically on first use
+from `requirements.txt` + `dev_requirements.txt`; `task venv:rebuild` recreates it. It lives outside
+the checkout because the checkout may be shared between the host and VMs (a vagrant
+`/host_home`), and pip breaks on VirtualBox shared folders. Needs Python >= 3.12 (the newest
+`python3.1x` on PATH; override with `task PYTHON=/path/to/python ...`) plus its venv support,
+a C compiler and its headers (`python3.X-venv build-essential python3.X-dev` on Debian/Ubuntu;
+a source build already has the Python parts), all checked as preconditions. 3.12 because older Pythons cap pip `ansible` at releases
+whose bundled collections are too old (community.zabbix 2.x can't talk to Zabbix >= 7.2).
 
 ```shell
 cd roles/<role>
@@ -69,6 +74,14 @@ platform list, so `create`/`prepare`/`destroy` touch that one instance too. Two 
 - The name must match `platforms[].name` exactly. Docker scenarios inherit `debian-13` from
   the base config; `linux_provision` overrides platforms with FQDNs
   (`debian-13.local.test`), because the role asserts `inventory_hostname == fqdn`.
+- The filter drops *every* other platform, including infrastructure containers. A scenario
+  that needs extra containers next to the instance under test (`zabbix_monitored_host`
+  needs its `zbx-*` Zabbix stack) cannot run single-platform; use `task test` there. Such a
+  role carries its own `Taskfile.yml` that includes the root one with `flatten: true`,
+  `excludes: [test:one]`, and redefines `test:one` without a `desc` (hidden from
+  `task --list`) to print why and exit 1. task uses the first Taskfile found walking up from
+  the cwd, so this one takes over inside the role. That is also why the root Taskfile
+  builds its paths from `TASKFILE_DIR`, not `ROOT_DIR` (the *entrypoint's* directory).
 
 **Why it matters:** a guest that cannot boot looks exactly like a role failure and costs 15
 minutes to find out it isn't — vagrant just loops on "Connection reset" until

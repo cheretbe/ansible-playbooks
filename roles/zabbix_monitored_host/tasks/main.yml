@@ -34,18 +34,7 @@
 
 # Runs on the control host over the httpapi connection declared below, built
 # from the zabbix_monitored_host_api_* variables.
-- name: Create/update Zabbix host object
-  community.zabbix.zabbix_host:
-    host_name: "{{ zabbix_monitored_host_name }}"
-    visible_name: "{{ zabbix_monitored_host_visible_name }}"
-    host_groups: "{{ zabbix_monitored_host_combined_groups }}"
-    link_templates: "{{ zabbix_monitored_host_combined_templates }}"
-    status: "{{ zabbix_monitored_host_status }}"
-    monitored_by: "{{ zabbix_monitored_host_monitored_by }}"
-    proxy: "{{ zabbix_monitored_host_proxy | default(omit, true) }}"
-    proxy_group: "{{ zabbix_monitored_host_proxy_group | default(omit, true) }}"
-    interfaces: "{{ zabbix_monitored_host_interfaces }}"
-    state: present
+- name: Manage Zabbix host object
   delegate_to: "{{ zabbix_monitored_host_api_delegate }}"
   # A network connection (ansible_network_os) delegated elsewhere resolves its
   # ansible_* connection vars in the DELEGATE's scope, which sees this role's
@@ -67,6 +56,72 @@
     # httpapi modules always execute on the control node, so use the same
     # interpreter as ansible-playbook, where community.zabbix is installed.
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  block:
+    # zabbix_host treats link_templates as the complete list and unlinks and
+    # clears (items, triggers, history) any other template, e.g. one linked by
+    # hand. Refuse that unless explicitly allowed.
+    - name: Get existing Zabbix host object
+      community.zabbix.zabbix_host_info:
+        host_name: "{{ zabbix_monitored_host_name }}"
+        # the default is a substring search
+        exact_match: true
+      register: __zabbix_monitored_host_existing
+      # a host that does not exist yet has no templates to lose
+      failed_when: >-
+        __zabbix_monitored_host_existing.failed
+        and 'Host not found' not in (__zabbix_monitored_host_existing.msg | default(''))
+      when: not zabbix_monitored_host_allow_template_deletion
+
+    # Compare by visible name: parentTemplates carries only that (no ID), while
+    # link_templates holds technical names. The export is the only place this
+    # module returns a template's visible name; Zabbix keeps those unique.
+    - name: Resolve requested template names
+      community.zabbix.zabbix_template_info:
+        template_name: "{{ item }}"
+        format: json
+        omit_date: true
+      register: __zabbix_monitored_host_templates
+      loop: "{{ zabbix_monitored_host_combined_templates }}"
+      when:
+        - not zabbix_monitored_host_allow_template_deletion
+        - __zabbix_monitored_host_existing.hosts is defined
+
+    - name: Check that no linked templates would be removed
+      ansible.builtin.assert:
+        that:
+          - _zabbix_monitored_host_dropped_templates | length == 0
+        fail_msg: >-
+          Zabbix host {{ zabbix_monitored_host_name }} has templates linked
+          that are not in the role's template list and would be unlinked and
+          cleared: {{ _zabbix_monitored_host_dropped_templates | map(attribute='name') | join(', ') }}.
+          Add them to zabbix_monitored_host_templates or
+          zabbix_monitored_host_extra_templates, or set
+          zabbix_monitored_host_allow_template_deletion to true.
+        quiet: true
+      vars:
+        _zabbix_monitored_host_dropped_templates: >-
+          {{ __zabbix_monitored_host_existing.hosts[0].parentTemplates
+             | rejectattr('name', 'in',
+                          __zabbix_monitored_host_templates.results | default([])
+                          | map(attribute='template_json.zabbix_export.templates.0.name')
+                          | list)
+             | list }}
+      when:
+        - not zabbix_monitored_host_allow_template_deletion
+        - __zabbix_monitored_host_existing.hosts is defined
+
+    - name: Create/update Zabbix host object
+      community.zabbix.zabbix_host:
+        host_name: "{{ zabbix_monitored_host_name }}"
+        visible_name: "{{ zabbix_monitored_host_visible_name }}"
+        host_groups: "{{ zabbix_monitored_host_combined_groups }}"
+        link_templates: "{{ zabbix_monitored_host_combined_templates }}"
+        status: "{{ zabbix_monitored_host_status }}"
+        monitored_by: "{{ zabbix_monitored_host_monitored_by }}"
+        proxy: "{{ zabbix_monitored_host_proxy | default(omit, true) }}"
+        proxy_group: "{{ zabbix_monitored_host_proxy_group | default(omit, true) }}"
+        interfaces: "{{ zabbix_monitored_host_interfaces }}"
+        state: present
 
 - name: Configure Linux target
   ansible.builtin.include_tasks: linux.yml

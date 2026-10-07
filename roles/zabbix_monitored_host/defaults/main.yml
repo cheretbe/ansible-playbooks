@@ -32,6 +32,9 @@ zabbix_monitored_host_groups: []
 zabbix_monitored_host_extra_groups: []
 zabbix_monitored_host_templates: []
 zabbix_monitored_host_extra_templates: []
+# zabbix_host unlinks AND clears every linked template missing from the combined
+# list, deleting its items and history. The role fails instead unless this is set.
+zabbix_monitored_host_allow_template_deletion: false
 
 # Agent interface created on the host object. Override the whole list to change
 # it, or set it to [] for a trapper-only host with no interface.

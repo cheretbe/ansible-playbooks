@@ -10,7 +10,14 @@
 version: '3'
 
 vars:
-  VENV: '{{.ROOT_DIR}}/.venv'
+  # newest python3.1x on PATH (override: 'task PYTHON=/path/to/python <task>').
+  # >= 3.12: older Pythons cap pip 'ansible' at releases whose bundled
+  # collections are too old (community.zabbix 2.x can't talk to Zabbix >= 7.2)
+  PYTHON:
+    sh: for p in python3.14 python3.13 python3.12; do command -v $p && exit; done; echo python3.12
+  # outside the checkout: it may be shared between the host and VMs (a vagrant
+  # /host_home), and pip breaks on VirtualBox shared folders
+  VENV: '{{.HOME}}/.cache/ansible-playbooks-molecule-venv'
   # ANSIBLE_HOME keeps collections inside the venv. Without it ansible searches
   # ~/.ansible/collections *before* the collections bundled with the venv's
   # 'ansible' package, so a stale user-wide install silently shadows the
@@ -39,23 +46,30 @@ tasks:
 
   venv:
     internal: true
-    dir: '{{.ROOT_DIR}}'
+    # TASKFILE_DIR, not ROOT_DIR: a role's own Taskfile.yml may include this one,
+    # and ROOT_DIR is the directory of the Taskfile task was started from
+    dir: '{{.TASKFILE_DIR}}'
     status:
       - test -x '{{.VENV}}/bin/molecule'
+    # checked through the chosen interpreter, so a source-built Python (which
+    # ships its own ensurepip and headers) passes without the distro packages
     preconditions:
-      - sh: dpkg --status python3-venv build-essential python3-dev > /dev/null 2>&1
-        msg: >-
-          Missing build packages. Install with:
-          sudo apt install python3-venv build-essential python3-dev
+      - sh: "'{{.PYTHON}}' -c 'import ensurepip'"
+        msg: '{{.PYTHON}} has no venv support. Install with: sudo apt install {{base .PYTHON}}-venv'
+      # requirements are unpinned: a release without a wheel gets compiled
+      - sh: command -v cc
+        msg: 'No C compiler. Install with: sudo apt install build-essential'
+      - sh: >-
+          '{{.PYTHON}}' -c 'import os, sys, sysconfig;
+          sys.exit(not os.path.isfile(os.path.join(sysconfig.get_paths()["include"], "Python.h")))'
+        msg: 'No headers for {{.PYTHON}}. Install with: sudo apt install {{base .PYTHON}}-dev'
     cmds:
-      - python3 -m venv '{{.VENV}}'
-      - '{{.VENV}}/bin/pip install --upgrade pip'
-      - '{{.VENV}}/bin/pip install wheel'
-      - '{{.VENV}}/bin/pip install -r requirements.txt -r dev_requirements.txt'
+      - "'{{.PYTHON}}' -m venv --upgrade-deps '{{.VENV}}'"
+      - "'{{.VENV}}/bin/pip' install -r requirements.txt -r dev_requirements.txt"
 
   venv:rebuild:
     desc: Recreate the python venv from scratch
-    dir: '{{.ROOT_DIR}}'
+    dir: '{{.TASKFILE_DIR}}'
     cmds:
       - rm -rf '{{.VENV}}'
       - task: venv
@@ -67,7 +81,7 @@ tasks:
     # is resolved against the cwd, with no walk up the tree) and so that
     # 'roles/<name>' paths are recognised as roles; the directory to lint is
     # passed as an argument instead. Run from the root to lint everything.
-    dir: '{{.ROOT_DIR}}'
+    dir: '{{.TASKFILE_DIR}}'
     # TARGET lets a calling task lint the role directory without inheriting that
     # task's own CLI_ARGS (which are meant for molecule, not for ansible-lint)
     vars:
