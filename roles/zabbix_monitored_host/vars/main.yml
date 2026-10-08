@@ -9,3 +9,12 @@ zabbix_monitored_host_combined_groups: >-
 
 zabbix_monitored_host_combined_templates: >-
   {{ (zabbix_monitored_host_templates + zabbix_monitored_host_extra_templates) | unique }}
+
+_zabbix_monitored_host_monitored_by: >-
+  {{ 'proxy' if zabbix_monitored_host_proxy | length > 0 else 'zabbix_server' }}
+
+# Where zabbix_sender sends: the proxy when there is one, else the server.
+_zabbix_monitored_host_sender_target: >-
+  {{ zabbix_monitored_host_proxy_address
+     if zabbix_monitored_host_proxy | length > 0
+     else zabbix_monitored_host_server }}

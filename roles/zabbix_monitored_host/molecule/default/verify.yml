@@ -143,7 +143,7 @@
           == (zabbix_monitored_host_verify_jobs | length) * 2
 
     # --- template safeguard ----------------------------------------------------
-    # Last in verify: it relinks templates on the host object.
+    # Relinks templates on the host object.
     - name: Link an extra template by hand
       community.zabbix.zabbix_host:
         host_name: "{{ inventory_hostname }}"
@@ -192,3 +192,94 @@
       ansible.builtin.assert:
         that:
           - zabbix_monitored_host_verify_host_after.hosts[0].parentTemplates | length == 0
+
+    # --- proxy ---------------------------------------------------------------
+    # A proxy object is enough to assign hosts to; nothing has to run behind it.
+    - name: Create a test proxy object
+      community.zabbix.zabbix_proxy:
+        proxy_name: molecule-proxy
+        operating_mode: active
+        state: present
+      delegate_to: localhost
+      run_once: true
+      vars: *zabbix_monitored_host_verify_api_vars
+
+    - name: Run the role with a proxy but no proxy address
+      block:
+        - name: Apply zabbix_monitored_host
+          ansible.builtin.include_role:
+            name: zabbix_monitored_host
+          vars:
+            zabbix_monitored_host_proxy: molecule-proxy
+
+        - name: Fail if the role accepted a proxy without an address
+          ansible.builtin.fail:
+            msg: zabbix_monitored_host accepted a proxy without zabbix_monitored_host_proxy_address
+      rescue:
+        - name: Check that the role failed on the proxy address check
+          ansible.builtin.assert:
+            that:
+              - "'zabbix_monitored_host_proxy_address' in ansible_failed_result.msg"
+
+    - name: Apply zabbix_monitored_host behind the proxy
+      ansible.builtin.include_role:
+        name: zabbix_monitored_host
+      vars:
+        zabbix_monitored_host_proxy: molecule-proxy
+        zabbix_monitored_host_proxy_address: molecule-proxy.example.test
+
+    - name: Get Zabbix host object behind the proxy
+      community.zabbix.zabbix_host_info:
+        host_name: "{{ inventory_hostname }}"
+        exact_match: true
+      delegate_to: localhost
+      register: zabbix_monitored_host_verify_host_proxy
+      vars: *zabbix_monitored_host_verify_api_vars
+
+    - name: Read a job unit behind the proxy
+      ansible.builtin.slurp:
+        path: /etc/systemd/system/molecule_ok.service
+      register: zabbix_monitored_host_verify_unit_proxy
+
+    - name: Check that the host is monitored by the proxy
+      ansible.builtin.assert:
+        that:
+          # 1 = proxy; molecule-proxy is the only proxy, so any proxyid is it
+          - zabbix_monitored_host_verify_host_proxy.hosts[0].monitored_by == '1'
+          - zabbix_monitored_host_verify_host_proxy.hosts[0].proxyid != '0'
+          - >-
+            'ZBX=molecule-proxy.example.test'
+            in (zabbix_monitored_host_verify_unit_proxy.content | b64decode)
+
+    - name: Apply zabbix_monitored_host without the proxy
+      ansible.builtin.include_role:
+        name: zabbix_monitored_host
+
+    - name: Get Zabbix host object after leaving the proxy
+      community.zabbix.zabbix_host_info:
+        host_name: "{{ inventory_hostname }}"
+        exact_match: true
+      delegate_to: localhost
+      register: zabbix_monitored_host_verify_host_direct
+      vars: *zabbix_monitored_host_verify_api_vars
+
+    - name: Read a job unit after leaving the proxy
+      ansible.builtin.slurp:
+        path: /etc/systemd/system/molecule_ok.service
+      register: zabbix_monitored_host_verify_unit_direct
+
+    - name: Check that the host is monitored by the server again
+      ansible.builtin.assert:
+        that:
+          - zabbix_monitored_host_verify_host_direct.hosts[0].monitored_by == '0'
+          - >-
+            'ZBX=zbx-server'
+            in (zabbix_monitored_host_verify_unit_direct.content | b64decode)
+
+    - name: Delete the test proxy object
+      community.zabbix.zabbix_proxy:
+        proxy_name: molecule-proxy
+        state: absent
+      delegate_to: localhost
+      run_once: true
+      vars: *zabbix_monitored_host_verify_api_vars

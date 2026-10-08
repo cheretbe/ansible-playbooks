@@ -86,24 +86,19 @@ argument_specs:
         description: Host interfaces (as accepted by community.zabbix.zabbix_host).
         type: list
         elements: dict
-      zabbix_monitored_host_monitored_by:
-        description: Whether the host is monitored directly or via a proxy.
-        type: str
-        choices: [zabbix_server, proxy, proxy_group]
-      zabbix_monitored_host_proxy:
-        description: Name of the Zabbix proxy object (when monitored_by=proxy).
-        type: str
-      zabbix_monitored_host_proxy_group:
-        description: Name of the proxy group object (when monitored_by=proxy_group).
-        type: str
       zabbix_monitored_host_server:
         description: Network address of the Zabbix server.
         type: str
-      zabbix_monitored_host_proxy_address:
-        description: Network address of the proxy that receives sender data.
+      zabbix_monitored_host_proxy:
+        description:
+          - Name of the Zabbix proxy object monitoring the host.
+          - When set, the host is monitored by that proxy and zabbix_sender sends
+            to zabbix_monitored_host_proxy_address; empty means the server.
         type: str
-      zabbix_monitored_host_sender_target:
-        description: Address zabbix_sender sends to (server or proxy).
+      zabbix_monitored_host_proxy_address:
+        description:
+          - Network address of the proxy, used by zabbix_sender.
+          - Required when zabbix_monitored_host_proxy is set.
         type: str
       zabbix_monitored_host_trapper_allowed_hosts:
         description: Comma-separated source addresses allowed to feed trapper items.

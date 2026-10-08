@@ -1,14 +1,15 @@
 ---
 # tasks file for zabbix_monitored_host
 
-- name: Validate proxy configuration
+- name: Validate monitoring path
   ansible.builtin.assert:
     that:
-      - zabbix_monitored_host_sender_target | length > 0
+      - _zabbix_monitored_host_sender_target | length > 0
     fail_msg: >-
-      zabbix_monitored_host_sender_target is empty. Set
-      zabbix_monitored_host_server (direct) or
-      zabbix_monitored_host_proxy_address (proxy).
+      {{ 'zabbix_monitored_host_proxy is set, so zabbix_monitored_host_proxy_address
+      is required'
+      if zabbix_monitored_host_proxy | length > 0
+      else 'zabbix_monitored_host_server is required' }}.
 
 - name: Validate host groups
   ansible.builtin.assert:
@@ -117,9 +118,8 @@
         host_groups: "{{ zabbix_monitored_host_combined_groups }}"
         link_templates: "{{ zabbix_monitored_host_combined_templates }}"
         status: "{{ zabbix_monitored_host_status }}"
-        monitored_by: "{{ zabbix_monitored_host_monitored_by }}"
+        monitored_by: "{{ _zabbix_monitored_host_monitored_by }}"
         proxy: "{{ zabbix_monitored_host_proxy | default(omit, true) }}"
-        proxy_group: "{{ zabbix_monitored_host_proxy_group | default(omit, true) }}"
         interfaces: "{{ zabbix_monitored_host_interfaces }}"
         state: present
 

@@ -11,7 +11,7 @@ User={{ item.user }}
 {% if item.working_directory is defined %}
 WorkingDirectory={{ item.working_directory }}
 {% endif %}
-Environment="ZBX={{ zabbix_monitored_host_sender_target }}"
+Environment="ZBX={{ _zabbix_monitored_host_sender_target }}"
 Environment="HOST={{ zabbix_monitored_host_name }}"
 Environment="JOB={{ item.key }}"
 {% for key, value in (item.environment | default({})).items() %}
