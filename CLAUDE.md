@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## How to respond
 
@@ -338,7 +338,8 @@ task lint -- linux_provision.yml linux_dns.yml linux_motd.yml linux_users.yml
 ## Conventions
 
 - Commit subjects: `roles/<role-name>: lowercase description`, or a plain sentence for
-  repo-wide changes. Work happens on `develop`; `master` is the main branch.
+  repo-wide changes. Work happens on `develop`; `master` is the main branch. Do not add
+  `Co-Authored-By` or other agent-attribution trailers to commit messages.
 - Comments in tasks and defaults explain *why* (upstream quirks, ordering constraints,
   idempotency guards), not what the module does. Match that density when editing. Keep them
   concise; do not turn a reviewer's follow-up remark or an example they gave into a comment —
