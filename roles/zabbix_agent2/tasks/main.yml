@@ -86,6 +86,26 @@
   become: true
   notify: Restart zabbix-agent2 service
 
+- name: Deploy custom UserParameters
+  ansible.builtin.template:
+    src: 10-userparameters.conf.j2
+    dest: /etc/zabbix/zabbix_agent2.d/10-userparameters.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when: zabbix_agent2_userparameters | length > 0
+  notify: Restart zabbix-agent2 service
+
+# Drop the file when the list is cleared, so a host does not keep stale keys.
+- name: Remove custom UserParameters drop-in when unused
+  ansible.builtin.file:
+    path: /etc/zabbix/zabbix_agent2.d/10-userparameters.conf
+    state: absent
+  become: true
+  when: zabbix_agent2_userparameters | length == 0
+  notify: Restart zabbix-agent2 service
+
 - name: Make sure /etc/sudoers.d exists
   ansible.builtin.file:
     state: directory

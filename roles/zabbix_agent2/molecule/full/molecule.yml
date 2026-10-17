@@ -17,3 +17,5 @@ provisioner:
       all:
         zabbix_agent2_docker_enabled: true
         zabbix_agent2_smart_enabled: true
+        zabbix_agent2_userparameters:
+          - "custom.ping,/bin/ping -c1 127.0.0.1"

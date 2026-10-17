@@ -25,3 +25,11 @@ argument_specs:
         required: false
         type: bool
         default: false
+      zabbix_agent2_userparameters:
+        description: >-
+          Custom UserParameter definitions (the value after "UserParameter=",
+          e.g. "custom.key,/bin/cmd"). Deployed as a separate drop-in when non-empty.
+        required: false
+        type: list
+        elements: str
+        default: []

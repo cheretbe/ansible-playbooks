@@ -37,6 +37,29 @@
             (zabbix_agent2_docker_enabled | default(false))
             == ('Plugins.Docker.Endpoint' in conf)
 
+    - name: Stat custom UserParameters drop-in
+      ansible.builtin.stat:
+        path: /etc/zabbix/zabbix_agent2.d/10-userparameters.conf
+      register: zabbix_agent2_verify_up
+
+    - name: Check UserParameters drop-in presence matches the variable
+      ansible.builtin.assert:
+        that:
+          - >-
+            (zabbix_agent2_userparameters | default([]) | length > 0)
+            == zabbix_agent2_verify_up.stat.exists
+
+    - name: Read custom UserParameters drop-in (when present)
+      ansible.builtin.slurp:
+        path: /etc/zabbix/zabbix_agent2.d/10-userparameters.conf
+      register: zabbix_agent2_verify_up_conf
+      when: zabbix_agent2_verify_up.stat.exists
+
+    - name: Check UserParameters drop-in contents (when present)
+      ansible.builtin.assert:
+        that: "'UserParameter=custom.ping,' in (zabbix_agent2_verify_up_conf.content | b64decode)"
+      when: zabbix_agent2_verify_up.stat.exists
+
     - name: Check that the agent is listening on port 10050
       ansible.builtin.wait_for:
         port: 10050

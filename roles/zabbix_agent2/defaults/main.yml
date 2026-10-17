@@ -4,3 +4,7 @@
 zabbix_agent2_server_active: "{{ zabbix_agent2_server }}:10051"
 zabbix_agent2_docker_enabled: false
 zabbix_agent2_smart_enabled: false
+
+# Extra UserParameter definitions (the value after "UserParameter=", e.g.
+# "custom.key,/bin/cmd"). Written to a separate drop-in only when non-empty.
+zabbix_agent2_userparameters: []
