@@ -63,3 +63,24 @@
   become: true
   when: proxmox_provision_certificate | bool
   notify: Restart pveproxy service
+
+# pvebanner.service rewrites /etc/issue every boot; agetty prints /etc/issue
+# then each /etc/issue.d/*.issue, so we add our line there and leave /etc/issue
+# (and pvebanner) alone. No handler: agetty re-reads the files at every prompt.
+- name: Ensure /etc/issue.d exists
+  ansible.builtin.file:
+    path: /etc/issue.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Add Web UI address to the console banner
+  ansible.builtin.template:
+    src: etc_issue.d_50-custom.issue.j2
+    dest: /etc/issue.d/50-custom.issue
+    owner: root
+    group: root
+    mode: "0644"
+  become: true

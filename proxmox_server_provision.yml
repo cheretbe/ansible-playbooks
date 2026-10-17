@@ -1,7 +1,8 @@
 ---
 
-- hosts: "{{ ansible_limit | default(omit) }}"
+- name: Provision Proxmox VE server
+  hosts: "{{ ansible_limit | default(omit) }}"
   tasks:
-    - name: Import proxmox-provision role
-      import_role:
-        name: proxmox-provision
+    - name: Import proxmox_provision role
+      ansible.builtin.import_role:
+        name: proxmox_provision
