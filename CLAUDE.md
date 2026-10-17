@@ -340,6 +340,10 @@ task lint -- linux_provision.yml linux_dns.yml linux_motd.yml linux_users.yml
 - Commit subjects: `roles/<role-name>: lowercase description`, or a plain sentence for
   repo-wide changes. Work happens on `develop`; `master` is the main branch. Do not add
   `Co-Authored-By` or other agent-attribution trailers to commit messages.
+- Default to **subject-only commits** — no body. Add a body only when the change is not
+  self-evident from the diff and subject: non-obvious reasoning, a trade-off, a gotcha, or
+  context the next reader needs. Routine changes (version bumps, a new role following the
+  conventions, a straightforward fix) get the subject alone.
 - Comments in tasks and defaults explain *why* (upstream quirks, ordering constraints,
   idempotency guards), not what the module does. Match that density when editing. Keep them
   concise; do not turn a reviewer's follow-up remark or an example they gave into a comment —
