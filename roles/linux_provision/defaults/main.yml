@@ -25,6 +25,7 @@ linux_provision_packages_utils:
   - colordiff
   - jq
   - pv
+  - rsync
 
 # --- ca_certificates --------------------------------------------------------
 
