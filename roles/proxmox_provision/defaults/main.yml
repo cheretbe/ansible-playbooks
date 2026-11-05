@@ -1,5 +1,10 @@
 ---
 
 proxmox_provision_apt_repos: true
+# Debian base repo; security updates always come from security.debian.org
+proxmox_provision_debian_mirror: "http://deb.debian.org/debian"
 proxmox_provision_subscription_msg: true
 proxmox_provision_certificate: true
+# Controller-side paths, required when proxmox_provision_certificate is true
+proxmox_provision_web_ui_cert: ""
+proxmox_provision_web_ui_cert_key: ""

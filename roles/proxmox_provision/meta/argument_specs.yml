@@ -1,0 +1,30 @@
+---
+
+argument_specs:
+  main:
+    short_description: Configure a Proxmox VE 9 server
+    options:
+      proxmox_provision_apt_repos:
+        type: bool
+        default: true
+        description: Manage apt sources (no-subscription PVE repo, Debian base repos).
+      proxmox_provision_debian_mirror:
+        type: str
+        default: "http://deb.debian.org/debian"
+        description: Debian base repo mirror URI.
+      proxmox_provision_subscription_msg:
+        type: bool
+        default: true
+        description: Remove the "no valid subscription" Web UI message.
+      proxmox_provision_certificate:
+        type: bool
+        default: true
+        description: Install the Web UI SSL certificate and key.
+      proxmox_provision_web_ui_cert:
+        type: str
+        default: ""
+        description: Controller path to the Web UI certificate.
+      proxmox_provision_web_ui_cert_key:
+        type: str
+        default: ""
+        description: Controller path to the Web UI certificate key.
