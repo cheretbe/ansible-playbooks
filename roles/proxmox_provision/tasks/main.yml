@@ -126,10 +126,31 @@
   when: proxmox_provision_subscription_msg | bool
   notify: Restart pveproxy service
 
+# pve-ssl.* is the node certificate that PVE (re)issues from its cluster CA;
+# pveproxy prefers pveproxy-ssl.* for a custom one when both files exist.
+# pmxcfs only allows mode 0640, so copy can overwrite a file there but not
+# create one (its temp file chmod is rejected): create them empty first.
+- name: Create Web UI SSL certificate files
+  ansible.builtin.file:
+    path: "/etc/pve/local/{{ _proxmox_provision_cert_file }}"
+    state: touch
+    owner: root
+    group: www-data
+    mode: "0640"
+    modification_time: preserve
+    access_time: preserve
+  loop:
+    - pveproxy-ssl.pem
+    - pveproxy-ssl.key
+  loop_control:
+    loop_var: _proxmox_provision_cert_file
+  become: true
+  when: proxmox_provision_certificate | bool
+
 - name: Copy Web UI SSL certificate
   ansible.builtin.copy:
     src: "{{ proxmox_provision_web_ui_cert }}"
-    dest: /etc/pve/local/pve-ssl.pem
+    dest: /etc/pve/local/pveproxy-ssl.pem
     owner: root
     group: www-data
     mode: "0640"
@@ -140,7 +161,7 @@
 - name: Copy Web UI SSL certificate key
   ansible.builtin.copy:
     src: "{{ proxmox_provision_web_ui_cert_key }}"
-    dest: /etc/pve/local/pve-ssl.key
+    dest: /etc/pve/local/pveproxy-ssl.key
     owner: root
     group: www-data
     mode: "0640"
