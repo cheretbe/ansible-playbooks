@@ -343,7 +343,9 @@ task lint -- linux_provision.yml linux_dns.yml linux_motd.yml linux_users.yml
 - Default to **subject-only commits** — no body. Add a body only when the change is not
   self-evident from the diff and subject: non-obvious reasoning, a trade-off, a gotcha, or
   context the next reader needs. Routine changes (version bumps, a new role following the
-  conventions, a straightforward fix) get the subject alone.
+  conventions, a straightforward fix) get the subject alone. The body is for what the diff
+  can't show: if the reasoning is already in a code comment the change adds, or the body would
+  just list what changed, use the subject alone.
 - Comments in tasks and defaults explain *why* (upstream quirks, ordering constraints,
   idempotency guards), not what the module does. Match that density when editing. Keep them
   concise; do not turn a reviewer's follow-up remark or an example they gave into a comment —
